@@ -133,13 +133,20 @@ test.describe('API Contract Tests', () => {
   });
 
   test('GET /api/files reads file', async ({ request }) => {
-    const configPath = path.join(PROJECT_ROOT, '.aihome', 'config.json');
-    const res = await request.get(`/api/files?path=${encodeURIComponent(configPath)}`);
+    const agents = await api.getAgents();
+    expect(agents.length).toBeGreaterThan(0);
+
+    const res = await request.get(`/api/files?path=${encodeURIComponent(agents[0].filePath)}`);
     const result = await res.json();
-    
+
     expect(result).toHaveProperty('content');
     expect(result).toHaveProperty('path');
-    expect(result.content).toContain('AIHome');
+    expect(result.content).toContain(agents[0].name);
+  });
+
+  test('GET /api/files rejects path outside workspace', async ({ request }) => {
+    const res = await request.get(`/api/files?path=${encodeURIComponent('/etc/hosts')}`);
+    expect(res.status()).toBe(403);
   });
 
   test('PUT /api/files writes file', async ({ request }) => {

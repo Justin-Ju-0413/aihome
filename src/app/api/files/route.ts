@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
+import { getWorkspaceConfig } from '@/lib/workspace-config';
+import { isPathWithinWorkspace } from '@/lib/path-security';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get('path');
-    
+
     if (!path) {
       return NextResponse.json(
         { error: 'Path parameter is required' },
         { status: 400 }
+      );
+    }
+
+    const config = await getWorkspaceConfig();
+    if (!isPathWithinWorkspace(path, config.paths)) {
+      return NextResponse.json(
+        { error: 'Path is outside the configured workspace' },
+        { status: 403 }
       );
     }
 
@@ -28,11 +38,19 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     const { path, content } = body;
-    
+
     if (!path || content === undefined) {
       return NextResponse.json(
         { error: 'Path and content are required' },
         { status: 400 }
+      );
+    }
+
+    const config = await getWorkspaceConfig();
+    if (!isPathWithinWorkspace(path, config.paths)) {
+      return NextResponse.json(
+        { error: 'Path is outside the configured workspace' },
+        { status: 403 }
       );
     }
 

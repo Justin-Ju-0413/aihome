@@ -41,7 +41,9 @@ export async function saveWorkspaceConfig(config: WorkspaceConfig): Promise<void
   await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
 }
 
-export async function getLayout(): Promise<Record<string, { x: number; y: number }>> {
+export type AgentLayout = Record<string, { group: string; order: number }>;
+
+export async function getLayout(): Promise<AgentLayout> {
   await ensureConfigDir();
   try {
     const data = await readFile(LAYOUT_FILE, 'utf-8');
@@ -51,7 +53,7 @@ export async function getLayout(): Promise<Record<string, { x: number; y: number
   }
 }
 
-export async function saveLayout(layout: Record<string, { x: number; y: number }>): Promise<void> {
+export async function saveLayout(layout: AgentLayout): Promise<void> {
   await ensureConfigDir();
   await writeFile(LAYOUT_FILE, JSON.stringify(layout, null, 2), 'utf-8');
 }

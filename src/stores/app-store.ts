@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import type { AgentNode, AgentGroup, AgentRelation } from '@/lib/types';
+import type { AgentLayout } from '@/lib/workspace-config';
 
 interface AppState {
   // Data
   agents: AgentNode[];
   groups: AgentGroup[];
   relations: AgentRelation[];
+  layout: AgentLayout;
   
   // UI State
   selectedAgentId: string | null;
@@ -21,6 +23,7 @@ interface AppState {
   setAgents: (agents: AgentNode[]) => void;
   setGroups: (groups: AgentGroup[]) => void;
   setRelations: (relations: AgentRelation[]) => void;
+  setLayout: (layout: AgentLayout) => void;
   setSelectedAgentId: (id: string | null) => void;
   setViewMode: (mode: 'board' | 'graph' | 'list') => void;
   setSearchQuery: (query: string) => void;
@@ -41,6 +44,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     { id: 'skills', name: 'Skills', color: '#f59e0b', description: 'Skill definitions' }
   ],
   relations: [],
+  layout: {},
   selectedAgentId: null,
   viewMode: 'board',
   searchQuery: '',
@@ -52,6 +56,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setAgents: (agents) => set({ agents }),
   setGroups: (groups) => set({ groups }),
   setRelations: (relations) => set({ relations }),
+  setLayout: (layout) => set({ layout }),
   setSelectedAgentId: (id) => set({ selectedAgentId: id }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setSearchQuery: (query) => set({ searchQuery: query }),

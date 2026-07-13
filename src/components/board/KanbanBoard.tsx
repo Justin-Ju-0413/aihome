@@ -13,62 +13,61 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import { useAppStore } from '@/stores/app-store';
 import { KanbanColumn } from './KanbanColumn';
-import type { AgentNode, AgentGroup } from '@/lib/types';
+import type { AgentNode } from '@/lib/types';
+import type { AgentLayout } from '@/lib/workspace-config';
 
 interface KanbanBoardProps {
   onAddAgent: () => void;
   onSelectAgent: (agent: AgentNode) => void;
 }
 
-function groupAgents(
-  agents: AgentNode[],
-  groups: AgentGroup[]
-): Record<string, AgentNode[]> {
-  const grouped: Record<string, AgentNode[]> = {};
-  groups.forEach(g => { grouped[g.id] = []; });
-  grouped['default'] = grouped['default'] || [];
-
-  agents.forEach(agent => {
-    const groupId = agent.group || 'default';
-    if (!grouped[groupId]) grouped[groupId] = [];
-    grouped[groupId].push(agent);
-  });
-
-  return grouped;
-}
-
 export function KanbanBoard({ onAddAgent, onSelectAgent }: KanbanBoardProps) {
-  const { agents, groups, setAgents } = useAppStore();
+  const { agents, groups, layout, setLayout } = useAppStore();
 
-  // Board layout is derived from the store so drag updates flow back through it.
-  const items = useMemo(() => groupAgents(agents, groups), [agents, groups]);
+  // Board arrangement is driven by the persisted layout: each agent's column
+  // comes from layout[id].group (falling back to agent.group), and each
+  // column's order comes from layout[id].order.
+  const items = useMemo(() => {
+    const grouped: Record<string, AgentNode[]> = {};
+    groups.forEach(g => { grouped[g.id] = []; });
+    grouped['default'] = grouped['default'] || [];
+
+    agents.forEach(agent => {
+      const groupId = layout[agent.id]?.group ?? agent.group ?? 'default';
+      if (!grouped[groupId]) grouped[groupId] = [];
+      grouped[groupId].push(agent);
+    });
+
+    Object.keys(grouped).forEach(groupId => {
+      grouped[groupId].sort(
+        (a, b) =>
+          (layout[a.id]?.order ?? Infinity) - (layout[b.id]?.order ?? Infinity)
+      );
+    });
+
+    return grouped;
+  }, [agents, groups, layout]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const saveLayout = useCallback(async (groupedAgents: Record<string, AgentNode[]>) => {
-    const layout: Record<string, { x: number; y: number; group: string }> = {};
-    Object.entries(groupedAgents).forEach(([groupId, groupAgents]) => {
-      groupAgents.forEach((agent, index) => {
-        layout[agent.id] = { x: index, y: index, group: groupId };
-      });
-    });
-
-    try {
-      await fetch('/api/files', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: process.cwd() + '/.aihome/layout.json',
-          content: JSON.stringify(layout, null, 2)
-        })
-      });
-    } catch (error) {
-      console.error('Failed to save layout:', error);
-    }
-  }, []);
+  const persistLayout = useCallback(
+    async (newLayout: AgentLayout) => {
+      setLayout(newLayout);
+      try {
+        await fetch('/api/workspace/layout', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newLayout),
+        });
+      } catch (error) {
+        console.error('Failed to save layout:', error);
+      }
+    },
+    [setLayout]
+  );
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -90,14 +89,14 @@ export function KanbanBoard({ onAddAgent, onSelectAgent }: KanbanBoardProps) {
         sourceIndex = idx;
       }
 
-      // Check if dropping on another agent
+      // Dropping on another agent
       const overIdx = groupAgents.findIndex(a => a.id === overId);
       if (overIdx !== -1) {
         destGroupId = groupId;
         destIndex = overIdx;
       }
 
-      // Check if dropping on column
+      // Dropping on a column
       if (groupId === overId) {
         destGroupId = groupId;
         destIndex = groupAgents.length;
@@ -106,35 +105,30 @@ export function KanbanBoard({ onAddAgent, onSelectAgent }: KanbanBoardProps) {
 
     if (!sourceGroupId || !destGroupId) return;
 
-    const dragged = agents.find(a => a.id === agentId);
-    if (!dragged) return;
+    const moved = items[sourceGroupId]?.[sourceIndex];
+    if (!moved) return;
 
-    let newAgents: AgentNode[];
+    const newItems: Record<string, AgentNode[]> = { ...items };
+
     if (sourceGroupId === destGroupId) {
-      // Same column reorder: replace that group's subsequence in the flat array.
-      const reorderedSlice = arrayMove(items[sourceGroupId], sourceIndex, destIndex);
-      let ri = 0;
-      newAgents = agents.map(a =>
-        (a.group || 'default') === sourceGroupId ? reorderedSlice[ri++] ?? a : a
-      );
+      newItems[sourceGroupId] = arrayMove(items[sourceGroupId], sourceIndex, destIndex);
     } else {
-      // Cross-column move: drop the agent at the destination position with its new group.
-      const withoutDragged = agents.filter(a => a.id !== agentId);
-      const movedAgent: AgentNode = { ...dragged, group: destGroupId };
-      const overAgent = withoutDragged.find(a => a.id === overId);
-      const insertIndex = overAgent
-        ? withoutDragged.indexOf(overAgent)
-        : withoutDragged.length;
-      newAgents = [
-        ...withoutDragged.slice(0, insertIndex),
-        movedAgent,
-        ...withoutDragged.slice(insertIndex),
-      ];
+      newItems[sourceGroupId] = items[sourceGroupId].filter((_, i) => i !== sourceIndex);
+      const destAgents = [...items[destGroupId]];
+      destAgents.splice(destIndex, 0, moved);
+      newItems[destGroupId] = destAgents;
     }
 
-    setAgents(newAgents);
-    await saveLayout(groupAgents(newAgents, groups));
-  }, [items, agents, groups, setAgents, saveLayout]);
+    // Rebuild the full layout from the new arrangement and persist it.
+    const newLayout: AgentLayout = {};
+    Object.entries(newItems).forEach(([groupId, groupAgents]) => {
+      groupAgents.forEach((a, idx) => {
+        newLayout[a.id] = { group: groupId, order: idx };
+      });
+    });
+
+    await persistLayout(newLayout);
+  }, [items, persistLayout]);
 
   const handleAddAgent = () => {
     onAddAgent();

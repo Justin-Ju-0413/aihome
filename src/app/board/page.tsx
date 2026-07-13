@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 export default function BoardPage() {
   const {
-    agents, groups, setAgents,
+    agents, groups, setAgents, setLayout,
     searchQuery, setSearchQuery, filterType, setFilterType,
     setIsScanning, isScanning
   } = useAppStore();
@@ -21,15 +21,20 @@ export default function BoardPage() {
   const loadAgents = useCallback(async () => {
     try {
       setIsScanning(true);
-      const res = await fetch('/api/agents');
-      const data = await res.json();
-      setAgents(data);
+      const [agentsRes, layoutRes] = await Promise.all([
+        fetch('/api/agents'),
+        fetch('/api/workspace/layout'),
+      ]);
+      const agentsData = await agentsRes.json();
+      const layoutData = layoutRes.ok ? await layoutRes.json() : {};
+      setAgents(agentsData);
+      setLayout(layoutData);
     } catch {
       toast.error('Failed to load agents');
     } finally {
       setIsScanning(false);
     }
-  }, [setAgents, setIsScanning]);
+  }, [setAgents, setLayout, setIsScanning]);
 
   // Load agents on mount
   useEffect(() => {
