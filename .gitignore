@@ -13,6 +13,12 @@
 # testing
 /coverage
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/data/test-agents/
+
 # next.js
 /.next/
 /out/
@@ -39,3 +45,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local runtime state (workspace config with machine-specific paths, layout, relations)
+/.aihome/
+
+# tool-generated docs (Qoder repowiki)
+/.qoder/
