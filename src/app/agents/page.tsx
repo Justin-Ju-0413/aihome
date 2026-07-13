@@ -1,0 +1,159 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Bot, Sparkles, Search, Grid, List, RefreshCw } from 'lucide-react';
+import { useAppStore } from '@/stores/app-store';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+export default function AgentsPage() {
+  const { agents, setAgents, setIsScanning, isScanning } = useAppStore();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    loadAgents();
+  }, []);
+
+  const loadAgents = async () => {
+    try {
+      setIsScanning(true);
+      const res = await fetch('/api/agents');
+      const data = await res.json();
+      setAgents(data);
+    } catch (error) {
+      toast.error('Failed to load agents');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const filteredAgents = agents.filter(a => 
+    !search || a.name.toLowerCase().includes(search.toLowerCase()) ||
+    a.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="h-full flex flex-col">
+      <header className="px-6 py-8 text-center">
+        <h1 className="font-heading text-3xl font-bold text-heading">Agents</h1>
+        <div className="w-16 h-px bg-divider mx-auto mt-3" />
+        <p className="text-sm text-muted mt-2">{agents.length} agents found</p>
+
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
+            />
+          </div>
+          <div className="flex border border-card-border rounded-lg bg-white/80">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={cn('p-2', viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted')}
+            >
+              <Grid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn('p-2', viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted')}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            onClick={loadAgents}
+            disabled={isScanning}
+            className="p-2 hover:bg-primary/10 rounded-lg disabled:opacity-50 text-text-body"
+          >
+            <RefreshCw className={`w-5 h-5 ${isScanning ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-auto p-6">
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredAgents.map(agent => (
+              <Link
+                key={agent.id}
+                href={`/agents/${agent.id}`}
+                className="bg-white rounded-lg border border-card-border p-5 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1',
+                    agent.type === 'skill' ? 'bg-secondary/20 text-primary' : 'bg-primary/10 text-primary'
+                  )}>
+                    {agent.type === 'skill' ? <Sparkles className="w-3 h-3" /> : <Bot className="w-3 h-3" />}
+                    {agent.type}
+                  </span>
+                  <span className="text-xs text-muted">•</span>
+                  <span className="text-xs text-muted">{agent.status}</span>
+                </div>
+                <h3 className="font-heading font-semibold text-heading mb-1">{agent.name}</h3>
+                <p className="text-sm text-text-body line-clamp-2">{agent.description}</p>
+                <div className="mt-3 text-xs text-muted">
+                  {agent.associatedFiles.total} files • {agent.dirPath.split('/').pop()}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg border border-card-border overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-primary/5 border-b border-card-border">
+                <tr>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Name</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Type</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Description</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Files</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-divider">
+                {filteredAgents.map(agent => (
+                  <tr key={agent.id} className="hover:bg-primary/5">
+                    <td className="px-4 py-3">
+                      <Link href={`/agents/${agent.id}`} className="font-medium text-heading hover:text-primary">
+                        {agent.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-medium',
+                        agent.type === 'skill' ? 'bg-secondary/20 text-primary' : 'bg-primary/10 text-primary'
+                      )}>
+                        {agent.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-text-body max-w-xs truncate">{agent.description}</td>
+                    <td className="px-4 py-3 text-sm text-muted">{agent.associatedFiles.total}</td>
+                    <td className="px-4 py-3">
+                      <Link href={`/agents/${agent.id}`} className="text-primary hover:text-accent text-sm">
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {filteredAgents.length === 0 && (
+          <div className="text-center py-12">
+            <Bot className="w-12 h-12 text-card-border mx-auto mb-4" />
+            <p className="text-muted">No agents found</p>
+            <p className="text-sm text-muted mt-1">Create your first agent to get started</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

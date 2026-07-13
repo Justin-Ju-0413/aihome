@@ -1,26 +1,127 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #0A4F9D;
+  --color-secondary: #6B97C8;
+  --color-accent: #3B7DD8;
+  --color-bg-base: #E8F0FE;
+  --color-card-bg: #FFFFFF;
+  --color-card-border: #C5D8EE;
+  --color-text-body: #4A6FA5;
+  --color-text-heading: #0A4F9D;
+  --color-text-muted: #8AADD4;
+  --color-divider: #B8D1EC;
+  --color-code-bg: #F8FAFD;
+  --color-code-border: #D6E2F0;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-background: var(--color-bg-base);
+  --color-foreground: var(--color-text-body);
+  --color-card: var(--color-card-bg);
+  --color-card-border: var(--color-card-border);
+  --color-heading: var(--color-text-heading);
+  --color-muted: var(--color-text-muted);
+  --color-divider: var(--color-divider);
+  --font-family-heading: var(--font-serif);
+  --font-family-body: var(--font-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg-base);
+  color: var(--color-text-body);
+  font-family: var(--font-sans);
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 10% 20%,
+      rgba(107, 151, 200, 0.15) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 85% 75%,
+      rgba(59, 125, 216, 0.10) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 90% 40% at 50% 10%,
+      rgba(10, 79, 157, 0.06) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 50% 50% at 20% 80%,
+      rgba(107, 151, 200, 0.08) 0%,
+      transparent 50%
+    );
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Line clamp utilities */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* React Flow customization */
+.react-flow__node {
+  font-family: inherit;
+}
+
+.react-flow__attribution {
+  font-size: 10px;
+}
+
+/* Drag and drop styles */
+[data-dragging="true"] {
+  opacity: 0.5;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
 }

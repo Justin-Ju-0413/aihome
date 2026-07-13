@@ -1,0 +1,292 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download } from 'lucide-react';
+import { useAppStore } from '@/stores/app-store';
+import { toast } from 'sonner';
+import type { WorkspaceConfig, AgentGroup } from '@/lib/types';
+
+const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
+
+export default function SettingsPage() {
+  const { groups, setGroups } = useAppStore();
+  const [config, setConfig] = useState<WorkspaceConfig | null>(null);
+  const [newPath, setNewPath] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupColor, setNewGroupColor] = useState(DEFAULT_COLORS[0]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  const loadConfig = async () => {
+    try {
+      const res = await fetch('/api/workspace');
+      const data = await res.json();
+      setConfig(data);
+    } catch (error) {
+      toast.error('Failed to load config');
+    }
+  };
+
+  const handleSaveConfig = async () => {
+    if (!config) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/workspace', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      if (res.ok) {
+        toast.success('Settings saved');
+      } else {
+        toast.error('Failed to save');
+      }
+    } catch (error) {
+      toast.error('Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddPath = () => {
+    if (!newPath.trim() || !config) return;
+    setConfig({
+      ...config,
+      paths: [...config.paths, newPath.trim()]
+    });
+    setNewPath('');
+  };
+
+  const handleRemovePath = (index: number) => {
+    if (!config) return;
+    setConfig({
+      ...config,
+      paths: config.paths.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleAddGroup = () => {
+    if (!newGroupName.trim() || !config) return;
+    const newGroup: AgentGroup = {
+      id: newGroupName.toLowerCase().replace(/\s+/g, '-'),
+      name: newGroupName.trim(),
+      color: newGroupColor,
+      description: ''
+    };
+    setConfig({
+      ...config,
+      groups: [...config.groups, newGroup]
+    });
+    setGroups([...config.groups, newGroup]);
+    setNewGroupName('');
+  };
+
+  const handleRemoveGroup = (id: string) => {
+    if (!config) return;
+    setConfig({
+      ...config,
+      groups: config.groups.filter(g => g.id !== id)
+    });
+    setGroups(config.groups.filter(g => g.id !== id));
+  };
+
+  const handleRescan = async () => {
+    setIsScanning(true);
+    try {
+      const res = await fetch('/api/scan', { method: 'POST' });
+      const data = await res.json();
+      toast.success(`Found ${data.agents.length} agents`);
+      if (data.errors.length > 0) {
+        data.errors.forEach((err: string) => toast.error(err));
+      }
+    } catch (error) {
+      toast.error('Scan failed');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (!config) return;
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'aihome-config.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse text-muted">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <header className="px-6 py-8 text-center">
+        <h1 className="font-heading text-3xl font-bold text-heading">Settings</h1>
+        <div className="w-16 h-px bg-divider mx-auto mt-3" />
+        <p className="text-sm text-muted mt-2">Configure workspace and preferences</p>
+
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            onClick={handleExport}
+            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border bg-white/80"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button
+            onClick={handleSaveConfig}
+            disabled={isSaving}
+            data-testid="settings-save-btn"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
+        {/* Workspace Info */}
+        <section className="bg-white rounded-lg border border-card-border p-6">
+          <h2 className="font-heading text-lg font-semibold text-heading mb-4">Workspace</h2>
+          <div>
+            <label className="block text-sm font-medium text-text-body mb-2">Name</label>
+            <input
+              type="text"
+              value={config.name}
+              onChange={(e) => setConfig({ ...config, name: e.target.value })}
+              className="w-full max-w-md px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
+            />
+          </div>
+        </section>
+
+        {/* Scan Paths */}
+        <section className="bg-white rounded-lg border border-card-border p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-lg font-semibold text-heading">Scan Paths</h2>
+            <button
+              onClick={handleRescan}
+              disabled={isScanning}
+              className="px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
+              Rescan
+            </button>
+          </div>
+          <p className="text-sm text-muted mb-4">Directories to scan for Agent and Skill definitions</p>
+          
+          <div className="space-y-2 mb-4">
+            {config.paths.map((path, index) => (
+              <div key={index} className="flex items-center gap-3 bg-primary/5 rounded-lg px-4 py-3 border border-card-border">
+                <FolderOpen className="w-4 h-4 text-muted" />
+                <span className="flex-1 text-sm font-mono text-text-body">{path}</span>
+                <button
+                  onClick={() => handleRemovePath(index)}
+                  className="p-1 hover:bg-red-100 rounded text-red-400 hover:text-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={newPath}
+              onChange={(e) => setNewPath(e.target.value)}
+              placeholder="/path/to/agents"
+              className="flex-1 px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm text-text-body placeholder:text-muted"
+              onKeyDown={(e) => e.key === 'Enter' && handleAddPath()}
+            />
+            <button
+              onClick={handleAddPath}
+              data-testid="settings-add-path-btn"
+              className="px-4 py-2 bg-white/80 text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
+          </div>
+        </section>
+
+        {/* Groups */}
+        <section className="bg-white rounded-lg border border-card-border p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-lg font-semibold text-heading">Groups</h2>
+          </div>
+          <p className="text-sm text-muted mb-4">Organize agents into groups on the kanban board</p>
+
+          <div className="space-y-2 mb-4">
+            {config.groups.map((group) => (
+              <div key={group.id} className="flex items-center gap-3 bg-primary/5 rounded-lg px-4 py-3 border border-card-border">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: group.color }} />
+                <span className="flex-1 text-sm font-medium text-text-body">{group.name}</span>
+                {group.id !== 'default' && (
+                  <button
+                    onClick={() => handleRemoveGroup(group.id)}
+                    className="p-1 hover:bg-red-100 rounded text-red-400 hover:text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-3 items-center">
+            <input
+              type="text"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="Group name"
+              className="flex-1 px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
+              onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
+            />
+            <div className="flex gap-1">
+              {DEFAULT_COLORS.map(color => (
+                <button
+                  key={color}
+                  onClick={() => setNewGroupColor(color)}
+                  className={`w-7 h-7 rounded-full border-2 transition-transform ${
+                    newGroupColor === color ? 'scale-110 border-primary' : 'border-transparent'
+                  }`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+            <button
+              onClick={handleAddGroup}
+              data-testid="settings-add-group-btn"
+              className="px-4 py-2 bg-white/80 text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
+          </div>
+        </section>
+
+        {/* About */}
+        <section className="bg-white rounded-lg border border-card-border p-6">
+          <h2 className="font-heading text-lg font-semibold text-heading mb-4">About</h2>
+          <div className="text-sm text-muted space-y-1">
+            <p>AIHome - AI Agent Visual Manager</p>
+            <p>Version 1.0.0</p>
+            <p>Built with Next.js, React, and TailwindCSS</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
