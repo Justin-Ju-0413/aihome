@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { X, Bot, Sparkles, FileText, FolderOpen, Trash2, Edit } from 'lucide-react';
 import type { AgentNode } from '@/lib/types';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 
 interface CardDetailProps {
   agent: AgentNode | null;

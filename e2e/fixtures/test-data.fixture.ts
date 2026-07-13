@@ -1,4 +1,4 @@
-import { test as base, type Page, type APIRequestContext } from '@playwright/test';
+import { test as base } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -6,6 +6,19 @@ const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const CONFIG_PATH = path.join(PROJECT_ROOT, '.aihome', 'config.json');
 const TEST_DATA_DIR = path.join(PROJECT_ROOT, 'data', 'test-agents');
 const BACKUP_CONFIG_PATH = path.join(PROJECT_ROOT, '.aihome', 'config.json.e2e-backup');
+
+// The app falls back to these defaults at runtime but never writes config.json
+// to disk, so the fixture materializes it when absent (e.g. on a fresh clone).
+const DEFAULT_CONFIG = {
+  name: 'AIHome',
+  paths: [path.join(PROJECT_ROOT, 'data')],
+  groups: [
+    { id: 'default', name: 'Default', color: '#6366f1', description: 'Default group' },
+    { id: 'agents', name: 'Agents', color: '#10b981', description: 'Agent definitions' },
+    { id: 'skills', name: 'Skills', color: '#f59e0b', description: 'Skill definitions' },
+  ],
+  layout: {},
+};
 
 export class TestDataManager {
   constructor(private testDataDir: string) {}
@@ -43,7 +56,10 @@ export class TestDataManager {
 
 export const test = base.extend<{ testData: TestDataManager }>({
   testData: async ({}, use) => {
-    // SETUP: Backup config and create test data directory
+    // SETUP: Ensure config exists on disk, back it up, and create test data directory
+    if (!fs.existsSync(CONFIG_PATH)) {
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 2));
+    }
     fs.copyFileSync(CONFIG_PATH, BACKUP_CONFIG_PATH);
     const originalConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Trash2, FileText, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,23 +11,17 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const router = useRouter();
   const [agent, setAgent] = useState<AgentNode | null>(null);
-  const [content, setContent] = useState('');
   const [frontmatter, setFrontmatter] = useState<Record<string, unknown>>({});
   const [markdownBody, setMarkdownBody] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'files' | 'preview'>('edit');
 
-  useEffect(() => {
-    loadAgent();
-  }, [id]);
-
-  const loadAgent = async () => {
+  const loadAgent = useCallback(async () => {
     try {
       const res = await fetch(`/api/agents/${id}`);
       const data = await res.json();
       setAgent(data);
-      setContent(data.content);
-      
+
       if (data.parsed) {
         setFrontmatter(data.parsed.data || {});
         setMarkdownBody(data.parsed.content || '');
@@ -41,19 +35,24 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         // Build file tree client-side would need a separate API
         // For now, just set empty
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to load agent');
       router.push('/agents');
     }
-  };
+  }, [id, router, setAgent, setFrontmatter, setMarkdownBody]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch agent detail on mount / id change
+    loadAgent();
+  }, [loadAgent]);
 
   const handleSave = async () => {
     if (!agent) return;
     setIsSaving(true);
-    
+
     try {
       const isSkill = agent.filePath.endsWith('SKILL.md');
-      const body = isSkill 
+      const body = isSkill
         ? { frontmatter, body: markdownBody }
         : { content: markdownBody };
 
@@ -68,7 +67,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       } else {
         toast.error('Failed to save');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to save');
     } finally {
       setIsSaving(false);
@@ -77,12 +76,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
   const handleDelete = async () => {
     if (!agent || !confirm(`Delete "${agent.name}"? This cannot be undone.`)) return;
-    
+
     try {
       await fetch(`/api/agents/${id}`, { method: 'DELETE' });
       toast.success('Agent deleted');
       router.push('/agents');
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete');
     }
   };
@@ -95,8 +94,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const typeColor = agent.type === 'skill' 
-    ? 'bg-secondary/20 text-primary' 
+  const typeColor = agent.type === 'skill'
+    ? 'bg-secondary/20 text-primary'
     : 'bg-primary/10 text-primary';
 
   return (
@@ -219,8 +218,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                 Files in {agent.dirPath.split('/').pop()}
               </h2>
               <div className="space-y-2">
-                <FileRow name="AGENTS.md" path={agent.filePath} isMain />
-                {agent.type === 'skill' && <FileRow name="SKILL.md" path={agent.filePath} isMain />}
+                <FileRow name="AGENTS.md" isMain />
+                {agent.type === 'skill' && <FileRow name="SKILL.md" isMain />}
               </div>
               <div className="mt-4 text-sm text-muted space-y-1">
                 <p>Directory: {agent.dirPath}</p>
@@ -248,7 +247,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-function FileRow({ name, path, isMain }: { name: string; path: string; isMain?: boolean }) {
+function FileRow({ name, isMain }: { name: string; isMain?: boolean }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2 hover:bg-primary/5 rounded-lg">
       <FileText className={`w-4 h-4 ${isMain ? 'text-primary' : 'text-muted'}`} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Bot, Sparkles, Search, Grid, List, RefreshCw } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
@@ -12,22 +12,22 @@ export default function AgentsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    loadAgents();
-  }, []);
-
-  const loadAgents = async () => {
+  const loadAgents = useCallback(async () => {
     try {
       setIsScanning(true);
       const res = await fetch('/api/agents');
       const data = await res.json();
       setAgents(data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load agents');
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [setAgents, setIsScanning]);
+
+  useEffect(() => {
+    loadAgents();
+  }, [loadAgents]);
 
   const filteredAgents = agents.filter(a => 
     !search || a.name.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -12,6 +12,7 @@ import {
   Connection,
   Edge,
   Node,
+  NodeProps,
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -22,6 +23,13 @@ import { toast } from 'sonner';
 
 const nodeWidth = 250;
 const nodeHeight = 100;
+
+interface AgentNodeData extends Record<string, unknown> {
+  label: string;
+  type: 'agent' | 'skill';
+  description: string;
+  fileCount: number;
+}
 
 function getLayoutedElements(nodes: Node[], edges: Edge[], direction = 'TB') {
   const g = new dagre.graphlib.Graph();
@@ -52,7 +60,7 @@ function getLayoutedElements(nodes: Node[], edges: Edge[], direction = 'TB') {
   return { nodes: layoutedNodes, edges };
 }
 
-function agentToNode(agent: AgentNode): Node {
+function agentToNode(agent: AgentNode): Node<AgentNodeData> {
   return {
     id: agent.id,
     type: 'agentNode',
@@ -90,7 +98,7 @@ function relationToEdge(relation: AgentRelation): Edge {
 }
 
 // Custom node component
-function AgentNodeComponent({ data }: { data: any }) {
+function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
   const typeColor = data.type === 'skill' ? 'border-secondary bg-secondary/5' : 'border-primary bg-primary/5';
   const typeBadge = data.type === 'skill' ? 'bg-secondary/20 text-primary' : 'bg-primary/10 text-primary';
 
@@ -119,10 +127,30 @@ export default function AgentGraphInner() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
+  const loadAgents = useCallback(async () => {
+    try {
+      const res = await fetch('/api/agents');
+      const data = await res.json();
+      setAgents(data);
+    } catch {
+      toast.error('Failed to load agents');
+    }
+  }, [setAgents]);
+
+  const loadRelations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/relations');
+      const data = await res.json();
+      setRelations(data);
+    } catch {
+      console.error('Failed to load relations');
+    }
+  }, [setRelations]);
+
   useEffect(() => {
     loadAgents();
     loadRelations();
-  }, []);
+  }, [loadAgents, loadRelations]);
 
   useEffect(() => {
     if (agents.length > 0) {
@@ -132,27 +160,7 @@ export default function AgentGraphInner() {
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
     }
-  }, [agents, relations]);
-
-  const loadAgents = async () => {
-    try {
-      const res = await fetch('/api/agents');
-      const data = await res.json();
-      setAgents(data);
-    } catch (error) {
-      toast.error('Failed to load agents');
-    }
-  };
-
-  const loadRelations = async () => {
-    try {
-      const res = await fetch('/api/relations');
-      const data = await res.json();
-      setRelations(data);
-    } catch (error) {
-      console.error('Failed to load relations');
-    }
-  };
+  }, [agents, relations, setNodes, setEdges]);
 
   const onConnect = useCallback(async (connection: Connection) => {
     const newRelation: AgentRelation = {
@@ -165,7 +173,7 @@ export default function AgentGraphInner() {
 
     const updatedRelations = [...relations, newRelation];
     setRelations(updatedRelations);
-    
+
     // Save to server
     try {
       await fetch('/api/relations', {
@@ -173,7 +181,7 @@ export default function AgentGraphInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRelations)
       });
-    } catch (error) {
+    } catch {
       toast.error('Failed to save relation');
     }
 
@@ -194,7 +202,7 @@ export default function AgentGraphInner() {
       >
         <Background color="#C5D8EE" gap={24} />
         <Controls />
-        <MiniMap 
+        <MiniMap
           nodeColor={(n) => n.data?.type === 'skill' ? '#6B97C8' : '#0A4F9D'}
           maskColor="rgba(10,79,157,0.08)"
         />

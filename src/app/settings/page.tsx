@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import type { WorkspaceConfig, AgentGroup } from '@/lib/types';
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 export default function SettingsPage() {
-  const { groups, setGroups } = useAppStore();
+  const { setGroups } = useAppStore();
   const [config, setConfig] = useState<WorkspaceConfig | null>(null);
   const [newPath, setNewPath] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
@@ -17,19 +17,20 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/workspace');
       const data = await res.json();
       setConfig(data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load config');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch workspace config on mount
+    loadConfig();
+  }, [loadConfig]);
 
   const handleSaveConfig = async () => {
     if (!config) return;
@@ -45,7 +46,7 @@ export default function SettingsPage() {
       } else {
         toast.error('Failed to save');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to save');
     } finally {
       setIsSaving(false);
@@ -103,7 +104,7 @@ export default function SettingsPage() {
       if (data.errors.length > 0) {
         data.errors.forEach((err: string) => toast.error(err));
       }
-    } catch (error) {
+    } catch {
       toast.error('Scan failed');
     } finally {
       setIsScanning(false);
@@ -185,7 +186,7 @@ export default function SettingsPage() {
             </button>
           </div>
           <p className="text-sm text-muted mb-4">Directories to scan for Agent and Skill definitions</p>
-          
+
           <div className="space-y-2 mb-4">
             {config.paths.map((path, index) => (
               <div key={index} className="flex items-center gap-3 bg-primary/5 rounded-lg px-4 py-3 border border-card-border">

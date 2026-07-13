@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, writeFile, mkdir, stat } from 'fs/promises';
-import { join, dirname } from 'path';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
 import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
@@ -22,7 +22,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, name, description, group, dirPath } = body;
+    const { type, name, description, dirPath } = body;
 
     if (!type || !name) {
       return NextResponse.json(

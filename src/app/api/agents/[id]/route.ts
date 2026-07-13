@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, writeFile, rm, stat } from 'fs/promises';
+import { readFile, writeFile, rm } from 'fs/promises';
 import { dirname } from 'path';
 import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
@@ -13,7 +13,6 @@ export async function GET(
     const filePath = Buffer.from(id, 'base64url').toString('utf-8');
     
     const content = await readFile(filePath, 'utf-8');
-    const stats = await stat(filePath);
     const dirPath = dirname(filePath);
     
     // Re-scan to get full agent info

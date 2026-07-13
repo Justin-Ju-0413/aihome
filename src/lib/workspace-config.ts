@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import { join } from 'path';
-import type { WorkspaceConfig, AgentGroup, AgentRelation } from './types';
+import type { WorkspaceConfig, AgentRelation } from './types';
 
 const CONFIG_DIR = join(process.cwd(), '.aihome');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');

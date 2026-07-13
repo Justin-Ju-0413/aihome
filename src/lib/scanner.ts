@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'fs/promises';
-import { join, resolve, relative, extname } from 'path';
+import { join, resolve } from 'path';
 import matter from 'gray-matter';
 import type { AgentNode, ScanResult } from './types';
 import { parseAgentsMd } from './parser';

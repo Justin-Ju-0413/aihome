@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, RefreshCw } from 'lucide-react';
 import { KanbanBoard } from '@/components/board/KanbanBoard';
 import { CardDetail } from '@/components/board/CardDetail';
@@ -9,32 +9,32 @@ import type { AgentNode } from '@/lib/types';
 import { toast } from 'sonner';
 
 export default function BoardPage() {
-  const { 
-    agents, groups, setAgents, setGroups, 
+  const {
+    agents, groups, setAgents,
     searchQuery, setSearchQuery, filterType, setFilterType,
-    setIsScanning, isScanning 
+    setIsScanning, isScanning
   } = useAppStore();
-  
+
   const [selectedAgent, setSelectedAgent] = useState<AgentNode | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Load agents on mount
-  useEffect(() => {
-    loadAgents();
-  }, []);
-
-  const loadAgents = async () => {
+  const loadAgents = useCallback(async () => {
     try {
       setIsScanning(true);
       const res = await fetch('/api/agents');
       const data = await res.json();
       setAgents(data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load agents');
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [setAgents, setIsScanning]);
+
+  // Load agents on mount
+  useEffect(() => {
+    loadAgents();
+  }, [loadAgents]);
 
   const handleRescan = async () => {
     try {
@@ -43,20 +43,12 @@ export default function BoardPage() {
       const data = await res.json();
       setAgents(data.agents);
       toast.success(`Found ${data.agents.length} agents`);
-    } catch (error) {
+    } catch {
       toast.error('Scan failed');
     } finally {
       setIsScanning(false);
     }
   };
-
-  const filteredAgents = agents.filter(agent => {
-    const matchesSearch = !searchQuery || 
-      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agent.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === 'all' || agent.type === filterType;
-    return matchesSearch && matchesType;
-  });
 
   return (
     <div className="h-full flex flex-col">
@@ -104,7 +96,7 @@ export default function BoardPage() {
           >
             <RefreshCw className={`w-5 h-5 ${isScanning ? 'animate-spin' : ''}`} />
           </button>
-          
+
           <button
             onClick={() => setShowCreateModal(true)}
             data-testid="board-new-agent-btn"
@@ -118,7 +110,7 @@ export default function BoardPage() {
 
       {/* Board */}
       <div className="flex-1 overflow-auto">
-        <KanbanBoard 
+        <KanbanBoard
           onAddAgent={() => setShowCreateModal(true)}
           onSelectAgent={setSelectedAgent}
         />
@@ -140,7 +132,7 @@ export default function BoardPage() {
                 setAgents(agents.filter(a => a.id !== agent.id));
                 setSelectedAgent(null);
                 toast.success('Agent deleted');
-              } catch (error) {
+              } catch {
                 toast.error('Failed to delete agent');
               }
             }
@@ -170,7 +162,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    
+
     setIsCreating(true);
     try {
       const res = await fetch('/api/agents', {
@@ -178,14 +170,14 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, name, description })
       });
-      
+
       if (res.ok) {
         toast.success('Agent created');
         onCreated();
       } else {
         toast.error('Failed to create agent');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to create agent');
     } finally {
       setIsCreating(false);
@@ -197,7 +189,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
       <div className="bg-white rounded-xl border border-card-border shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h2 className="font-heading text-xl font-bold text-heading mb-4">Create New Agent</h2>
-          
+
           <div className="space-y-4">
             {/* Type Selection */}
             <div>
