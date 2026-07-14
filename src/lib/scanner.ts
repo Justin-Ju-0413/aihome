@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'fs/promises';
-import { join, resolve } from 'path';
+import { join, resolve, basename } from 'path';
 import matter from 'gray-matter';
 import type { AgentNode, ScanResult } from './types';
 import { parseAgentsMd } from './parser';
@@ -15,16 +15,20 @@ export async function scanDirectories(paths: string[]): Promise<ScanResult> {
   const agents: AgentNode[] = [];
   const errors: string[] = [];
   const scannedPaths: string[] = [];
+  // agent id -> declared dependency names (resolved to ids in a second pass)
+  const depNamesByAgentId = new Map<string, string[]>();
 
   for (const basePath of paths) {
     try {
       const absPath = resolve(basePath);
-      await scanDirectory(absPath, absPath, agents, 0);
+      await scanDirectory(absPath, absPath, agents, 0, depNamesByAgentId);
       scannedPaths.push(absPath);
     } catch (err) {
       errors.push(`Failed to scan ${basePath}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+
+  resolveDependencies(agents, depNamesByAgentId);
 
   return {
     agents,
@@ -38,7 +42,8 @@ async function scanDirectory(
   dirPath: string,
   basePath: string,
   agents: AgentNode[],
-  depth: number
+  depth: number,
+  depNamesByAgentId: Map<string, string[]>
 ): Promise<void> {
   if (depth > MAX_DEPTH) return;
 
@@ -56,17 +61,17 @@ async function scanDirectory(
     const fullPath = join(dirPath, entry.name);
 
     if (entry.isDirectory()) {
-      await scanDirectory(fullPath, basePath, agents, depth + 1);
+      await scanDirectory(fullPath, basePath, agents, depth + 1, depNamesByAgentId);
     } else if (entry.name === 'AGENTS.md') {
       try {
-        const agent = await parseAgentsMdFile(fullPath, dirPath);
+        const agent = await parseAgentsMdFile(fullPath, dirPath, depNamesByAgentId);
         if (agent) agents.push(agent);
       } catch (err) {
         console.error(`Failed to parse ${fullPath}:`, err);
       }
     } else if (entry.name === 'SKILL.md') {
       try {
-        const skill = await parseSkillMdFile(fullPath, dirPath);
+        const skill = await parseSkillMdFile(fullPath, dirPath, depNamesByAgentId);
         if (skill) agents.push(skill);
       } catch (err) {
         console.error(`Failed to parse ${fullPath}:`, err);
@@ -75,13 +80,17 @@ async function scanDirectory(
   }
 }
 
-async function parseAgentsMdFile(filePath: string, dirPath: string): Promise<AgentNode | null> {
+async function parseAgentsMdFile(
+  filePath: string,
+  dirPath: string,
+  depNamesByAgentId: Map<string, string[]>
+): Promise<AgentNode | null> {
   const content = await readFile(filePath, 'utf-8');
   const parsed = parseAgentsMd(content);
   const stats = await stat(filePath);
   const associatedFiles = await countAssociatedFiles(dirPath);
 
-  return {
+  const agent: AgentNode = {
     id: generateId(filePath),
     name: parsed.name || 'Untitled Agent',
     type: 'agent',
@@ -97,9 +106,16 @@ async function parseAgentsMdFile(filePath: string, dirPath: string): Promise<Age
     createdAt: stats.birthtime.toISOString(),
     updatedAt: stats.mtime.toISOString()
   };
+
+  depNamesByAgentId.set(agent.id, extractDependencyNamesFromSections(parsed.sections));
+  return agent;
 }
 
-async function parseSkillMdFile(filePath: string, dirPath: string): Promise<AgentNode | null> {
+async function parseSkillMdFile(
+  filePath: string,
+  dirPath: string,
+  depNamesByAgentId: Map<string, string[]>
+): Promise<AgentNode | null> {
   const content = await readFile(filePath, 'utf-8');
   const { data, content: body } = matter(content);
   const stats = await stat(filePath);
@@ -108,7 +124,7 @@ async function parseSkillMdFile(filePath: string, dirPath: string): Promise<Agen
   const name = data.name || extractFirstHeading(body) || 'Untitled Skill';
   const description = data.description || extractFirstParagraph(body) || '';
 
-  return {
+  const agent: AgentNode = {
     id: generateId(filePath),
     name,
     type: 'skill',
@@ -128,6 +144,76 @@ async function parseSkillMdFile(filePath: string, dirPath: string): Promise<Agen
     createdAt: stats.birthtime.toISOString(),
     updatedAt: stats.mtime.toISOString()
   };
+
+  depNamesByAgentId.set(agent.id, normalizeDepNames(data['depends-on'] ?? data.dependencies));
+  return agent;
+}
+
+/**
+ * Parse declared dependency names from an AGENTS.md `## Dependencies` (or
+ * "Depends On" / "依赖") section. Accepts `- Name`, `- [[Name]]`,
+ * `- [Name](path)`, and `` - `Name` `` list items.
+ */
+function extractDependencyNamesFromSections(
+  sections: Array<{ title: string; content: string }>
+): string[] {
+  const depSection = sections.find(s =>
+    /^(dependencies|depends[ -]on|依赖)$/i.test(s.title.trim())
+  );
+  if (!depSection) return [];
+
+  const names: string[] = [];
+  for (const line of depSection.content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('-') && !trimmed.startsWith('*')) continue;
+    const item = trimmed.replace(/^[-*]\s+/, '').trim();
+    const wiki = item.match(/^\[\[([^\]]+)\]\]/);
+    const md = item.match(/^\[([^\]]+)\]/);
+    const code = item.match(/^`([^`]+)`/);
+    const raw = wiki?.[1] || md?.[1] || code?.[1] || item;
+    const name = raw.replace(/\s*\(.*\)$/, '').replace(/\s*:.*$/, '').trim();
+    if (name) names.push(name);
+  }
+  return names;
+}
+
+function normalizeDepNames(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+  if (typeof value === 'string') return value.split(',').map(s => s.trim()).filter(Boolean);
+  return [];
+}
+
+/**
+ * Resolve declared dependency names to agent ids and populate the forward
+ * (`dependencies`) and reverse (`calledBy`) links. Names match by agent name
+ * or directory basename, case-insensitively.
+ */
+function resolveDependencies(agents: AgentNode[], depNamesByAgentId: Map<string, string[]>): void {
+  const byName = new Map<string, AgentNode>();
+  const byDir = new Map<string, AgentNode>();
+  for (const a of agents) {
+    byName.set(a.name.toLowerCase(), a);
+    byDir.set(basename(a.dirPath).toLowerCase(), a);
+  }
+
+  for (const a of agents) {
+    a.dependencies = [];
+    a.calledBy = [];
+  }
+
+  for (const a of agents) {
+    const names = depNamesByAgentId.get(a.id) ?? [];
+    const depIds: string[] = [];
+    for (const n of names) {
+      const target = byName.get(n.toLowerCase()) ?? byDir.get(n.toLowerCase());
+      if (target && target.id !== a.id && !depIds.includes(target.id)) {
+        depIds.push(target.id);
+        if (!target.calledBy.includes(a.id)) target.calledBy.push(a.id);
+      }
+    }
+    a.dependencies = depIds;
+  }
 }
 
 async function countAssociatedFiles(dirPath: string): Promise<AgentNode['associatedFiles']> {
@@ -135,7 +221,7 @@ async function countAssociatedFiles(dirPath: string): Promise<AgentNode['associa
 
   try {
     const entries = await readdir(dirPath, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       if (entry.isDirectory()) {
         if (entry.name === 'scripts') counts.scripts = await countFilesInDir(join(dirPath, entry.name));

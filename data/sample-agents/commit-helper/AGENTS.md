@@ -28,3 +28,7 @@ An intelligent commit message generator that follows conventional commit standar
 - **refactor**: Code refactoring
 - **test**: Adding or updating tests
 - **chore**: Maintenance tasks
+
+## Dependencies
+
+- Code Assistant

@@ -5,6 +5,9 @@ allowed-tools:
   - bash
   - file-read
   - file-write
+depends-on:
+  - Code Assistant
+  - Commit Helper
 metadata:
   framework: jest,vitest
 ---

@@ -155,7 +155,27 @@ export default function AgentGraphInner() {
   useEffect(() => {
     if (agents.length > 0) {
       const flowNodes = agents.map(agentToNode);
-      const flowEdges = relations.map(relationToEdge);
+
+      // Auto-detected dependencies (from agent.dependencies) become 'depends'
+      // edges, alongside any manually authored relations.
+      const autoRelations: AgentRelation[] = agents.flatMap(a =>
+        a.dependencies.map(depId => ({
+          id: `dep-${a.id}-${depId}`,
+          source: a.id,
+          target: depId,
+          type: 'depends' as const,
+          label: 'depends',
+        }))
+      );
+      const seen = new Set<string>();
+      const deduped = [...relations, ...autoRelations].filter(r => {
+        const key = `${r.source}->${r.target}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      const flowEdges = deduped.map(relationToEdge);
+
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);

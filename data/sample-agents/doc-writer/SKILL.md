@@ -2,6 +2,8 @@
 name: doc-writer
 description: Generates comprehensive documentation for code projects, including README files, API docs, and user guides.
 license: MIT
+depends-on:
+  - Code Assistant
 metadata:
   author: AIHome Team
   version: "1.0"
