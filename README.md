@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AIHome
 
-## Getting Started
+A local-first visual workspace for discovering, organizing, and managing AI agents and skills. AIHome scans your directories for `AGENTS.md` / `SKILL.md` definitions and renders them as a drag-and-drop kanban board and a relationship graph, so you can group, connect, and understand your agent ecosystem at a glance.
 
-First, run the development server:
+> Runs entirely on your local machine. All data stays in your workspace — there is no backend service.
+
+## Features
+
+- **Kanban board** — drag agents across groups and reorder within columns; layout (group + order) is persisted to `.aihome/layout.json` and restored on refresh.
+- **Relationship graph** — agents render as nodes with dagre auto-layout; edges show dependencies. Dependencies are auto-detected from `## Dependencies` sections and `depends-on` frontmatter, and you can also connect nodes manually.
+- **Agent list & detail** — browse all agents/skills, search and filter by type, edit markdown content (with frontmatter editor for skills), and inspect associated files.
+- **File-system backed** — agents are plain markdown files. Create, edit, and delete through the UI; the scanner re-reads the directory.
+- **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
+- **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths.
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org/) (App Router, Turbopack) + [React 19](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS 4](https://tailwindcss.com/)
+- [Zustand](https://github.com/pmndrs/zustand) for state
+- [@xyflow/react](https://reactflow.dev/) + [dagre](https://github.com/dagrejs/dagre) for the graph
+- [@dnd-kit](https://dndkit.com/) for drag-and-drop
+- [gray-matter](https://github.com/jonschlinkert/gray-matter) for frontmatter
+- [Playwright](https://playwright.dev/) for end-to-end tests
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm run start` | Run the production build |
+| `npm run lint` | ESLint |
+| `npm run test:e2e` | Run the Playwright e2e suite (auto-starts the dev server) |
+| `npm run test:e2e:ui` | Interactive e2e UI |
 
-## Learn More
+## Project structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── api/            # Route handlers: agents, files, relations, scan, workspace, workspace/layout
+│   ├── agents/         # Agent list + detail (edit) pages
+│   ├── board/          # Kanban board page
+│   ├── graph/          # Relationship graph page
+│   └── settings/       # Workspace settings page
+├── components/
+│   ├── board/          # KanbanBoard, KanbanColumn, AgentCard, CardDetail
+│   ├── graph/          # AgentGraph
+│   └── layout/         # TopNav
+├── lib/
+│   ├── scanner.ts      # Directory scanner + dependency resolution
+│   ├── parser.ts       # AGENTS.md / SKILL.md parsers
+│   ├── file-utils.ts   # File tree builder
+│   ├── workspace-config.ts  # .aihome/ config, layout, relations persistence
+│   ├── path-security.ts     # Workspace path sandboxing
+│   └── types.ts        # Core data models
+└── stores/
+    └── app-store.ts    # Zustand store
+data/sample-agents/     # Four sample agents/skills
+e2e/                    # Playwright tests, fixtures, helpers
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Agent & skill file format
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+AIHome discovers agents from `AGENTS.md` and skills from `SKILL.md` files anywhere under your configured scan paths.
 
-## Deploy on Vercel
+**`AGENTS.md`** — the first `# H1` is the name, the first paragraph is the description, and `## H2` sections are captured. Declare dependencies with a `## Dependencies` section listing other agents by name:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```markdown
+# Commit Helper
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+An intelligent commit message generator.
+
+## Dependencies
+
+- Code Assistant
+```
+
+**`SKILL.md`** — frontmatter holds metadata, and the body is markdown. Declare dependencies via `depends-on`:
+
+```markdown
+---
+name: doc-writer
+description: Generates comprehensive documentation for code projects.
+license: MIT
+depends-on:
+  - Code Assistant
+---
+
+# Doc Writer
+...
+```
+
+The scanner resolves dependency names to agent ids in a second pass and populates each agent's `dependencies` / `calledBy`, which the graph renders as edges.
+
+## Configuration
+
+AIHome stores runtime state under `.aihome/` (gitignored):
+
+- `config.json` — workspace name, scan `paths`, and `groups`.
+- `layout.json` — persisted board layout (`{ [agentId]: { group, order } }`).
+- `relations.json` — manually created graph relations.
+
+If `config.json` is absent, AIHome falls back to scanning the `data/` directory with the default groups (Default / Agents / Skills). Add scan paths in **Settings** to point at your own agent directories.
+
+## API
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| GET | `/api/agents` | List all scanned agents |
+| POST | `/api/agents` | Create a new agent/skill |
+| GET / PUT / DELETE | `/api/agents/[id]` | Read / update / delete one agent |
+| POST | `/api/scan` | Rescan configured paths |
+| GET / PUT | `/api/workspace` | Read / update workspace config |
+| GET / PUT | `/api/workspace/layout` | Read / persist board layout |
+| GET / PUT | `/api/relations` | Read / persist graph relations |
+| GET / PUT | `/api/files` | Read / write a file (sandboxed to workspace paths) |
+
+Agent ids are base64url-encoded file paths.
+
+## License
+
+[MIT](./LICENSE)
