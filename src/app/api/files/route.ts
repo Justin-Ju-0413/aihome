@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
-import { isPathWithinWorkspace } from '@/lib/path-security';
+import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/path-security';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     const config = await getWorkspaceConfig();
-    if (!isPathWithinWorkspace(path, config.paths)) {
+    if (!await isExistingPathWithinWorkspace(path, config.paths)) {
       return NextResponse.json(
         { error: 'Path is outside the configured workspace' },
         { status: 403 }
@@ -47,7 +47,9 @@ export async function PUT(request: NextRequest) {
     }
 
     const config = await getWorkspaceConfig();
-    if (!isPathWithinWorkspace(path, config.paths)) {
+    const isAllowed = await isExistingPathWithinWorkspace(path, config.paths)
+      || await isNewPathWithinWorkspace(path, config.paths);
+    if (!isAllowed) {
       return NextResponse.json(
         { error: 'Path is outside the configured workspace' },
         { status: 403 }

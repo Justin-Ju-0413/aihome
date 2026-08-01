@@ -1,5 +1,7 @@
 # AIHome
 
+[![CI](https://github.com/Justin-Ju-0413/aihome/actions/workflows/ci.yml/badge.svg)](https://github.com/Justin-Ju-0413/aihome/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/Justin-Ju-0413/aihome?display_name=tag)](https://github.com/Justin-Ju-0413/aihome/releases)
+
 A local-first visual workspace for discovering, organizing, and managing AI agents and skills. AIHome scans your directories for `AGENTS.md` / `SKILL.md` definitions and renders them as a drag-and-drop kanban board and a relationship graph, so you can group, connect, and understand your agent ecosystem at a glance.
 
 > Runs entirely on your local machine. All data stays in your workspace — there is no backend service.
@@ -27,11 +29,13 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 ## Getting started
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`.
+
+The sample workspace is a no-account, no-API-key demo. Use a throwaway clone when trying create, edit, or delete operations so your own workspace files are not affected.
 
 ### Scripts
 
@@ -132,3 +136,7 @@ Agent ids are base64url-encoded file paths.
 ## License
 
 [MIT](./LICENSE)
+
+## Status and roadmap
+
+`v0.1.x` is the focused local developer-tool baseline. Existing `/api/*` success responses are treated as the compatibility boundary. Filesystem requests outside configured workspaces return HTTP 403. See [`docs/v0.2-roadmap.md`](docs/v0.2-roadmap.md), [`CHANGELOG.md`](CHANGELOG.md), and [`SECURITY.md`](SECURITY.md).

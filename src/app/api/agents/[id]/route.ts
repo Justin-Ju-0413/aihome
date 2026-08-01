@@ -3,6 +3,16 @@ import { readFile, writeFile, rm } from 'fs/promises';
 import { dirname } from 'path';
 import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
+import { getWorkspaceConfig } from '@/lib/workspace-config';
+import { isExistingPathWithinWorkspace } from '@/lib/path-security';
+
+async function getAuthorizedAgentPath(id: string): Promise<string | null> {
+  const config = await getWorkspaceConfig();
+  const result = await scanDirectories(config.paths);
+  const agent = result.agents.find((candidate) => candidate.id === id);
+  if (!agent || !await isExistingPathWithinWorkspace(agent.filePath, config.paths)) return null;
+  return agent.filePath;
+}
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +20,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const filePath = Buffer.from(id, 'base64url').toString('utf-8');
+    const filePath = await getAuthorizedAgentPath(id);
+    if (!filePath) return NextResponse.json({ error: 'Path is outside the configured workspace' }, { status: 403 });
     
     const content = await readFile(filePath, 'utf-8');
     const dirPath = dirname(filePath);
@@ -40,7 +51,8 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const filePath = Buffer.from(id, 'base64url').toString('utf-8');
+    const filePath = await getAuthorizedAgentPath(id);
+    if (!filePath) return NextResponse.json({ error: 'Path is outside the configured workspace' }, { status: 403 });
     
     let content: string;
     
@@ -69,7 +81,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const filePath = Buffer.from(id, 'base64url').toString('utf-8');
+    const filePath = await getAuthorizedAgentPath(id);
+    if (!filePath) return NextResponse.json({ error: 'Path is outside the configured workspace' }, { status: 403 });
     const dirPath = dirname(filePath);
     
     // Delete the entire agent directory
