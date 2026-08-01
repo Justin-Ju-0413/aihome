@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
+import { isExistingPathWithinWorkspace } from '@/lib/path-security';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,10 +11,20 @@ export async function POST(request: NextRequest) {
     // Use provided paths or fall back to config
     const paths = body.paths || config.paths;
     
-    if (!paths || paths.length === 0) {
+    if (!Array.isArray(paths) || paths.length === 0 || paths.some((path) => typeof path !== 'string')) {
       return NextResponse.json(
         { error: 'No scan paths configured' },
         { status: 400 }
+      );
+    }
+
+    const authorization = await Promise.all(
+      paths.map((path) => isExistingPathWithinWorkspace(path, config.paths))
+    );
+    if (authorization.some((allowed) => !allowed)) {
+      return NextResponse.json(
+        { error: 'Scan path is outside the configured workspace' },
+        { status: 403 }
       );
     }
 

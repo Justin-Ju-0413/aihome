@@ -4,6 +4,7 @@ import { join } from 'path';
 import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
+import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/path-security';
 
 export async function GET() {
   try {
@@ -24,9 +25,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { type, name, description, dirPath } = body;
 
-    if (!type || !name) {
+    if (!['agent', 'skill'].includes(type) || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json(
         { error: 'Type and name are required' },
+        { status: 400 }
+      );
+    }
+
+    const slug = name.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(slug)) {
+      return NextResponse.json(
+        { error: 'Name must contain only letters, numbers, hyphens or underscores' },
         { status: 400 }
       );
     }
@@ -41,8 +50,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!await isExistingPathWithinWorkspace(baseDir, config.paths)) {
+      return NextResponse.json(
+        { error: 'Directory is outside the configured workspace' },
+        { status: 403 }
+      );
+    }
+
     // Create agent/skill directory
-    const agentDir = join(baseDir, name.toLowerCase().replace(/\s+/g, '-'));
+    const agentDir = join(baseDir, slug);
+    if (!await isNewPathWithinWorkspace(agentDir, config.paths)) {
+      return NextResponse.json(
+        { error: 'Directory is outside the configured workspace' },
+        { status: 403 }
+      );
+    }
     await mkdir(agentDir, { recursive: true });
 
     let filePath: string;
@@ -51,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (type === 'skill') {
       filePath = join(agentDir, 'SKILL.md');
       const frontmatter = {
-        name: name.toLowerCase().replace(/\s+/g, '-'),
+        name: slug,
         description: description || '',
         metadata: {
           created: new Date().toISOString()

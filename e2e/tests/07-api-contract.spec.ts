@@ -76,6 +76,19 @@ test.describe('API Contract Tests', () => {
     await api.deleteAgent(created.id);
   });
 
+  test('GET /api/agents/[id] rejects a decoded path outside the workspace', async ({ request }) => {
+    const id = Buffer.from('/etc/hosts').toString('base64url');
+    const res = await request.get(`/api/agents/${id}`);
+    expect(res.status()).toBe(403);
+  });
+
+  test('POST /api/agents rejects path-like names', async ({ request }) => {
+    const res = await request.post('/api/agents', {
+      data: { type: 'agent', name: '../../outside' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
   test('DELETE /api/agents/[id] deletes agent', async ({ request }) => {
     const created = await api.createAgent('agent', 'e2e-delete-test', 'To be deleted');
     
@@ -95,6 +108,11 @@ test.describe('API Contract Tests', () => {
     expect(Array.isArray(result.agents)).toBe(true);
   });
 
+  test('POST /api/scan rejects a path outside the workspace', async ({ request }) => {
+    const res = await request.post('/api/scan', { data: { paths: ['/etc'] } });
+    expect(res.status()).toBe(403);
+  });
+
   test('GET /api/workspace returns config', async () => {
     const config = await api.getWorkspaceConfig();
     expect(config).toHaveProperty('name');
@@ -111,6 +129,12 @@ test.describe('API Contract Tests', () => {
 
     // Restore
     await api.updateWorkspaceConfig({ name: original.name });
+  });
+
+  test('PUT /api/workspace rejects invalid config without changing the response contract', async ({ request }) => {
+    const res = await request.put('/api/workspace', { data: { paths: [] } });
+    expect(res.status()).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: 'Invalid workspace config' });
   });
 
   test('GET /api/relations returns array', async () => {
