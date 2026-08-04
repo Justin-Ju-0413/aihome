@@ -23,7 +23,7 @@ async function walkSorted(root: string): Promise<Array<[string, string[]]>> {
     } catch {
       entries = [];
     }
-    entries.sort((a, b) => a.name.localeCompare(b.name));
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     const files = entries
       .filter((e) => e.isFile() && !e.name.startsWith('.'))
       .map((e) => e.name);
