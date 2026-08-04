@@ -1,21 +1,28 @@
+<p align="center">
+  <img src=".github/persona-banner.svg" width="100%" alt="aihome — Make agent ecosystems visible">
+</p>
+
 # AIHome
 
-[![CI](https://github.com/Justin-Ju-0413/aihome/actions/workflows/ci.yml/badge.svg)](https://github.com/Justin-Ju-0413/aihome/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/Justin-Ju-0413/aihome?display_name=tag)](https://github.com/Justin-Ju-0413/aihome/releases)
+**Make agent ecosystems visible.**
+**让 agent 生态可见。**
 
-A local-first visual workspace for discovering, organizing, and managing AI agents and skills. AIHome scans your directories for `AGENTS.md` / `SKILL.md` definitions and renders them as a drag-and-drop kanban board and a relationship graph, so you can group, connect, and understand your agent ecosystem at a glance.
+A local-first visual workspace for discovering, organizing, and managing AI agents and skills. AIHome scans your directories for `AGENTS.md` / `SKILL.md` definitions and renders them as a drag-and-drop kanban board and a relationship graph.
+
+本地优先的 `AGENTS.md` / `SKILL.md` 可视化工作区:扫描、看板、关系图、文件管理,全部在本机运行,数据不离开工作区。
 
 > Runs entirely on your local machine. All data stays in your workspace — there is no backend service.
 
-## Features
+## Features / 功能
 
 - **Kanban board** — drag agents across groups and reorder within columns; layout (group + order) is persisted to `.aihome/layout.json` and restored on refresh.
-- **Relationship graph** — agents render as nodes with dagre auto-layout; edges show dependencies. Dependencies are auto-detected from `## Dependencies` sections and `depends-on` frontmatter, and you can also connect nodes manually.
-- **Agent list & detail** — browse all agents/skills, search and filter by type, edit markdown content (with frontmatter editor for skills), and inspect associated files.
-- **File-system backed** — agents are plain markdown files. Create, edit, and delete through the UI; the scanner re-reads the directory.
+- **Relationship graph** — agents render as nodes with dagre auto-layout; edges show dependencies, auto-detected from `## Dependencies` sections and `depends-on` frontmatter; manual connections also supported.
+- **Agent list & detail** — browse, search and filter by type, edit markdown content (with frontmatter editor for skills), inspect associated files.
+- **File-system backed** — agents are plain markdown files; create, edit, delete through the UI, scanner re-reads the directory.
 - **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
-- **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths.
+- **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths (out-of-workspace requests return HTTP 403).
 
-## Tech stack
+## Tech stack / 技术栈
 
 - [Next.js 16](https://nextjs.org/) (App Router, Turbopack) + [React 19](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
@@ -26,7 +33,7 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - [gray-matter](https://github.com/jonschlinkert/gray-matter) for frontmatter
 - [Playwright](https://playwright.dev/) for end-to-end tests
 
-## Getting started
+## Getting started / 快速开始
 
 ```bash
 npm ci
@@ -48,7 +55,7 @@ The sample workspace is a no-account, no-API-key demo. Use a throwaway clone whe
 | `npm run test:e2e` | Run the Playwright e2e suite (auto-starts the dev server) |
 | `npm run test:e2e:ui` | Interactive e2e UI |
 
-## Project structure
+## Project structure / 项目结构
 
 ```
 src/
@@ -75,7 +82,7 @@ data/sample-agents/     # Four sample agents/skills
 e2e/                    # Playwright tests, fixtures, helpers
 ```
 
-## Agent & skill file format
+## Agent & skill file format / 文件格式
 
 AIHome discovers agents from `AGENTS.md` and skills from `SKILL.md` files anywhere under your configured scan paths.
 
@@ -108,7 +115,7 @@ depends-on:
 
 The scanner resolves dependency names to agent ids in a second pass and populates each agent's `dependencies` / `calledBy`, which the graph renders as edges.
 
-## Configuration
+## Configuration / 配置
 
 AIHome stores runtime state under `.aihome/` (gitignored):
 
@@ -133,10 +140,16 @@ If `config.json` is absent, AIHome falls back to scanning the `data/` directory 
 
 Agent ids are base64url-encoded file paths.
 
+## Verification / 验证
+
+- Playwright e2e covers board, graph, list, detail and settings flows.
+- File and Agent-ID APIs reject paths outside configured workspaces (HTTP 403).
+- CI runs install, lint, production build and browser tests.
+
+## Status & roadmap / 状态与路线图
+
+`v0.1.x` is the focused local developer-tool baseline. Existing `/api/*` success responses are treated as the compatibility boundary. Filesystem requests outside configured workspaces return HTTP 403. See [`docs/v0.2-roadmap.md`](docs/v0.2-roadmap.md), [`CHANGELOG.md`](CHANGELOG.md), and [`SECURITY.md`](SECURITY.md).
+
 ## License
 
 [MIT](./LICENSE)
-
-## Status and roadmap
-
-`v0.1.x` is the focused local developer-tool baseline. Existing `/api/*` success responses are treated as the compatibility boundary. Filesystem requests outside configured workspaces return HTTP 403. See [`docs/v0.2-roadmap.md`](docs/v0.2-roadmap.md), [`CHANGELOG.md`](CHANGELOG.md), and [`SECURITY.md`](SECURITY.md).
