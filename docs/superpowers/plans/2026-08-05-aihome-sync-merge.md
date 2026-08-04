@@ -325,7 +325,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/paths.t
   - `isSkillDir(dirPath: string): Promise<boolean>` — 非隐藏、非 `.zip` 后缀、目录、含 `SKILL.md`
   - `scanSkills(root: string): Promise<Record<string, string>>` — `{技能名: sha256}`，root 不存在/不可读返回 `{}`
   - `copyTree(src: string, dst: string): Promise<void>` — 递归复制，跳过 `.git` 与隐藏项
-  - `atomicCopy(src: string, dst: string): Promise<void>` — 复制到 `dst.tmp-<pid>` 后原子替换
+  - `atomicCopy(src: string, dst: string): Promise<void>` — 复制到 `dst.tmp-<pid>` 后原子替换；**语义与 copyTree 一致：复制 src 的内容**（单层技能目录场景下 src 即技能目录本身）
 
 - [ ] **Step 1: 写失败测试**
 
@@ -465,7 +465,7 @@ async function walkSorted(root: string): Promise<Array<[string, string[]]>> {
     } catch {
       entries = [];
     }
-    entries.sort((a, b) => a.name.localeCompare(b.name));
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     const files = entries
       .filter((e) => e.isFile() && !e.name.startsWith('.'))
       .map((e) => e.name);
