@@ -15,7 +15,7 @@
 - 行为对齐（逐条移植自 sync.py）：技能判定 = 目录含 `SKILL.md` 且非隐藏非 `.zip`；冲突 = 同名不同内容 → 保留 `name` 与 `name@端` 两份；幂等 = 校验和相同跳过；push 覆盖端上分歧版本但不推送冲突标记技能；无删除传播
 - metadata.json 格式：`{"version": 1, "skills": {name: {sha256, sources[], updated_at, conflicts?: {端: sha}}}}`
 - 校验和：目录内所有文件按相对路径排序级联 `relpath + "\x00" + content` 的 SHA-256，跳过隐藏项
-- 端配置：`sync-config.json` 存 `{"version": 1, "endpoints": {name: path}}` 全量 map；空/缺失回退默认四端（opencode/claude/codex/hermes）；端名 `^[a-z0-9][a-z0-9_-]{0,63}$`
+- 端配置：`sync-config.json` 存 `{"version": 1, "endpoints": {name: path}}` 全量 map；空/缺失回退默认四端（opencode/claude/codex/hermes）；端名 `^[a-z0-9][a-z0-9_-]{0,63}$`（大小写不敏感，含 /i）
 - 写操作全部支持 `dryRun`；git 失败返回结构化错误码 `GIT_MISSING`/`GIT_CONFLICT`/`GIT_PERMISSION`/`GIT_OTHER`
 - 迁移：检测旧 `~/skill-sync`（存在 `common/` 与 `metadata.json`）→ 复制到 `~/.aihome/repo`（原目录不动、幂等）；AIHome 的 `.aihome/`（项目工作区）与 `~/.aihome`（用户级同步）互不干扰
 - 现有 91 个 e2e 必须保持全绿；`lint`/`tsc --noEmit`/`build` 干净
