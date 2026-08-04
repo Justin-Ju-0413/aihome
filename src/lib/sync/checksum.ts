@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { readdir, readFile, stat, access, mkdir, rename, rm, copyFile } from 'fs/promises';
+import type { Dirent } from 'fs';
 import * as path from 'path';
 
 export async function isSkillDir(dirPath: string): Promise<boolean> {
@@ -17,7 +18,7 @@ export async function isSkillDir(dirPath: string): Promise<boolean> {
 async function walkSorted(root: string): Promise<Array<[string, string[]]>> {
   const out: Array<[string, string[]]> = [];
   async function walk(dir: string, rel: string): Promise<void> {
-    let entries;
+    let entries: Dirent[];
     try {
       entries = await readdir(dir, { withFileTypes: true });
     } catch {
