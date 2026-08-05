@@ -966,6 +966,7 @@ describe('collect', () => {
     const result = await collect([], true);
     expect(result.stats).toMatchObject({ new: 1 });
     expect(await scanSkills(commonDir())).toEqual({});
+    await expect(fs.access(commonDir())).rejects.toThrow(); // dryRun 不创建任何目录
   });
 
   it('skips unchanged skills on second run (idempotent)', async () => {
@@ -1050,7 +1051,6 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
   const endpoints = await resolveEndpoints(only);
   const meta = await loadMetadata(metadataFile());
   const skills = meta.skills;
-  await mkdir(commonDir(), { recursive: true });
   const stats: CollectStats = { new: 0, updated: 0, conflict: 0, skipped: 0 };
   const actions: SyncAction[] = [];
   const warnings: string[] = [];
@@ -1111,6 +1111,7 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
   }
 
   if (!dryRun) {
+    await mkdir(commonDir(), { recursive: true });
     await saveMetadata(meta, metadataFile());
     const manifest = renderManifest(meta);
     const manifestFile = path.join(repoDir(), 'MANIFEST.md');
