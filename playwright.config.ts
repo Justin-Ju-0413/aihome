@@ -43,6 +43,7 @@ export default defineConfig({
     env: {
       AIHOME_REPO_DIR: path.join(e2eSyncRoot, 'repo'),
       AIHOME_CONFIG_DIR: path.join(e2eSyncRoot, 'config'),
+      AIHOME_LEGACY_DIR: path.join(e2eSyncRoot, 'legacy'),
     },
   },
 });

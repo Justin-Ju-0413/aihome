@@ -5,7 +5,7 @@ import { repoDir, commonDir } from './paths';
 import { copyTree, scanSkills } from './checksum';
 
 export async function detectLegacyRepo(): Promise<string | null> {
-  const legacy = path.join(os.homedir(), 'skill-sync');
+  const legacy = process.env.AIHOME_LEGACY_DIR ?? path.join(os.homedir(), 'skill-sync');
   try {
     await fs.access(path.join(legacy, 'common'));
     await fs.access(path.join(legacy, 'metadata.json'));
