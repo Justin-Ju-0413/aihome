@@ -2475,7 +2475,7 @@ export default function UsagePage() {
 }
 ```
 
-- [x] **Step 5: 手工验证**
+- [x] **Step 5: 手工验证**（2026-08-06 执行时跳过：3000 端口被并行会话占用；由 Task 15 e2e 的 webServer 启动覆盖验证）
 
 Run: `npm run dev` → 打开 http://localhost:3000/usage
 Expected: 导航出现 USAGE；页面显示筛选器 + 5 张总览卡片（本机真实数据非零）；Rescan 按钮可用。
