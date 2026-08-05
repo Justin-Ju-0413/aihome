@@ -6,7 +6,7 @@ import {
   configDir, repoDir, commonDir, metadataFile,
 } from '../paths';
 import {
-  DEFAULT_ENDPOINTS, loadSyncConfig, saveSyncConfig, getEndpoints, setEndpoints, validateEndpointName, syncConfigPath,
+  DEFAULT_ENDPOINTS, loadSyncConfig, getEndpoints, setEndpoints, validateEndpointName, syncConfigPath,
 } from '../config';
 
 const tmpHome = path.join(os.tmpdir(), `aihome-sync-test-${process.pid}`);

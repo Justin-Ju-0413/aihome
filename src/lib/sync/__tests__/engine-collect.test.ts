@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { collect } from '../engine';
-import { loadMetadata, saveMetadata, SkillMetaEntry } from '../metadata';
+import { loadMetadata, saveMetadata } from '../metadata';
 import { commonDir, metadataFile } from '../paths';
 import { scanSkills, dirSha256 } from '../checksum';
 
