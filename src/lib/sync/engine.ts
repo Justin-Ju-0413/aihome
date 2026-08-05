@@ -111,3 +111,196 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
   }
   return { stats, actions, warnings };
 }
+
+export interface PushStats {
+  updated: number;
+  skipped: number;
+}
+
+export interface PushResult {
+  stats: PushStats;
+  actions: SyncAction[];
+  warnings: string[];
+}
+
+export async function push(only?: string[], dryRun = false): Promise<PushResult> {
+  const endpoints = await resolveEndpoints(only);
+  const meta = await loadMetadata(metadataFile());
+  const skills = meta.skills;
+  const stats: PushStats = { updated: 0, skipped: 0 };
+  const actions: SyncAction[] = [];
+  const warnings: string[] = [];
+
+  let commonNames: string[] = [];
+  try {
+    const items = await readdir(commonDir());
+    for (const name of items.sort()) {
+      if (name.startsWith('.') || name.includes('@')) continue;
+      if (await isSkillDir(path.join(commonDir(), name))) commonNames.push(name);
+    }
+  } catch {
+    commonNames = [];
+  }
+
+  for (const [endpoint, endpointPath] of Object.entries(endpoints).sort()) {
+    try {
+      await mkdir(endpointPath, { recursive: true });
+      const remote = await scanSkills(endpointPath);
+      for (const name of commonNames) {
+        const entry = skills[name];
+        if (entry && entry.conflicts !== undefined) {
+          actions.push({ kind: 'skip', message: `skip ${endpoint}:${name}（存在冲突副本）` });
+          continue;
+        }
+        const src = path.join(commonDir(), name);
+        const dst = path.join(endpointPath, name);
+        if (remote[name] === (await dirSha256(src))) {
+          stats.skipped += 1;
+          continue;
+        }
+        if (name in remote) {
+          warnings.push(`${endpoint}:${name} 将被 common/ 版本覆盖（端上版本不同）`);
+        }
+        actions.push({ kind: 'push', message: `push ${name} -> ${endpoint}/` });
+        stats.updated += 1;
+        if (!dryRun) await atomicCopy(src, dst);
+      }
+    } catch (err) {
+      warnings.push(`端 ${endpoint} 处理失败: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  if (!dryRun) {
+    await gitCommit(repoDir(), `sync: push ${stats.updated} updated, ${stats.skipped} skipped`);
+  }
+  return { stats, actions, warnings };
+}
+
+export interface EndpointState {
+  path: string;
+  exists: boolean;
+  count: number;
+  diff: { missing: number; same: number; different: number; extra: number };
+}
+
+export interface SyncSkillState {
+  name: string;
+  sha256: string;
+  sha8: string;
+  sources: string[];
+  updated_at: string;
+  conflicts: Record<string, string>;
+  endpoint_state: Record<string, string>;
+}
+
+export interface SyncConflict {
+  name: string;
+  versions: string[];
+  sha256: string[];
+  endpoint: string;
+}
+
+export interface SyncState {
+  generated_at: string;
+  summary: { total_skills: number; conflict_count: number; endpoint_count: number };
+  endpoints: Record<string, EndpointState>;
+  skills: SyncSkillState[];
+  conflicts: SyncConflict[];
+}
+
+export async function buildState(): Promise<SyncState> {
+  const meta = await loadMetadata(metadataFile());
+  const skillsMeta = meta.skills;
+
+  let commonNames: string[] = [];
+  try {
+    const items = await readdir(commonDir());
+    for (const name of items.sort()) {
+      if (name.startsWith('.') || name.includes('@')) continue;
+      if (await isSkillDir(path.join(commonDir(), name))) commonNames.push(name);
+    }
+  } catch {
+    commonNames = [];
+  }
+
+  const commonSha: Record<string, string | null> = {};
+  for (const name of commonNames) {
+    try {
+      commonSha[name] = await dirSha256(path.join(commonDir(), name));
+    } catch {
+      commonSha[name] = null;
+    }
+  }
+
+  const skills: SyncSkillState[] = commonNames.map((name) => {
+    const entry = skillsMeta[name];
+    const sha = entry?.sha256 ?? '';
+    return {
+      name,
+      sha256: sha,
+      sha8: sha.slice(0, 8),
+      sources: entry?.sources ?? [],
+      updated_at: entry?.updated_at ?? '',
+      conflicts: entry?.conflicts ?? {},
+      endpoint_state: {},
+    };
+  });
+
+  const endpoints: Record<string, EndpointState> = {};
+  for (const [endpoint, endpointPath] of Object.entries(await getEndpoints()).sort()) {
+    let exists = false;
+    try {
+      await access(endpointPath);
+      exists = true;
+    } catch {
+      exists = false;
+    }
+    const remote = exists ? await scanSkills(endpointPath) : {};
+    const diff = { missing: 0, same: 0, different: 0, extra: 0 };
+    for (const name of commonNames) {
+      let state = 'missing';
+      if (name in remote) {
+        state = remote[name] === commonSha[name] ? 'same' : 'different';
+      }
+      diff[state as 'missing' | 'same' | 'different'] += 1;
+    }
+    for (const name of Object.keys(remote)) {
+      if (!(name in commonSha)) diff.extra += 1;
+    }
+    endpoints[endpoint] = { path: endpointPath, exists, count: Object.keys(remote).length, diff };
+    for (const skill of skills) {
+      if (skill.name in remote) {
+        skill.endpoint_state[endpoint] =
+          remote[skill.name] === commonSha[skill.name] ? 'same' : 'different';
+      } else {
+        skill.endpoint_state[endpoint] = 'missing';
+      }
+    }
+  }
+
+  const conflicts: SyncConflict[] = [];
+  for (const name of Object.keys(skillsMeta).sort()) {
+    const entry = skillsMeta[name];
+    const cfl = entry.conflicts ?? {};
+    if (Object.keys(cfl).length > 0) {
+      conflicts.push({
+        name,
+        versions: ['common/' + name, ...Object.keys(cfl).map((ep) => `common/${name}@${ep}`)],
+        sha256: [entry.sha256 ?? '', ...Object.values(cfl)],
+        endpoint: Object.keys(cfl)[0],
+      });
+    }
+  }
+
+  return {
+    generated_at: nowIso(),
+    summary: {
+      total_skills: commonNames.length,
+      conflict_count: conflicts.length,
+      endpoint_count: Object.keys(endpoints).length,
+    },
+    endpoints,
+    skills,
+    conflicts,
+  };
+}
