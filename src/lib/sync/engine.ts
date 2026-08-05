@@ -107,7 +107,8 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
     const tmpFile = `${manifestFile}.tmp`;
     await writeFile(tmpFile, manifest, 'utf-8');
     await rename(tmpFile, manifestFile);
-    await gitCommit(repoDir(), `sync: collect ${stats.new} new, ${stats.updated} updated, ${stats.conflict} conflict`);
+    const git = await gitCommit(repoDir(), `sync: collect ${stats.new} new, ${stats.updated} updated, ${stats.conflict} conflict`);
+    if (!git.ok) warnings.push(`git 提交失败（collect）: ${git.code ?? 'unknown'}`);
   }
   return { stats, actions, warnings };
 }
@@ -171,7 +172,8 @@ export async function push(only?: string[], dryRun = false): Promise<PushResult>
   }
 
   if (!dryRun) {
-    await gitCommit(repoDir(), `sync: push ${stats.updated} updated, ${stats.skipped} skipped`);
+    const git = await gitCommit(repoDir(), `sync: push ${stats.updated} updated, ${stats.skipped} skipped`);
+    if (!git.ok) warnings.push(`git 提交失败（push）: ${git.code ?? 'unknown'}`);
   }
   return { stats, actions, warnings };
 }
