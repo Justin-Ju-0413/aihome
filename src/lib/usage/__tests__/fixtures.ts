@@ -30,10 +30,21 @@ export function makeCcSwitchDb(p: string, rows: Array<Record<string, unknown>>):
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   for (const r of rows) {
-    stmt.run(r.request_id, r.provider_id ?? 'p1', r.app_type, r.model, r.input_tokens ?? 0,
-      r.output_tokens ?? 0, r.cache_read_tokens ?? 0, r.cache_creation_tokens ?? 0,
-      r.total_cost_usd ?? '0', r.latency_ms ?? null, r.session_id ?? null,
-      r.status_code ?? 200, r.created_at);
+    stmt.run(
+      r.request_id as string,
+      (r.provider_id as string) ?? 'p1',
+      r.app_type as string,
+      r.model as string,
+      (r.input_tokens as number) ?? 0,
+      (r.output_tokens as number) ?? 0,
+      (r.cache_read_tokens as number) ?? 0,
+      (r.cache_creation_tokens as number) ?? 0,
+      (r.total_cost_usd as string) ?? '0',
+      (r.latency_ms as number) ?? null,
+      (r.session_id as string) ?? null,
+      (r.status_code as number) ?? 200,
+      r.created_at as number
+    );
   }
   db.close();
 }

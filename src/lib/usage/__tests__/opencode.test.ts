@@ -1,5 +1,4 @@
 import { describe, it, expect, afterAll } from 'vitest';
-import * as fs from 'fs';
 import * as path from 'path';
 import { DatabaseSync } from 'node:sqlite';
 import { scanOpencode } from '../sources/opencode';

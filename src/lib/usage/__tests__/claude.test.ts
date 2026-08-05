@@ -53,7 +53,7 @@ describe('scanClaude', () => {
     checkpointMtimeAfterFirstScan = checkpoint.mtime;
   });
   it('mtime incremental: skips unmodified files', () => {
-    const { events } = scanClaude(dir, { ts: 0, mtime: checkpointMtimeAfterFirstScan });
+    const { events } = scanClaude(dir, { ts: 0, mtime: checkpointMtimeAfterFirstScan }, () => null);
     expect(events).toHaveLength(0);
   });
   it('returns empty when dir missing', () => {
