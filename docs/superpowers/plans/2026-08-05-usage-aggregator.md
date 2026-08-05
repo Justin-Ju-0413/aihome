@@ -2250,7 +2250,7 @@ git commit -m "feat(usage): add usage API routes (events, sources, rescan)"
 - Consumes: API `/api/usage/events`、`/api/usage/sources`、`/api/usage/rescan`（Task 11）。
 - Produces: 页面 filter 状态 `{ source: string; range: UsageRange; dimension: UsageDimension }`；组件 props（见下）。
 
-- [ ] **Step 1: TopNav 加 USAGE 项**
+- [x] **Step 1: TopNav 加 USAGE 项**
 
 在 `src/components/layout/TopNav.tsx` 的 `navItems` 中，`/agents` 与 `/sync` 之间插入：
 
@@ -2258,7 +2258,7 @@ git commit -m "feat(usage): add usage API routes (events, sources, rescan)"
 { href: '/usage', label: 'USAGE', testId: 'nav-usage' },
 ```
 
-- [ ] **Step 2: 写 OverviewCards 组件**
+- [x] **Step 2: 写 OverviewCards 组件**
 
 ```tsx
 'use client';
@@ -2294,7 +2294,7 @@ export function OverviewCards({ totals }: Props) {
 }
 ```
 
-- [ ] **Step 3: 写 UsageFilters 组件**
+- [x] **Step 3: 写 UsageFilters 组件**
 
 ```tsx
 'use client';
@@ -2367,7 +2367,7 @@ export function UsageFilters({ source, range, onSourceChange, onRangeChange, onR
 }
 ```
 
-- [ ] **Step 4: 写 usage/page.tsx（骨架，K线/图表/表格占位后续 task 接入）**
+- [x] **Step 4: 写 usage/page.tsx（骨架，K线/图表/表格占位后续 task 接入）**
 
 ```tsx
 'use client';
@@ -2475,12 +2475,12 @@ export default function UsagePage() {
 }
 ```
 
-- [ ] **Step 5: 手工验证**
+- [x] **Step 5: 手工验证**
 
 Run: `npm run dev` → 打开 http://localhost:3000/usage
 Expected: 导航出现 USAGE；页面显示筛选器 + 5 张总览卡片（本机真实数据非零）；Rescan 按钮可用。
 
-- [ ] **Step 6: lint + commit**
+- [x] **Step 6: lint + commit**
 
 Run: `npm run lint`
 Expected: 0 warnings。
