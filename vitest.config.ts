@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/lib/sync/**/*.test.ts'],
+    include: ['src/lib/**/*.test.ts'],
   },
   resolve: {
     alias: {

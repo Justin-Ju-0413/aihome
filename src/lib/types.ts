@@ -4,6 +4,7 @@ export interface AgentNode {
   id: string;
   name: string;
   type: 'agent' | 'skill';
+  ruleFiles: Array<'AGENTS.md' | 'SKILL.md' | 'CLAUDE.md'>;
   description: string;
   filePath: string;
   dirPath: string;
