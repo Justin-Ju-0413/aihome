@@ -20,6 +20,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run test
+        env:
+          GIT_AUTHOR_NAME: CI
+          GIT_AUTHOR_EMAIL: ci@example.com
+          GIT_COMMITTER_NAME: CI
+          GIT_COMMITTER_EMAIL: ci@example.com
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
