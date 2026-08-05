@@ -49,6 +49,9 @@ next-env.d.ts
 # local runtime state (workspace config with machine-specific paths, layout, relations)
 /.aihome/
 
+# git worktrees must live OUTSIDE the repo; anything inside is never committed
+/.worktrees/
+
 # tool-generated docs (Qoder repowiki)
 /.qoder/
 
