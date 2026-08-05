@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
 import { toast } from 'sonner';
+import { EndpointSettings } from '@/components/sync/EndpointSettings';
 import type { WorkspaceConfig, AgentGroup } from '@/lib/types';
 
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
@@ -287,6 +288,8 @@ export default function SettingsPage() {
             <p>Built with Next.js, React, and TailwindCSS</p>
           </div>
         </section>
+
+        <EndpointSettings />
       </div>
     </div>
   );
