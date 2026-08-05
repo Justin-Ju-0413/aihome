@@ -13,6 +13,12 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 
 > Runs entirely on your local machine. All data stays in your workspace — there is no backend service.
 
+## Screenshots / 演示
+
+| Kanban board / 看板 | Relationship graph / 关系图 |
+|---|---|
+| ![Board](docs/screenshots/board.png) | ![Graph](docs/screenshots/graph.png) |
+
 ## Features / 功能
 
 - **Kanban board** — drag agents across groups and reorder within columns; layout (group + order) is persisted to `.aihome/layout.json` and restored on refresh.
