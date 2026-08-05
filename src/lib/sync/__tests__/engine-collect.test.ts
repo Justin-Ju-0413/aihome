@@ -76,6 +76,7 @@ describe('collect', () => {
     const result = await collect([], true);
     expect(result.stats).toMatchObject({ new: 1 });
     expect(await scanSkills(commonDir())).toEqual({});
+    await expect(fs.access(commonDir())).rejects.toThrow(); // dryRun 不创建任何目录
   });
 
   it('skips unchanged skills on second run (idempotent)', async () => {
