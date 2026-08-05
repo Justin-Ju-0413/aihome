@@ -144,7 +144,7 @@ export async function push(only?: string[], dryRun = false): Promise<PushResult>
 
   for (const [endpoint, endpointPath] of Object.entries(endpoints).sort()) {
     try {
-      await mkdir(endpointPath, { recursive: true });
+      if (!dryRun) await mkdir(endpointPath, { recursive: true });
       const remote = await scanSkills(endpointPath);
       for (const name of commonNames) {
         const entry = skills[name];
