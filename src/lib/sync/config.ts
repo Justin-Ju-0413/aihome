@@ -61,7 +61,9 @@ export async function setEndpoints(endpoints: Record<string, string>): Promise<v
   const cleaned: Record<string, string> = {};
   for (const [name, p] of Object.entries(endpoints)) {
     if (validateEndpointName(name) && typeof p === 'string' && p.trim()) {
-      cleaned[name] = path.resolve(p.trim());
+      const trimmed = p.trim();
+      const expanded = trimmed.startsWith('~/') ? path.join(os.homedir(), trimmed.slice(2)) : trimmed;
+      cleaned[name] = path.resolve(expanded);
     }
   }
   await saveSyncConfig({ version: 1, endpoints: cleaned });
