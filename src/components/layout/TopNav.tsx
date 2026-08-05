@@ -8,6 +8,7 @@ const navItems = [
   { href: '/board', label: 'BOARD', testId: 'nav-board' },
   { href: '/graph', label: 'GRAPH', testId: 'nav-graph' },
   { href: '/agents', label: 'AGENTS', testId: 'nav-agents' },
+  { href: '/sync', label: 'SYNC', testId: 'nav-sync' },
   { href: '/settings', label: 'SETTINGS', testId: 'nav-settings' },
 ];
 

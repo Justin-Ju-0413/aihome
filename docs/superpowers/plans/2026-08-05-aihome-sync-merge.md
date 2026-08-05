@@ -15,7 +15,7 @@
 - 行为对齐（逐条移植自 sync.py）：技能判定 = 目录含 `SKILL.md` 且非隐藏非 `.zip`；冲突 = 同名不同内容 → 保留 `name` 与 `name@端` 两份；幂等 = 校验和相同跳过；push 覆盖端上分歧版本但不推送冲突标记技能；无删除传播
 - metadata.json 格式：`{"version": 1, "skills": {name: {sha256, sources[], updated_at, conflicts?: {端: sha}}}}`
 - 校验和：目录内所有文件按相对路径排序级联 `relpath + "\x00" + content` 的 SHA-256，跳过隐藏项
-- 端配置：`sync-config.json` 存 `{"version": 1, "endpoints": {name: path}}` 全量 map；空/缺失回退默认四端（opencode/claude/codex/hermes）；端名 `^[a-z0-9][a-z0-9_-]{0,63}$`
+- 端配置：`sync-config.json` 存 `{"version": 1, "endpoints": {name: path}}` 全量 map；空/缺失回退默认四端（opencode/claude/codex/hermes）；端名 `^[a-z0-9][a-z0-9_-]{0,63}$`（大小写不敏感，含 /i）
 - 写操作全部支持 `dryRun`；git 失败返回结构化错误码 `GIT_MISSING`/`GIT_CONFLICT`/`GIT_PERMISSION`/`GIT_OTHER`
 - 迁移：检测旧 `~/skill-sync`（存在 `common/` 与 `metadata.json`）→ 复制到 `~/.aihome/repo`（原目录不动、幂等）；AIHome 的 `.aihome/`（项目工作区）与 `~/.aihome`（用户级同步）互不干扰
 - 现有 91 个 e2e 必须保持全绿；`lint`/`tsc --noEmit`/`build` 干净
@@ -33,12 +33,12 @@
 - Consumes: 无
 - Produces: `npm run test`（= `vitest run`）；vitest 配置含 `@` → `./src` 别名、仅跑 `src/lib/sync/**/*.test.ts`
 
-- [ ] **Step 1: 安装 vitest**
+- [x] **Step 1: 安装 vitest**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm install -D vitest`
 Expected: 安装成功（package.json devDependencies 出现 `vitest`）
 
-- [ ] **Step 2: 写冒烟测试**
+- [x] **Step 2: 写冒烟测试**
 
 Create `src/lib/sync/__tests__/smoke.test.ts`:
 
@@ -52,7 +52,7 @@ describe('sync test infra', () => {
 });
 ```
 
-- [ ] **Step 3: 写 vitest 配置**
+- [x] **Step 3: 写 vitest 配置**
 
 Create `vitest.config.ts`:
 
@@ -73,7 +73,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: 加 npm script**
+- [x] **Step 4: 加 npm script**
 
 Modify `package.json` scripts 增加：
 
@@ -82,12 +82,12 @@ Modify `package.json` scripts 增加：
 "test:watch": "vitest"
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `Test Files  1 passed`，`1 passed`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add vitest.config.ts src/lib/sync/__tests__/smoke.test.ts package.json package-lock.json && git commit -m "test: 接入 vitest 单元测试基础设施"
@@ -120,7 +120,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add vitest.config.ts src
     - `setEndpoints(endpoints: Record<string, string>): Promise<void>` — 校验后保存
     - `validateEndpointName(name: string): boolean` — `/^[a-z0-9][a-z0-9_-]{0,63}$/i`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `src/lib/sync/__tests__/config.test.ts`:
 
@@ -194,12 +194,12 @@ describe('sync config', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test 2>&1 | tail -5`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 paths.ts**
+- [x] **Step 3: 实现 paths.ts**
 
 Create `src/lib/sync/paths.ts`:
 
@@ -224,7 +224,7 @@ export function metadataFile(): string {
 }
 ```
 
-- [ ] **Step 4: 实现 config.ts**
+- [x] **Step 4: 实现 config.ts**
 
 Create `src/lib/sync/config.ts`:
 
@@ -299,12 +299,12 @@ export async function setEndpoints(endpoints: Record<string, string>): Promise<v
 }
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `config.test.ts` 全部通过
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/paths.ts src/lib/sync/config.ts src/lib/sync/__tests__/config.test.ts && git commit -m "feat: sync 路径注入与端配置模块"
@@ -325,9 +325,9 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/paths.t
   - `isSkillDir(dirPath: string): Promise<boolean>` — 非隐藏、非 `.zip` 后缀、目录、含 `SKILL.md`
   - `scanSkills(root: string): Promise<Record<string, string>>` — `{技能名: sha256}`，root 不存在/不可读返回 `{}`
   - `copyTree(src: string, dst: string): Promise<void>` — 递归复制，跳过 `.git` 与隐藏项
-  - `atomicCopy(src: string, dst: string): Promise<void>` — 复制到 `dst.tmp-<pid>` 后原子替换
+  - `atomicCopy(src: string, dst: string): Promise<void>` — 复制到 `dst.tmp-<pid>` 后原子替换；**语义与 copyTree 一致：复制 src 的内容**（单层技能目录场景下 src 即技能目录本身）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `src/lib/sync/__tests__/checksum.test.ts`:
 
@@ -430,12 +430,12 @@ describe('copyTree / atomicCopy', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 checksum.ts**
+- [x] **Step 3: 实现 checksum.ts**
 
 Create `src/lib/sync/checksum.ts`:
 
@@ -465,7 +465,7 @@ async function walkSorted(root: string): Promise<Array<[string, string[]]>> {
     } catch {
       entries = [];
     }
-    entries.sort((a, b) => a.name.localeCompare(b.name));
+    entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     const files = entries
       .filter((e) => e.isFile() && !e.name.startsWith('.'))
       .map((e) => e.name);
@@ -538,12 +538,12 @@ export async function atomicCopy(src: string, dst: string): Promise<void> {
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `checksum.test.ts` 全部通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/checksum.ts src/lib/sync/__tests__/checksum.test.ts && git commit -m "feat: sync 校验和/扫描/复制原语"
@@ -570,7 +570,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/checksu
   - `renderManifest(meta: SyncMetadata): string` — Markdown 清单（表头 `| 技能 | 校验和(8位) | 来源 | 冲突 |`）
   - `nowIso(): string` — UTC ISO 秒级时间戳
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `src/lib/sync/__tests__/metadata.test.ts`:
 
@@ -635,12 +635,12 @@ describe('renderManifest', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 metadata.ts**
+- [x] **Step 3: 实现 metadata.ts**
 
 Create `src/lib/sync/metadata.ts`:
 
@@ -734,12 +734,12 @@ export function renderManifest(meta: SyncMetadata): string {
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `metadata.test.ts` 全部通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/metadata.ts src/lib/sync/__tests__/metadata.test.ts && git commit -m "feat: sync 清单读写与 diff 分类"
@@ -759,7 +759,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/metadat
   - `export type GitErrorCode = 'GIT_MISSING' | 'GIT_CONFLICT' | 'GIT_PERMISSION' | 'GIT_OTHER'`
   - `gitCommit(repoDir: string, message: string): Promise<{ ok: boolean; code?: GitErrorCode }>` — 无 `.git` 先 `git init`；无暂存变更直接成功；提交成功 `{ok: true}`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `src/lib/sync/__tests__/git.test.ts`:
 
@@ -802,12 +802,12 @@ describe('gitCommit', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 git.ts**
+- [x] **Step 3: 实现 git.ts**
 
 Create `src/lib/sync/git.ts`:
 
@@ -855,12 +855,12 @@ export async function gitCommit(
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `git.test.ts` 全部通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/git.ts src/lib/sync/__tests__/git.test.ts && git commit -m "feat: sync git 提交与错误分类"
@@ -883,7 +883,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/git.ts 
   - `collect(only?: string[], dryRun?: boolean): Promise<CollectResult>` — 四端 → 中心仓库；dryRun 只统计不落盘；落盘时写 metadata.json + MANIFEST.md + git commit
   - 内部 `resolveEndpoints(only?: string[]): Promise<Record<string, string>>` — only 过滤 + 未知端名抛 `Error('未知端名: ...')`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `src/lib/sync/__tests__/engine-collect.test.ts`:
 
@@ -966,6 +966,7 @@ describe('collect', () => {
     const result = await collect([], true);
     expect(result.stats).toMatchObject({ new: 1 });
     expect(await scanSkills(commonDir())).toEqual({});
+    await expect(fs.access(commonDir())).rejects.toThrow(); // dryRun 不创建任何目录
   });
 
   it('skips unchanged skills on second run (idempotent)', async () => {
@@ -998,12 +999,12 @@ describe('collect', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 engine.ts（collect 部分）**
+- [x] **Step 3: 实现 engine.ts（collect 部分）**
 
 Create `src/lib/sync/engine.ts`:
 
@@ -1050,7 +1051,6 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
   const endpoints = await resolveEndpoints(only);
   const meta = await loadMetadata(metadataFile());
   const skills = meta.skills;
-  await mkdir(commonDir(), { recursive: true });
   const stats: CollectStats = { new: 0, updated: 0, conflict: 0, skipped: 0 };
   const actions: SyncAction[] = [];
   const warnings: string[] = [];
@@ -1111,6 +1111,7 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
   }
 
   if (!dryRun) {
+    await mkdir(commonDir(), { recursive: true });
     await saveMetadata(meta, metadataFile());
     const manifest = renderManifest(meta);
     const manifestFile = path.join(repoDir(), 'MANIFEST.md');
@@ -1125,12 +1126,12 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
 
 注意：collect 中「端路径缺失」的处理与 Python 一致——先 `scanSkills`（缺失返回 `{}`），再尝试 `mkdir` 后重扫；仍为空则记 warning 跳过。缺失端不报错。
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `engine-collect.test.ts` 全部通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/engine.ts src/lib/sync/__tests__/engine-collect.test.ts && git commit -m "feat: sync collect 引擎"
@@ -1157,7 +1158,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/engine.
   - `export interface SyncState { generated_at: string; summary: { total_skills: number; conflict_count: number; endpoint_count: number }; endpoints: Record<string, EndpointState>; skills: SyncSkillState[]; conflicts: SyncConflict[] }`
   - `buildState(): Promise<SyncState>` — 移植 Python build_state（metadata 快照 + 各端实时扫描 + missing/same/different/extra 分类）
 
-- [ ] **Step 1: 写失败测试（push）**
+- [x] **Step 1: 写失败测试（push）**
 
 Create `src/lib/sync/__tests__/engine-push.test.ts`:
 
@@ -1241,9 +1242,10 @@ describe('push', () => {
   it('dry run does not touch endpoints', async () => {
     await makeSkill(endpoints.alpha, 'foo', 'v1');
     await collect();
+    await fs.rm(endpoints.gamma, { recursive: true, force: true });
     const result = await push([], true);
     expect(result.stats.updated).toBeGreaterThan(0);
-    expect(await scanSkills(endpoints.gamma)).toEqual({});
+    await expect(fs.access(endpoints.gamma)).rejects.toThrow(); // dryRun 不创建端目录
   });
 
   it('rejects unknown endpoint names', async () => {
@@ -1252,12 +1254,12 @@ describe('push', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（push 未定义）
 
-- [ ] **Step 3: 写失败测试（buildState）**
+- [x] **Step 3: 写失败测试（buildState）**
 
 Create `src/lib/sync/__tests__/engine-state.test.ts`:
 
@@ -1330,12 +1332,12 @@ describe('buildState', () => {
 });
 ```
 
-- [ ] **Step 4: 跑测试确认失败**
+- [x] **Step 4: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（buildState 未定义）
 
-- [ ] **Step 5: 实现 push 与 buildState（追加到 engine.ts）**
+- [x] **Step 5: 实现 push 与 buildState（追加到 engine.ts）**
 
 在 `src/lib/sync/engine.ts` 末尾追加：
 
@@ -1372,7 +1374,7 @@ export async function push(only?: string[], dryRun = false): Promise<PushResult>
 
   for (const [endpoint, endpointPath] of Object.entries(endpoints).sort()) {
     try {
-      await mkdir(endpointPath, { recursive: true });
+      if (!dryRun) await mkdir(endpointPath, { recursive: true });
       const remote = await scanSkills(endpointPath);
       for (const name of commonNames) {
         const entry = skills[name];
@@ -1536,17 +1538,17 @@ export async function buildState(): Promise<SyncState> {
 
 注意：engine.ts 顶部 imports 需补 `access`（`fs/promises`）、`getEndpoints`（`./config`）。buildState 中 `endpoint_state` 对不存在端也填充 `missing`。
 
-- [ ] **Step 6: 跑测试确认通过**
+- [x] **Step 6: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `engine-push.test.ts`、`engine-state.test.ts` 全部通过
 
-- [ ] **Step 7: lint 与 tsc 检查**
+- [x] **Step 7: lint 与 tsc 检查**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run lint && npx tsc --noEmit`
 Expected: 无错误
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/engine.ts src/lib/sync/__tests__/engine-push.test.ts src/lib/sync/__tests__/engine-state.test.ts && git commit -m "feat: sync push 引擎与状态聚合"
@@ -1567,7 +1569,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/engine.
   - `export interface MigrationResult { migrated: boolean; copiedSkills: number; reason: 'no-legacy' | 'already-migrated' | 'ok' }`
   - `migrateLegacyRepo(): Promise<MigrationResult>` — 幂等：无旧仓库 → no-legacy；目标 repo 已存在 → already-migrated；否则复制 `common/` + `metadata.json` + `MANIFEST.md`（存在才复制），写 `.migrated-from` 标记文件（内容为旧路径），返回 ok
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 Create `src/lib/sync/__tests__/migration.test.ts`:
 
@@ -1654,12 +1656,12 @@ describe('migration', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 migration.ts**
+- [x] **Step 3: 实现 migration.ts**
 
 Create `src/lib/sync/migration.ts`:
 
@@ -1719,12 +1721,12 @@ export async function migrateLegacyRepo(): Promise<MigrationResult> {
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: `migration.test.ts` 全部通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/migration.ts src/lib/sync/__tests__/migration.test.ts && git commit -m "feat: 旧 skill-sync 仓库一次性迁移"
@@ -1750,7 +1752,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/lib/sync/migrati
   - `GET /api/sync/conflicts` → `200 SyncConflict[]`
   - `GET/PUT /api/sync/endpoints` → `200 { endpoints }`；PUT 非法端名/空路径 → `400`
 
-- [ ] **Step 1: 创建五个路由**
+- [x] **Step 1: 创建五个路由**
 
 Create `src/app/api/sync/status/route.ts`:
 
@@ -1877,12 +1879,12 @@ export async function PUT(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 2: lint 与 tsc**
+- [x] **Step 2: lint 与 tsc**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run lint && npx tsc --noEmit`
 Expected: 无错误
 
-- [ ] **Step 3: dev 服务器冒烟**
+- [x] **Step 3: dev 服务器冒烟**
 
 Run:
 ```bash
@@ -1901,7 +1903,7 @@ rm -rf /tmp/aihome-smoke-repo /tmp/aihome-smoke-config /tmp/aihome-smoke-alpha
 ```
 Expected: collect 返回 `stats.new == 1`；status 显示 alpha 端与中心仓库；conflicts 返回 `[]`
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/app/api/sync && git commit -m "feat: sync API 路由（status/collect/push/conflicts/endpoints）"
@@ -1925,7 +1927,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/app/api/sync && 
   - `/sync` 页面：`main h1` 文本 `Skill Sync`；collect/push 按钮文本小写 `collect`/`push`；冲突标题 `冲突`；dry-run 复选框
   - 设置页新增「同步端点」区块（EndpointSettings 组件）
 
-- [ ] **Step 1: 写 SyncStatusPanel**
+- [x] **Step 1: 写 SyncStatusPanel**
 
 Create `src/components/sync/SyncStatusPanel.tsx`：
 
@@ -2029,7 +2031,7 @@ export function SyncStatusPanel({ state, onChanged }: Props) {
 
 注意：`border-divider`、`text-primary`、`text-secondary`、`font-heading` 为项目现有 Tailwind 自定义 token（见 board/settings 页面），保持统一；若 `bg-primary` 按钮样式与现有页面不一致，以现有按钮类为准微调。
 
-- [ ] **Step 2: 写 ConflictsList**
+- [x] **Step 2: 写 ConflictsList**
 
 Create `src/components/sync/ConflictsList.tsx`：
 
@@ -2075,7 +2077,7 @@ export function ConflictsList({ conflicts }: { conflicts: SyncConflict[] }) {
 }
 ```
 
-- [ ] **Step 3: 写同步页**
+- [x] **Step 3: 写同步页**
 
 Create `src/app/sync/page.tsx`：
 
@@ -2139,7 +2141,7 @@ export default function SyncPage() {
 }
 ```
 
-- [ ] **Step 4: 写 EndpointSettings 并接入设置页**
+- [x] **Step 4: 写 EndpointSettings 并接入设置页**
 
 Create `src/components/sync/EndpointSettings.tsx`：
 
@@ -2254,7 +2256,7 @@ Modify `src/app/settings/page.tsx`：在文件末尾 `</main>` 前（现有表�
 
 并在文件顶部 imports 增加：`import { EndpointSettings } from '@/components/sync/EndpointSettings';`
 
-- [ ] **Step 5: TopNav 增加 SYNC**
+- [x] **Step 5: TopNav 增加 SYNC**
 
 Modify `src/components/layout/TopNav.tsx` 的 `navItems`，在 AGENTS 之后插入：
 
@@ -2262,14 +2264,14 @@ Modify `src/components/layout/TopNav.tsx` 的 `navItems`，在 AGENTS 之后插�
 { href: '/sync', label: 'SYNC', testId: 'nav-sync' },
 ```
 
-- [ ] **Step 6: lint / tsc / 手工冒烟**
+- [x] **Step 6: lint / tsc / 手工冒烟**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run lint && npx tsc --noEmit`
 Expected: 无错误
 
 手工冒烟：`npm run dev` 后浏览器访问 `http://localhost:3000/sync`，确认状态面板、collect/push 按钮、冲突列表渲染正常；`/settings` 页出现「同步端点」区块。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/app/sync src/components/sync src/components/layout/TopNav.tsx src/app/settings/page.tsx && git commit -m "feat: 同步页与设置页端点配置 UI"
@@ -2288,7 +2290,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add src/app/sync src/com
 - Consumes: Task 9 API、Task 10 UI（h1 `Skill Sync`、按钮 `collect`/`push`）
 - Produces: `npm run test:e2e` 覆盖同步流程；dev server 以 `AIHOME_REPO_DIR`/`AIHOME_CONFIG_DIR` 指向 `e2e/.e2e-sync/` 隔离真实 home
 
-- [ ] **Step 1: 写 global-setup 生成隔离夹具**
+- [x] **Step 1: 写 global-setup 生成隔离夹具**
 
 Create `e2e/global-setup.ts`：
 
@@ -2322,7 +2324,7 @@ export default function globalSetup(): void {
 }
 ```
 
-- [ ] **Step 2: 改 playwright.config.ts**
+- [x] **Step 2: 改 playwright.config.ts**
 
 Modify `playwright.config.ts`：顶部加 `import * as path from 'path';` 与 `const e2eSyncRoot = path.join(__dirname, 'e2e', '.e2e-sync');`；顶层加 `globalSetup: './e2e/global-setup.ts',`；`webServer` 加 `env`：
 
@@ -2341,7 +2343,7 @@ Modify `playwright.config.ts`：顶部加 `import * as path from 'path';` 与 `c
   },
 ```
 
-- [ ] **Step 3: 写 08-sync.spec.ts**
+- [x] **Step 3: 写 08-sync.spec.ts**
 
 Create `e2e/tests/08-sync.spec.ts`：
 
@@ -2393,12 +2395,12 @@ test.describe('Skill Sync', () => {
 });
 ```
 
-- [ ] **Step 4: 跑 e2e**
+- [x] **Step 4: 跑 e2e**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test:e2e`
 Expected: 全绿（含既有 91 个用例）。若本机已有 dev server 在跑（reuseExistingServer），隔离守卫会失败——先停掉再跑。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add e2e/global-setup.ts e2e/tests/08-sync.spec.ts playwright.config.ts && git commit -m "test: 同步流程 e2e（隔离夹具）"
@@ -2411,7 +2413,7 @@ cd /Users/gstar/Documents/05-项目代码/AIHome && git add e2e/global-setup.ts 
 **Files:**
 - Modify: `/Users/gstar/skill-sync/README.md`（仓库外）
 
-- [ ] **Step 1: README 顶部加合并声明**
+- [x] **Step 1: README 顶部加合并声明**
 
 Modify `/Users/gstar/skill-sync/README.md`，在标题行 `# skill-sync` 之后插入：
 
@@ -2421,13 +2423,13 @@ Modify `/Users/gstar/skill-sync/README.md`，在标题行 `# skill-sync` 之后�
 > 已发布的 v0.1.0 三平台桌面版仍可使用，但建议改用 AIHome。
 ```
 
-- [ ] **Step 2: 提交并推送**
+- [x] **Step 2: 提交并推送**
 
 ```bash
 cd /Users/gstar/skill-sync && git add README.md && git commit -m "docs: 冻结仓库，功能并入 AIHome" && git push origin master
 ```
 
-- [ ] **Step 3: GitHub 仓库归档（人工确认）**
+- [x] **Step 3: GitHub 仓库归档（人工确认）**
 
 到 https://github.com/Justin-Ju-0413/skill-sync/settings 选择 Archive this repository（可选，建议归档避免误发版）。此项需用户手动操作或确认后由用户执行。
 
@@ -2437,22 +2439,22 @@ cd /Users/gstar/skill-sync && git add README.md && git commit -m "docs: 冻结�
 
 **Files:** 无新增
 
-- [ ] **Step 1: 全量质量门**
+- [x] **Step 1: 全量质量门**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run lint && npx tsc --noEmit && npm run build`
 Expected: 全部通过
 
-- [ ] **Step 2: 单测**
+- [x] **Step 2: 单测**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test`
 Expected: 全部通过（约 30+ 用例）
 
-- [ ] **Step 3: e2e**
+- [x] **Step 3: e2e**
 
 Run: `cd /Users/gstar/Documents/05-项目代码/AIHome && npm run test:e2e`
 Expected: 全绿（91 既有 + 4 新）
 
-- [ ] **Step 4: 真实机器冒烟（含迁移）**
+- [x] **Step 4: 真实机器冒烟（含迁移）**
 
 Run（本机有旧 `~/skill-sync`，真实默认目录）:
 ```bash
@@ -2469,7 +2471,7 @@ kill %1
 ```
 Expected: `legacy.present == true`（本机存在 ~/skill-sync）；迁移后 `legacy.migrated == true`、`copiedSkills == 73`；`summary.total_skills == 73`、`conflict_count == 1`、`endpoint_count == 4`；且 `~/.aihome/repo/common/` 下技能数与旧仓库一致。核对后可在 UI 里点一次 collect/push 走真实全流程。
 
-- [ ] **Step 5: 更新计划勾选并提交计划文档**
+- [x] **Step 5: 更新计划勾选并提交计划文档**
 
 ```bash
 cd /Users/gstar/Documents/05-项目代码/AIHome && git add docs/superpowers/plans/2026-08-05-aihome-sync-merge.md && git commit -m "docs: M1 同步核心并入计划完成"

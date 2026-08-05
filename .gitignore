@@ -51,3 +51,6 @@ next-env.d.ts
 
 # tool-generated docs (Qoder repowiki)
 /.qoder/
+
+# e2e sync fixture runtime state
+e2e/.e2e-sync/
