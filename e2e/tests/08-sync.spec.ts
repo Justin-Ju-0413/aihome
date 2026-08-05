@@ -19,7 +19,19 @@ test.describe('Skill Sync', () => {
   test('collect pulls skills and records the conflict', async ({ page, request }) => {
     await page.goto('/sync');
     await page.locator('button', { hasText: 'collect' }).click();
-    await expect(page.locator('text=冲突').first()).toBeVisible();
+
+    // collect 为异步请求：等待 summary.conflict_count 变为 1（collect 完成）再查
+    // conflicts，避免与进行中的 collect 产生竞态（"0 冲突"徽标在 collect 前已可见）
+    await expect
+      .poll(
+        async () => {
+          const res = await request.get('/api/sync/status');
+          const data = await res.json();
+          return data.state.summary.conflict_count;
+        },
+        { timeout: 15_000, message: 'collect 应记录 1 个冲突' }
+      )
+      .toBe(1);
 
     const conflicts = await (await request.get('/api/sync/conflicts')).json();
     expect(conflicts).toHaveLength(1);
