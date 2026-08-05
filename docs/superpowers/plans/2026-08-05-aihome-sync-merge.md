@@ -1242,9 +1242,10 @@ describe('push', () => {
   it('dry run does not touch endpoints', async () => {
     await makeSkill(endpoints.alpha, 'foo', 'v1');
     await collect();
+    await fs.rm(endpoints.gamma, { recursive: true, force: true });
     const result = await push([], true);
     expect(result.stats.updated).toBeGreaterThan(0);
-    expect(await scanSkills(endpoints.gamma)).toEqual({});
+    await expect(fs.access(endpoints.gamma)).rejects.toThrow(); // dryRun 不创建端目录
   });
 
   it('rejects unknown endpoint names', async () => {
@@ -1373,7 +1374,7 @@ export async function push(only?: string[], dryRun = false): Promise<PushResult>
 
   for (const [endpoint, endpointPath] of Object.entries(endpoints).sort()) {
     try {
-      await mkdir(endpointPath, { recursive: true });
+      if (!dryRun) await mkdir(endpointPath, { recursive: true });
       const remote = await scanSkills(endpointPath);
       for (const name of commonNames) {
         const entry = skills[name];
