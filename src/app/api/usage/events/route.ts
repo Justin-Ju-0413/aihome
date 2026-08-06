@@ -35,12 +35,10 @@ export async function GET(request: NextRequest) {
       const monthStart = new Date(now);
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
-      const since = Math.min(
-        now - Math.max(rangeMs(range), 30 * 24 * 3600_000),
-        monthStart.getTime()
-      );
-      const events = cache.queryEvents(sources, since);
-      const totalsEvents = cache.queryEvents(ACTIVE_SOURCES, since);
+      const klineSince = now - Math.max(rangeMs(range), 30 * 24 * 3600_000);
+      const totalsSince = Math.min(klineSince, monthStart.getTime());
+      const events = cache.queryEvents(sources, klineSince);
+      const totalsEvents = cache.queryEvents(ACTIVE_SOURCES, totalsSince);
       const bucketMs = bucketMsForRange(range);
       const windowStart = now - rangeMs(range);
       const windowEvents = events.filter((e) => e.timestamp >= windowStart);
@@ -79,7 +77,7 @@ export async function GET(request: NextRequest) {
           bySource: groupBySource(windowEvents),
           topModels: groupByModel(windowEvents),
         },
-        table: buildTable(events, now),
+        table: buildTable(cache.queryEvents(sources, totalsSince), now),
         sourceStatus,
       });
     } finally {
