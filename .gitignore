@@ -57,3 +57,6 @@ next-env.d.ts
 
 # e2e sync fixture runtime state
 e2e/.e2e-sync/
+
+# e2e usage fixture runtime state
+e2e/.e2e-usage/

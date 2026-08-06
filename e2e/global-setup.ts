@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { DatabaseSync } from 'node:sqlite';
 
 const root = path.resolve(__dirname, '..');
 const syncRoot = path.join(root, 'e2e', '.e2e-sync');
@@ -24,4 +25,64 @@ export default function globalSetup(): void {
     JSON.stringify({ version: 1, endpoints: { alpha, beta } }, null, 2)
   );
   fs.mkdirSync(repo, { recursive: true });
+
+  const usageRoot = path.join(root, 'e2e', '.e2e-usage');
+  fs.rmSync(usageRoot, { recursive: true, force: true });
+  fs.mkdirSync(path.join(usageRoot, 'claude-projects', 'proj'), { recursive: true });
+  fs.mkdirSync(path.join(usageRoot, 'codex-sessions', '2026', '08'), { recursive: true });
+
+  const hourAgo = Math.floor(Date.now() / 1000) - 3600;
+  const ccDb = new DatabaseSync(path.join(usageRoot, 'cc-switch.db'));
+  ccDb.exec(`CREATE TABLE proxy_request_logs (
+    request_id TEXT PRIMARY KEY, provider_id TEXT, app_type TEXT, model TEXT,
+    input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0,
+    cache_read_tokens INTEGER DEFAULT 0, cache_creation_tokens INTEGER DEFAULT 0,
+    total_cost_usd TEXT DEFAULT '0', latency_ms INTEGER, session_id TEXT,
+    status_code INTEGER, created_at INTEGER)`);
+  ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'r-ok', 'p1', 'opencode', 'deepseek-v4-flash', 100, 50, 0, 0, '0.01', 300, 's1', 200, hourAgo);
+  ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'r-fail', 'p1', 'opencode', 'deepseek-v4-flash', 1, 1, 0, 0, '0', 100, 's1', 500, hourAgo - 60);
+  ccDb.close();
+
+  fs.writeFileSync(
+    path.join(usageRoot, 'claude-projects', 'proj', 's1.jsonl'),
+    JSON.stringify({
+      type: 'assistant', uuid: 'u1', timestamp: new Date(Date.now() - 3600_000).toISOString(),
+      message: { model: 'glm-5.2', usage: { input_tokens: 500, output_tokens: 100,
+        cache_read_input_tokens: 50, cache_creation_input_tokens: 10 } },
+    }) + '\n'
+  );
+
+  fs.writeFileSync(
+    path.join(usageRoot, 'codex-sessions', '2026', '08', 'rollout.jsonl'),
+    JSON.stringify({ type: 'event_msg', payload: { model: 'gpt-5.5' } }) + '\n' +
+    JSON.stringify({
+      type: 'event_msg',
+      timestamp: new Date(Date.now() - 3600_000).toISOString(),
+      payload: { type: 'token_count', info: { last_token_usage: {
+        input_tokens: 800, cached_input_tokens: 100, output_tokens: 200 } } },
+    }) + '\n'
+  );
+
+  const ocDb = new DatabaseSync(path.join(usageRoot, 'opencode.db'));
+  ocDb.exec(`CREATE TABLE session (id TEXT PRIMARY KEY, cost REAL NOT NULL DEFAULT 0,
+    tokens_input INTEGER NOT NULL DEFAULT 0, tokens_output INTEGER NOT NULL DEFAULT 0,
+    tokens_reasoning INTEGER NOT NULL DEFAULT 0, time_created INTEGER NOT NULL);
+    CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
+    time_created INTEGER NOT NULL, data TEXT NOT NULL)`);
+  ocDb.prepare(`INSERT INTO session VALUES (?, ?, ?, ?, ?, ?)`).run(
+    's-oc', 0.25, 300, 150, 0, Date.now() - 3600_000);
+  ocDb.prepare(`INSERT INTO message VALUES (?, ?, ?, ?)`).run(
+    'm-oc', 's-oc', Date.now() - 3600_000, JSON.stringify({ model: { modelID: 'deepseek-v4-flash' } }));
+  ocDb.close();
+
+  const hDb = new DatabaseSync(path.join(usageRoot, 'hermes.db'));
+  hDb.exec(`CREATE TABLE sessions (id TEXT PRIMARY KEY, source TEXT, model TEXT, started_at REAL,
+    input_tokens INTEGER DEFAULT 0, output_tokens INTEGER DEFAULT 0,
+    cache_read_tokens INTEGER DEFAULT 0, cache_write_tokens INTEGER DEFAULT 0,
+    estimated_cost_usd REAL, actual_cost_usd REAL)`);
+  hDb.prepare(`INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'h-1', 'cli', 'qwen3.5-9b', (Date.now() - 3600_000) / 1000, 200, 80, 5, 2, 0, 0.05);
+  hDb.close();
 }

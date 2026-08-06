@@ -34,6 +34,7 @@ export type SourceStatus = 'ready' | 'unavailable' | 'error' | 'not-supported';
 export interface SourceInfo {
   id: UsageSource;
   label: string;
+  path?: string;
   status: SourceStatus;
   message?: string;
   lastScanAt?: number;

@@ -7,12 +7,13 @@ test.describe('Navigation & Routing', () => {
     await expect(page).toHaveURL(/\/board/);
   });
 
-  test('top nav has 4 navigation links', async ({ page }) => {
+  test('top nav has 5 navigation links', async ({ page }) => {
     await page.goto('/board');
     await expect(page.locator(selectors.nav.board)).toBeVisible();
     await expect(page.locator(selectors.nav.graph)).toBeVisible();
     await expect(page.locator(selectors.nav.agents)).toBeVisible();
     await expect(page.locator(selectors.nav.settings)).toBeVisible();
+    await expect(page.locator(selectors.nav.usage)).toBeVisible();
   });
 
   test('Board nav link navigates to /board', async ({ page }) => {
@@ -41,6 +42,13 @@ test.describe('Navigation & Routing', () => {
     await page.locator(selectors.nav.settings).click();
     await expect(page).toHaveURL(/\/settings/);
     await expect(page.locator('main h1')).toContainText('Settings');
+  });
+
+  test('Usage nav link navigates to /usage', async ({ page }) => {
+    await page.goto('/board');
+    await page.locator(selectors.nav.usage).click();
+    await expect(page).toHaveURL(/\/usage/);
+    await expect(page.locator('main h1')).toContainText('Usage');
   });
 
   test('current page is highlighted in nav', async ({ page }) => {

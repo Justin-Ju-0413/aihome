@@ -2896,7 +2896,7 @@ git commit -m "feat(usage): add stat charts and collapsible usage table"
 - `.e2e-usage/opencode.db`：session 1 行 + message（1 小时前）。
 - `.e2e-usage/hermes.db`：session 1 行（1 小时前）。
 
-- [ ] **Step 1: 更新 selectors.ts**
+- [x] **Step 1: 更新 selectors.ts**
 
 `nav` 加 `usage: '[data-testid="nav-usage"]'`；新增 `usage` 块：
 
@@ -2916,7 +2916,7 @@ usage: {
 },
 ```
 
-- [ ] **Step 2: 更新 global-setup.ts**
+- [x] **Step 2: 更新 global-setup.ts**
 
 在文件顶部 `import { DatabaseSync } from 'node:sqlite';`（playwright 跑在 Node 22+，OK）。在现有 fixture 创建后追加：
 
@@ -2982,7 +2982,7 @@ hDb.prepare(`INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
 hDb.close();
 ```
 
-- [ ] **Step 3: 更新 playwright.config.ts**
+- [x] **Step 3: 更新 playwright.config.ts**
 
 `webServer.env` 追加：
 
@@ -2996,7 +2996,7 @@ AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
 
 > 注：`.e2e-usage` 在 `e2e/` 下、`.e2e-sync` 同级；用 `path.join(root, '.e2e-usage', ...)` 更直白——实现时以 root 为准。
 
-- [ ] **Step 4: 更新 01-navigation.spec.ts**
+- [x] **Step 4: 更新 01-navigation.spec.ts**
 
 - 标题改为 `'top nav has 5 navigation links'`，在 agents 断言后加：
 
@@ -3015,7 +3015,7 @@ test('Usage nav link navigates to /usage', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 5: 写 09-usage.spec.ts**
+- [x] **Step 5: 写 09-usage.spec.ts**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -3066,12 +3066,12 @@ test.describe('Usage Aggregator', () => {
 
 > 注：`toBeEnabled` 断言 rescan 完成（按钮从 disabled 恢复）。
 
-- [ ] **Step 6: 运行 e2e**
+- [x] **Step 6: 运行 e2e**（2026-08-06 执行：3000 端口被 travel-planner dev server 占用，经临时 3001 配置运行全套，106 passed 含 01-navigation 5 链接、09-usage 5 用例；临时配置已删除）
 
 Run: `npm run test:e2e`
 Expected: 全部通过（含 01-navigation 5 链接、09-usage 5 用例）。
 
-- [ ] **Step 7: lint + commit**
+- [x] **Step 7: lint + commit**
 
 Run: `npm run lint`
 Expected: 0 warnings。

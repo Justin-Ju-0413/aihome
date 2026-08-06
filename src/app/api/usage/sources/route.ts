@@ -15,6 +15,7 @@ export async function GET() {
         sources.push({
           id,
           label: SOURCE_LABELS[id],
+          path: p,
           status: existsSync(p) ? 'ready' : 'unavailable',
           message: existsSync(p) ? undefined : `not found: ${p}`,
           eventCount: cache.countEvents(id),
