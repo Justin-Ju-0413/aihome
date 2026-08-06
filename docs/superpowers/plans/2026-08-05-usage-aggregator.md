@@ -3110,7 +3110,7 @@ git commit -m "test(usage): add e2e fixtures and usage spec"
 - Incremental local indexer with checkpoint + dedupe (cache at `~/.aihome/usage-cache.db`).
 ```
 
-- [x] **Step 3: ccswitch-usage-widget 重定向**
+- [x] **Step 3: ccswitch-usage-widget 重定向**（2026-08-06 执行：README 已替换并本地提交 c56c00a；push 被分支保护拒绝 GH006，需 PR 落地；description 已更新）
 
 ```bash
 gh repo view Justin-Ju-0413/ccswitch-usage-widget --json nameWithOwner
@@ -3129,7 +3129,7 @@ gh repo view Justin-Ju-0413/ccswitch-usage-widget --json nameWithOwner
 Run: `npm run lint && npm run test && npm run build`
 Expected: 全绿；`npm run test:e2e` 亦全绿。
 
-- [x] **Step 5: Commit + push**（2026-08-06 执行：按调度指令提交留在本地，不 push AIHome 分支；旧仓库 ccswitch-usage-widget 已推送）
+- [x] **Step 5: Commit + push**（2026-08-06 执行：按调度指令提交留在本地，不 push AIHome 分支；旧仓库 ccswitch-usage-widget 推送被分支保护拒绝 GH006，未落地）
 
 ```bash
 git add README.md CHANGELOG.md
