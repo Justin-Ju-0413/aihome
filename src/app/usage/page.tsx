@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { OverviewCards } from '@/components/usage/OverviewCards';
 import { UsageFilters } from '@/components/usage/UsageFilters';
+import { KLineChart } from '@/components/usage/KLineChart';
 import type { Totals, UsageRange, KlineBucket, TableRow } from '@/lib/usage/aggregate';
 
 interface EventsResponse {
@@ -24,7 +25,7 @@ async function fetchEvents(source: string, range: UsageRange, dimension: string)
 export default function UsagePage() {
   const [source, setSource] = useState('all');
   const [range, setRange] = useState<UsageRange>('24h');
-  const [dimension] = useState<'cost' | 'tokens'>('cost');
+  const [dimension, setDimension] = useState<'cost' | 'tokens'>('cost');
   const [data, setData] = useState<EventsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [rescanning, setRescanning] = useState(false);
@@ -96,7 +97,17 @@ export default function UsagePage() {
           </div>
           <OverviewCards totals={data.totals} />
           <div data-testid="usage-kline" className="rounded-lg border border-divider bg-white/80 p-4 mb-6">
-            <p className="text-xs text-secondary">K-line chart lands in Task 13</p>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-heading text-lg font-bold text-primary">K-line</h2>
+              <button
+                data-testid="usage-dimension"
+                onClick={() => setDimension((d) => (d === 'cost' ? 'tokens' : 'cost'))}
+                className="text-xs text-secondary hover:text-primary"
+              >
+                {dimension === 'cost' ? 'Amount' : 'Tokens'}
+              </button>
+            </div>
+            <KLineChart buckets={data.kline} dimension={dimension} />
           </div>
           <div data-testid="usage-stats" className="rounded-lg border border-divider bg-white/80 p-4 mb-6">
             <p className="text-xs text-secondary">Stat charts land in Task 14</p>
