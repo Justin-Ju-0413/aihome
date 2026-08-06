@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { OverviewCards } from '@/components/usage/OverviewCards';
 import { UsageFilters } from '@/components/usage/UsageFilters';
 import { KLineChart } from '@/components/usage/KLineChart';
+import { StatCharts } from '@/components/usage/StatCharts';
+import { UsageTable } from '@/components/usage/UsageTable';
 import type { Totals, UsageRange, KlineBucket, TableRow } from '@/lib/usage/aggregate';
 
 interface EventsResponse {
@@ -109,12 +111,10 @@ export default function UsagePage() {
             </div>
             <KLineChart buckets={data.kline} dimension={dimension} />
           </div>
-          <div data-testid="usage-stats" className="rounded-lg border border-divider bg-white/80 p-4 mb-6">
-            <p className="text-xs text-secondary">Stat charts land in Task 14</p>
+          <div className="mb-6">
+            <StatCharts stats={data.stats} />
           </div>
-          <div data-testid="usage-table" className="rounded-lg border border-divider bg-white/80 p-4">
-            <p className="text-xs text-secondary">Usage table lands in Task 14</p>
-          </div>
+          <UsageTable rows={data.table} />
         </>
       ) : null}
     </main>

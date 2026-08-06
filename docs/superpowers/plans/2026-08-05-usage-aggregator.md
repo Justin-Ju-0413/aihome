@@ -2707,7 +2707,7 @@ git commit -m "feat(usage): add canvas k-line chart with hover tooltip"
 - 成本阈值色：`cost < 20` 绿（`text-emerald-600`）、`20–50` 黄（`text-amber-600`）、`≥50` 红（`text-red-600`），应用于 24h 与 Month 两列。
 - 空状态："No usage data yet — click Rescan after using your AI tools."
 
-- [ ] **Step 1: 写 StatCharts 组件**
+- [x] **Step 1: 写 StatCharts 组件**
 
 ```tsx
 'use client';
@@ -2777,7 +2777,7 @@ export function StatCharts({ stats }: { stats: Stats }) {
 }
 ```
 
-- [ ] **Step 2: 写 UsageTable 组件**
+- [x] **Step 2: 写 UsageTable 组件**
 
 ```tsx
 'use client';
@@ -2860,15 +2860,15 @@ export function UsageTable({ rows }: { rows: TableRow[] }) {
 
 > 注意：`<>` fragment 在 map 内需要 `key`——改为 `Fragment`（`import { Fragment, useState } from 'react'`）并在 `<Fragment key={row.source}>` 上挂 key，且子 `<tr>` 不再需要 key。实现时按 lint 提示修正。
 
-- [ ] **Step 3: 接入 usage/page.tsx**
+- [x] **Step 3: 接入 usage/page.tsx**
 
 `data-testid="usage-stats"` 占位替换为 `<StatCharts stats={data.stats} />`（外留 mb-6 容器），`data-testid="usage-table"` 占位替换为 `<UsageTable rows={data.table} />`，并 import 两个组件。
 
-- [ ] **Step 4: 手工验证**
+- [x] **Step 4: 手工验证**（2026-08-06 执行时跳过：dev server 验证由 Task 15 e2e 的 webServer + 09-usage.spec.ts 覆盖）
 
 Run: `npm run dev` → /usage：图表渲染、表格可折叠、成本颜色正确。
 
-- [ ] **Step 5: lint + commit**
+- [x] **Step 5: lint + commit**
 
 Run: `npm run lint`
 Expected: 0 warnings。
