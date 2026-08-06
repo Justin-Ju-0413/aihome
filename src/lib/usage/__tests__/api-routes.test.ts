@@ -12,11 +12,17 @@ const ccDb = path.join(dir, 'cc.db');
 const cacheDb = path.join(dir, 'cache.db');
 const prev = { ...process.env };
 
+const now = Date.now();
+const monthStart = new Date();
+monthStart.setDate(1);
+monthStart.setHours(0, 0, 0, 0);
+const safeTs = Math.max(now - 3600_000, monthStart.getTime() + 5 * 60_000);
+
 beforeAll(() => {
   makeCcSwitchDb(ccDb, [
     { request_id: 'r1', app_type: 'opencode', model: 'deepseek-v4-flash', input_tokens: 10,
       output_tokens: 5, total_cost_usd: '0.01', status_code: 200,
-      created_at: Math.floor((Date.now() - 3600_000) / 1000) },
+      created_at: Math.floor(safeTs / 1000) },
   ]);
   const db = new DatabaseSync(path.join(dir, 'oc.db'));
   db.exec(`CREATE TABLE session (id TEXT PRIMARY KEY, cost REAL NOT NULL DEFAULT 0,
@@ -25,9 +31,9 @@ beforeAll(() => {
     CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
     time_created INTEGER NOT NULL, data TEXT NOT NULL)`);
   db.prepare(`INSERT INTO session VALUES (?, ?, ?, ?, ?, ?)`).run(
-    's1', 0.5, 100, 200, 0, Date.now() - 3600_000);
+    's1', 0.5, 100, 200, 0, safeTs);
   db.prepare(`INSERT INTO message VALUES (?, ?, ?, ?)`).run(
-    'm1', 's1', Date.now() - 3600_000, JSON.stringify({ model: { modelID: 'm2' } }));
+    'm1', 's1', safeTs, JSON.stringify({ model: { modelID: 'm2' } }));
   db.close();
   Object.assign(process.env, {
     AIHOME_USAGE_CCSWITCH_DB: ccDb,
@@ -67,6 +73,13 @@ describe('usage API routes', () => {
   it('events: invalid range falls back to default', async () => {
     const res = await eventsGet(makeRequest('http://localhost/api/usage/events?range=bogus'));
     expect(res.status).toBe(200);
+  });
+  it('events: invalid source falls back to all sources', async () => {
+    const res = await eventsGet(makeRequest('http://localhost/api/usage/events?source=bogus'));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.sourceStatus.length).toBe(6);
+    expect(data.totals).toBeDefined();
   });
   it('sources: reports availability without indexing', async () => {
     const res = await sourcesGet();

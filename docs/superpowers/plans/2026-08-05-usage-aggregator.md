@@ -34,7 +34,7 @@
 **Interfaces:**
 - Produces: `UsageSource`, `ActiveUsageSource`, `UsageEvent`, `ScannedEvent`, `SourceStatus`, `SourceInfo`, `Checkpoint`；`USAGE_SOURCE_PATHS`, `usageCachePath()`。
 
-- [ ] **Step 1: 写 types.ts**
+- [x] **Step 1: 写 types.ts**
 
 ```ts
 export type UsageSource =
@@ -80,7 +80,7 @@ export interface SourceInfo {
 }
 ```
 
-- [ ] **Step 2: 写 paths.ts**
+- [x] **Step 2: 写 paths.ts**
 
 ```ts
 import * as os from 'os';
@@ -107,17 +107,17 @@ export function usageCachePath(): string {
 }
 ```
 
-- [ ] **Step 3: 更新 vitest.config.ts 与 @types/node**
+- [x] **Step 3: 更新 vitest.config.ts 与 @types/node**
 
 `vitest.config.ts` 的 `include` 改为：`['src/lib/sync/**/*.test.ts', 'src/lib/usage/**/*.test.ts']`。
 `package.json` 中 `"@types/node": "^20"` 改为 `"^22"`，然后 `npm install`（node:sqlite 类型在 @types/node 22+）。
 
-- [ ] **Step 4: 验证**
+- [x] **Step 4: 验证**
 
 Run: `npm run lint && npx tsc --noEmit`
 Expected: 无错误（types.ts/paths.ts 可被空引用，tsconfig 需能解析 `node:sqlite`——此处只验证依赖安装成功）。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/types.ts src/lib/usage/paths.ts vitest.config.ts package.json package-lock.json
@@ -144,7 +144,7 @@ git commit -m "feat(usage): add usage types, paths, and test config"
 **定价公式**（每百万 token）：
 `cost = (input - cacheRead - cacheWrite) * inputPerM + cacheRead * cacheReadPerM + cacheWrite * cacheWritePerM + output * outputPerM`，全部除以 1e6。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -181,12 +181,12 @@ describe('loadCcSwitchPricing', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/pricing.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 pricing.ts**
+- [x] **Step 3: 实现 pricing.ts**
 
 ```ts
 import { existsSync } from 'fs';
@@ -265,12 +265,12 @@ export function loadCcSwitchPricing(dbPath: string): Record<string, ModelPricing
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/pricing.test.ts`
 Expected: PASS（3 组全过）。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/pricing.ts src/lib/usage/__tests__/pricing.test.ts
@@ -328,7 +328,7 @@ CREATE TABLE IF NOT EXISTS meta (
 );
 ```
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
@@ -382,12 +382,12 @@ describe('UsageCache', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/cache.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 cache.ts**
+- [x] **Step 3: 实现 cache.ts**
 
 ```ts
 import * as fs from 'fs';
@@ -512,12 +512,12 @@ export class UsageCache {
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/cache.test.ts`
 Expected: PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/cache.ts src/lib/usage/__tests__/cache.test.ts
@@ -543,7 +543,7 @@ git commit -m "feat(usage): add incremental cache with checkpoint and dedupe"
 - 字段映射：`app_type`→provider、`model`→model、`input/output/cache_read/cache_creation_tokens`→tokens、`total_cost_usd`（TEXT）→`Number()`、`latency_ms`、`session_id`、`created_at*1000`→timestamp。
 - `rawId = request_id`；新 checkpoint `{ ts: maxCreatedAt, mtime: 0 }`（无行则保持原 cp）。
 
-- [ ] **Step 1: 写测试 helpers（fixtures.ts）**
+- [x] **Step 1: 写测试 helpers（fixtures.ts）**
 
 ```ts
 import * as fs from 'fs';
@@ -591,7 +591,7 @@ export function rmTmp(dir: string): void {
 }
 ```
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll } from 'vitest';
@@ -640,12 +640,12 @@ describe('scanCcSwitch', () => {
 });
 ```
 
-- [ ] **Step 3: 运行确认失败**
+- [x] **Step 3: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/ccswitch.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 4: 实现 ccswitch.ts**
+- [x] **Step 4: 实现 ccswitch.ts**
 
 ```ts
 import { existsSync } from 'fs';
@@ -699,12 +699,12 @@ export function scanCcSwitch(
 }
 ```
 
-- [ ] **Step 5: 运行确认通过**
+- [x] **Step 5: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/ccswitch.test.ts`
 Expected: PASS。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/usage/sources/ccswitch.ts src/lib/usage/__tests__/ccswitch.test.ts src/lib/usage/__tests__/fixtures.ts
@@ -733,7 +733,7 @@ git commit -m "feat(usage): add cc-switch adapter"
 - cost = `calculateCost(usage, pricingProvider(model))`；无定价则 `costUsd = 0`。
 - provider = `'claude-code'`；rawId = `<文件名>:<d.uuid>`（无 uuid 用行号）；新 checkpoint `{ ts: 0, mtime: maxScannedFileMtime }`。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll } from 'vitest';
@@ -800,12 +800,12 @@ describe('scanClaude', () => {
 
 > 注：第二个用例中 `checkpointMtimeAfterFirstScan` 取第一个用例返回的 `checkpoint.mtime`（在测试文件顶部用 `let checkpointMtimeAfterFirstScan = 0;` 声明，第一个用例末尾赋值）。
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/claude.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 claude.ts**
+- [x] **Step 3: 实现 claude.ts**
 
 ```ts
 import * as fs from 'fs';
@@ -905,12 +905,12 @@ export function scanClaude(
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/claude.test.ts`
 Expected: PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/sources/claude.ts src/lib/usage/__tests__/claude.test.ts
@@ -940,7 +940,7 @@ git commit -m "feat(usage): add claude-code jsonl adapter"
 - provider = `'codex'`；rawId = `<文件名>:<事件 uuid/id 或行号>`；checkpoint.mtime = max 文件 mtime。
 - 新版本 rollout `info: null` 自然跳过（无数据，诚实降级）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll } from 'vitest';
@@ -1001,12 +1001,12 @@ describe('scanCodex', () => {
 
 > 注：rawId 用行号时，测试断言 `rollout-1.jsonl:1` 对应 usageEvent 所在行（第 2 行，0 起）。若实现用事件内 `id` 字段且 fixture 无 id，行号需与实现一致——实现中 rawId 用 `payload.id ?? 行号`，fixture 无 id 时即为行号。
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/codex.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 codex.ts**
+- [x] **Step 3: 实现 codex.ts**
 
 ```ts
 import * as fs from 'fs';
@@ -1083,12 +1083,12 @@ export function scanCodex(
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/codex.test.ts`
 Expected: PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/sources/codex.ts src/lib/usage/__tests__/codex.test.ts
@@ -1113,7 +1113,7 @@ git commit -m "feat(usage): add codex rollout adapter"
 - model：取该会话最早一条 message 的 `json_extract(data, '$.model.modelID')`（已验证 message.data JSON 含 `model.modelID`），无则 `'unknown'`。
 - provider = `'opencode'`；rawId = session `id`；checkpoint.ts = max `time_created`。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll } from 'vitest';
@@ -1174,12 +1174,12 @@ describe('scanOpencode', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/opencode.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 opencode.ts**
+- [x] **Step 3: 实现 opencode.ts**
 
 ```ts
 import { existsSync } from 'fs';
@@ -1231,12 +1231,12 @@ export function scanOpencode(
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/opencode.test.ts`
 Expected: PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/sources/opencode.ts src/lib/usage/__tests__/opencode.test.ts
@@ -1260,7 +1260,7 @@ git commit -m "feat(usage): add opencode adapter"
 - cost = `estimated_cost_usd`（空/0 时用 `actual_cost_usd`）；token 列直映（`cache_write_tokens`→cacheWrite）；`source`→provider；`started_at*1000`→timestamp。
 - rawId = `id`；checkpoint.ts = max `started_at`（保留小数原样，比较用 `> cp.ts` 即可）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll } from 'vitest';
@@ -1310,12 +1310,12 @@ describe('scanHermes', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/hermes.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 hermes.ts**
+- [x] **Step 3: 实现 hermes.ts**
 
 ```ts
 import { existsSync } from 'fs';
@@ -1368,12 +1368,12 @@ export function scanHermes(
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/hermes.test.ts`
 Expected: PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/sources/hermes.ts src/lib/usage/__tests__/hermes.test.ts
@@ -1397,7 +1397,7 @@ git commit -m "feat(usage): add hermes adapter"
   - `function runIndex(only?: ActiveUsageSource[]): { sources: SourceInfo[]; inserted: number }`
   - `function indexIfStale(maxAgeMs = 5 * 60_000): void`（events 路由用：meta `last_index_ms` 超时则 runIndex）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
@@ -1473,12 +1473,12 @@ describe('SOURCE_LABELS', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/indexer.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 sources/index.ts**
+- [x] **Step 3: 实现 sources/index.ts**
 
 ```ts
 import { existsSync } from 'fs';
@@ -1522,7 +1522,7 @@ export function scanSource(
 }
 ```
 
-- [ ] **Step 4: 实现 indexer.ts**
+- [x] **Step 4: 实现 indexer.ts**
 
 ```ts
 import { USAGE_SOURCE_PATHS, usageCachePath } from './paths';
@@ -1620,12 +1620,12 @@ export function indexIfStale(maxAgeMs = 5 * 60_000): void {
 }
 ```
 
-- [ ] **Step 5: 运行确认通过**
+- [x] **Step 5: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/indexer.test.ts`
 Expected: PASS。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/usage/sources/index.ts src/lib/usage/indexer.ts src/lib/usage/__tests__/indexer.test.ts
@@ -1656,7 +1656,7 @@ git commit -m "feat(usage): add source registry and incremental indexer"
   - `interface TableRow { source: string; cost24h: number; tokens24h: number; costMonth: number; tokensMonth: number; models: Array<{ model: string; cost24h: number; tokens24h: number; costMonth: number; tokensMonth: number }> }`
   - `function buildTable(events: UsageEvent[], now?: number): TableRow[]`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -1745,12 +1745,12 @@ describe('buildTable', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/aggregate.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 aggregate.ts**
+- [x] **Step 3: 实现 aggregate.ts**
 
 ```ts
 import type { UsageEvent } from './types';
@@ -1940,12 +1940,12 @@ export function buildTable(events: UsageEvent[], now = Date.now()): TableRow[] {
 }
 ```
 
-- [ ] **Step 4: 运行确认通过**
+- [x] **Step 4: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/aggregate.test.ts`
 Expected: PASS。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/aggregate.ts src/lib/usage/__tests__/aggregate.test.ts
@@ -1981,7 +1981,7 @@ interface EventsResponse {
 }
 ```
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
@@ -2069,12 +2069,12 @@ describe('usage API routes', () => {
 });
 ```
 
-- [ ] **Step 2: 运行确认失败**
+- [x] **Step 2: 运行确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/api-routes.test.ts`
 Expected: FAIL（模块不存在）。
 
-- [ ] **Step 3: 实现 events/route.ts**
+- [x] **Step 3: 实现 events/route.ts**
 
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -2150,7 +2150,7 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 4: 实现 sources/route.ts**
+- [x] **Step 4: 实现 sources/route.ts**
 
 ```ts
 import { NextResponse } from 'next/server';
@@ -2194,7 +2194,7 @@ export async function GET() {
 
 > 注：`ActiveUsageSource` 仅在类型上用，未直接引用则从 import 中移除，保证 lint 零告警。
 
-- [ ] **Step 5: 实现 rescan/route.ts**
+- [x] **Step 5: 实现 rescan/route.ts**
 
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -2219,17 +2219,17 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-- [ ] **Step 6: 运行确认通过**
+- [x] **Step 6: 运行确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/api-routes.test.ts`
 Expected: PASS。
 
-- [ ] **Step 7: lint + 全量单测**
+- [x] **Step 7: lint + 全量单测**
 
 Run: `npm run lint && npm run test`
 Expected: 全部通过。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/app/api/usage src/lib/usage/__tests__/api-routes.test.ts

@@ -1,5 +1,5 @@
 import { existsSync } from 'fs';
-import type { ActiveUsageSource, Checkpoint, ScannedEvent, UsageSource } from '../types';
+import type { ActiveUsageSource, Checkpoint, ScannedEvent } from '../types';
 import { scanCcSwitch } from './ccswitch';
 import { scanClaude } from './claude';
 import { scanCodex } from './codex';

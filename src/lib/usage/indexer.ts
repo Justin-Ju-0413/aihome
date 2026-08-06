@@ -3,7 +3,6 @@ import { UsageCache } from './cache';
 import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo, type UsageSource } from './types';
 import { loadCcSwitchPricing, getPricing } from './pricing';
 import { scanSource, checkSourceAvailability } from './sources';
-import { existsSync } from 'fs';
 export { checkSourceAvailability };
 
 export const SOURCE_LABELS: Record<UsageSource, string> = {

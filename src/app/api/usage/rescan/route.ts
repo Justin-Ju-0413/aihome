@@ -4,7 +4,15 @@ import { runIndex } from '@/lib/usage/indexer';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const text = await request.text();
+    let body: Record<string, unknown> = {};
+    if (text) {
+      try {
+        body = JSON.parse(text) as Record<string, unknown>;
+      } catch {
+        return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+      }
+    }
     const onlyParam = Array.isArray(body.only) ? body.only : undefined;
     const only: ActiveUsageSource[] | undefined = onlyParam
       ? onlyParam.filter((n: unknown) => ACTIVE_SOURCES.includes(n as ActiveUsageSource)) as ActiveUsageSource[]

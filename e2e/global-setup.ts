@@ -31,7 +31,11 @@ export default function globalSetup(): void {
   fs.mkdirSync(path.join(usageRoot, 'claude-projects', 'proj'), { recursive: true });
   fs.mkdirSync(path.join(usageRoot, 'codex-sessions', '2026', '08'), { recursive: true });
 
-  const hourAgo = Math.floor(Date.now() / 1000) - 3600;
+  const nowMs = Date.now();
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const safeMs = Math.max(nowMs - 3600_000, todayStart.getTime() + 5 * 60_000);
+  const safeSec = Math.floor(safeMs / 1000);
   const ccDb = new DatabaseSync(path.join(usageRoot, 'cc-switch.db'));
   ccDb.exec(`CREATE TABLE proxy_request_logs (
     request_id TEXT PRIMARY KEY, provider_id TEXT, app_type TEXT, model TEXT,
@@ -40,15 +44,15 @@ export default function globalSetup(): void {
     total_cost_usd TEXT DEFAULT '0', latency_ms INTEGER, session_id TEXT,
     status_code INTEGER, created_at INTEGER)`);
   ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    'r-ok', 'p1', 'opencode', 'deepseek-v4-flash', 100, 50, 0, 0, '0.01', 300, 's1', 200, hourAgo);
+    'r-ok', 'p1', 'opencode', 'deepseek-v4-flash', 100, 50, 0, 0, '0.01', 300, 's1', 200, safeSec);
   ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    'r-fail', 'p1', 'opencode', 'deepseek-v4-flash', 1, 1, 0, 0, '0', 100, 's1', 500, hourAgo - 60);
+    'r-fail', 'p1', 'opencode', 'deepseek-v4-flash', 1, 1, 0, 0, '0', 100, 's1', 500, safeSec - 60);
   ccDb.close();
 
   fs.writeFileSync(
     path.join(usageRoot, 'claude-projects', 'proj', 's1.jsonl'),
     JSON.stringify({
-      type: 'assistant', uuid: 'u1', timestamp: new Date(Date.now() - 3600_000).toISOString(),
+      type: 'assistant', uuid: 'u1', timestamp: new Date(safeMs).toISOString(),
       message: { model: 'glm-5.2', usage: { input_tokens: 500, output_tokens: 100,
         cache_read_input_tokens: 50, cache_creation_input_tokens: 10 } },
     }) + '\n'
@@ -59,7 +63,7 @@ export default function globalSetup(): void {
     JSON.stringify({ type: 'event_msg', payload: { model: 'gpt-5.5' } }) + '\n' +
     JSON.stringify({
       type: 'event_msg',
-      timestamp: new Date(Date.now() - 3600_000).toISOString(),
+      timestamp: new Date(safeMs).toISOString(),
       payload: { type: 'token_count', info: { last_token_usage: {
         input_tokens: 800, cached_input_tokens: 100, output_tokens: 200 } } },
     }) + '\n'
@@ -72,9 +76,9 @@ export default function globalSetup(): void {
     CREATE TABLE message (id TEXT PRIMARY KEY, session_id TEXT NOT NULL,
     time_created INTEGER NOT NULL, data TEXT NOT NULL)`);
   ocDb.prepare(`INSERT INTO session VALUES (?, ?, ?, ?, ?, ?)`).run(
-    's-oc', 0.25, 300, 150, 0, Date.now() - 3600_000);
+    's-oc', 0.25, 300, 150, 0, safeMs);
   ocDb.prepare(`INSERT INTO message VALUES (?, ?, ?, ?)`).run(
-    'm-oc', 's-oc', Date.now() - 3600_000, JSON.stringify({ model: { modelID: 'deepseek-v4-flash' } }));
+    'm-oc', 's-oc', safeMs, JSON.stringify({ model: { modelID: 'deepseek-v4-flash' } }));
   ocDb.close();
 
   const hDb = new DatabaseSync(path.join(usageRoot, 'hermes.db'));
@@ -83,6 +87,6 @@ export default function globalSetup(): void {
     cache_read_tokens INTEGER DEFAULT 0, cache_write_tokens INTEGER DEFAULT 0,
     estimated_cost_usd REAL, actual_cost_usd REAL)`);
   hDb.prepare(`INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    'h-1', 'cli', 'qwen3.5-9b', (Date.now() - 3600_000) / 1000, 200, 80, 5, 2, 0, 0.05);
+    'h-1', 'cli', 'qwen3.5-9b', safeSec, 200, 80, 5, 2, 0, 0.05);
   hDb.close();
 }

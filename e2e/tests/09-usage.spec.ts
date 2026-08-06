@@ -33,6 +33,7 @@ test.describe('Usage Aggregator', () => {
     await page.goto('/usage');
     await page.locator(selectors.usage.sourceClaude).click();
     await expect(page.locator(selectors.usage.table)).toContainText('claude');
+    await expect(page.locator(selectors.usage.table)).not.toContainText('cc-switch');
   });
 
   test('rescan flow refreshes data', async ({ page }) => {

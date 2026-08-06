@@ -16,6 +16,7 @@ export function KLineChart({ buckets, dimension }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hover, setHover] = useState<{ x: number; y: number; bucket: KlineBucket } | null>(null);
+  const [width, setWidth] = useState(300);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -26,6 +27,7 @@ export function KLineChart({ buckets, dimension }: Props) {
 
     const draw = () => {
       const rect = container.getBoundingClientRect();
+      setWidth(rect.width);
       const dpr = window.devicePixelRatio || 1;
       const w = Math.max(rect.width, 10);
       const h = 300;
@@ -77,20 +79,16 @@ export function KLineChart({ buckets, dimension }: Props) {
         const height = Math.max(Math.abs(yOf(b.open) - yOf(b.close)), 1);
         ctx.fillStyle = color;
         ctx.fillRect(x - candleW / 2, top, candleW, height);
-        if (b.open === b.close) {
-          ctx.fillRect(x - candleW / 2, top, candleW, 1);
-        }
       });
 
-      const last = buckets[buckets.length - 1];
       const lx = 4 + plotW - xStep / 2;
       ctx.strokeStyle = HIGHLIGHT;
       ctx.lineWidth = 2;
       ctx.strokeRect(lx - candleW / 2 - 2, 2, candleW + 4, plotH);
-      void last;
     };
 
     draw();
+    setHover(null);
     const ro = new ResizeObserver(draw);
     ro.observe(container);
     return () => ro.disconnect();
@@ -119,7 +117,10 @@ export function KLineChart({ buckets, dimension }: Props) {
       {hover && (
         <div
           className="pointer-events-none absolute bg-neutral-900 text-white text-xs rounded px-2 py-1"
-          style={{ left: hover.x, top: hover.y - 40 }}
+          style={{
+            left: Math.min(hover.x, width - 220),
+            top: Math.max(hover.y - 40, 4),
+          }}
         >
           {new Date(hover.bucket.start).toLocaleString()} · O {fmt(hover.bucket.open)} / H {fmt(hover.bucket.high)} / L {fmt(hover.bucket.low)} / C {fmt(hover.bucket.close)} · n={hover.bucket.count}
         </div>

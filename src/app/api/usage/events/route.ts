@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { usageCachePath } from '@/lib/usage/paths';
 import { UsageCache } from '@/lib/usage/cache';
 import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo } from '@/lib/usage/types';
-import { indexIfStale, SOURCE_LABELS } from '@/lib/usage/indexer';
+import { indexIfStale, SOURCE_LABELS, checkSourceAvailability } from '@/lib/usage/indexer';
 import {
   buildKline, bucketMsForRange, rangeMs, totalsFor, groupBySource, groupByModel,
-  byDay, buildTable,
+  byDay, buildTable, USAGE_RANGES,
   type UsageRange, type UsageDimension,
 } from '@/lib/usage/aggregate';
 
-const RANGES: UsageRange[] = ['5m', '15m', '30m', '1h', '24h', '7d', '30d'];
 const DIMENSIONS: UsageDimension[] = ['cost', 'tokens'];
 
 export async function GET(request: NextRequest) {
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
     const sourceParam = searchParams.get('source') ?? 'all';
     const rangeParam = searchParams.get('range') ?? '24h';
     const dimensionParam = searchParams.get('dimension') ?? 'cost';
-    const range: UsageRange = RANGES.includes(rangeParam as UsageRange)
+    const range: UsageRange = USAGE_RANGES.includes(rangeParam as UsageRange)
       ? (rangeParam as UsageRange)
       : '24h';
     const dimension: UsageDimension = DIMENSIONS.includes(dimensionParam as UsageDimension)
@@ -38,12 +37,16 @@ export async function GET(request: NextRequest) {
       const bucketMs = bucketMsForRange(range);
       const windowStart = now - rangeMs(range);
       const windowEvents = events.filter((e) => e.timestamp >= windowStart);
-      const sourceStatus: SourceInfo[] = ACTIVE_SOURCES.map((id) => ({
-        id,
-        label: SOURCE_LABELS[id],
-        status: 'ready' as const,
-        eventCount: cache.countEvents(id),
-      }));
+      const sourceStatus: SourceInfo[] = ACTIVE_SOURCES.map((id) => {
+        const avail = checkSourceAvailability(id);
+        return {
+          id,
+          label: SOURCE_LABELS[id],
+          status: avail.ok ? ('ready' as const) : ('unavailable' as const),
+          message: avail.ok ? undefined : avail.reason,
+          eventCount: cache.countEvents(id),
+        };
+      });
       sourceStatus.push({
         id: 'openclaw',
         label: SOURCE_LABELS.openclaw,

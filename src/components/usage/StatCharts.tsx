@@ -30,20 +30,24 @@ export function StatCharts({ stats }: { stats: Stats }) {
       </div>
       <div className="rounded-lg border border-divider bg-white/80 p-4">
         <h3 className="text-sm font-semibold text-primary mb-2">By Source</h3>
-        {stats.bySource.map((s) => {
-          const pct = (s.cost / totalCost) * 100;
-          return (
-            <div key={s.source} className="mb-2">
-              <div className="flex justify-between text-xs text-secondary mb-0.5">
-                <span>{s.source}</span>
-                <span>${s.cost.toFixed(4)} · {pct.toFixed(1)}%</span>
+        {stats.bySource.length === 0 ? (
+          <p className="text-xs text-secondary">No data</p>
+        ) : (
+          stats.bySource.map((s) => {
+            const pct = (s.cost / totalCost) * 100;
+            return (
+              <div key={s.source} className="mb-2">
+                <div className="flex justify-between text-xs text-secondary mb-0.5">
+                  <span>{s.source}</span>
+                  <span>${s.cost.toFixed(4)} · {pct.toFixed(1)}%</span>
+                </div>
+                <div className="h-2 bg-neutral-100 rounded-full">
+                  <div className="h-2 bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                </div>
               </div>
-              <div className="h-2 bg-neutral-100 rounded-full">
-                <div className="h-2 bg-primary rounded-full" style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
       <div className="rounded-lg border border-divider bg-white/80 p-4">
         <h3 className="text-sm font-semibold text-primary mb-2">Top Models</h3>
