@@ -81,6 +81,14 @@ describe('usage API routes', () => {
     expect(data.sourceStatus.length).toBe(6);
     expect(data.totals).toBeDefined();
   });
+  it('events: totals span all sources even with a source filter active', async () => {
+    const res = await eventsGet(makeRequest('http://localhost/api/usage/events?source=cc-switch&range=24h'));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.totals.requests).toBeGreaterThanOrEqual(2);
+    expect(data.table).toHaveLength(1);
+    expect(data.table[0].source).toBe('cc-switch');
+  });
   it('sources: reports availability without indexing', async () => {
     const res = await sourcesGet();
     expect(res.status).toBe(200);

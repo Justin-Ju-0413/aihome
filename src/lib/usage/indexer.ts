@@ -33,10 +33,10 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
       try {
         const cp = cache.getCheckpoint(id);
         const { events, checkpoint } = scanSource(id, cp, pricing);
-        cache.insertEvents(events);
+        inserted += cache.insertEvents(events);
         cache.setCheckpoint(id, checkpoint);
         cache.setMeta(`last_index_${id}`, String(Date.now()));
-        inserted += events.length;
+        cache.setMeta(`last_index_${id}_error`, '');
         sources.push({
           id,
           label: SOURCE_LABELS[id],
@@ -45,11 +45,13 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
           eventCount: cache.countEvents(id),
         });
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        cache.setMeta(`last_index_${id}_error`, message);
         sources.push({
           id,
           label: SOURCE_LABELS[id],
           status: 'error',
-          message: error instanceof Error ? error.message : String(error),
+          message,
         });
       }
     }

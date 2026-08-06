@@ -11,7 +11,7 @@ const ev = (ts: number, cost: number, tokens: number, source = 'cc-switch', mode
   costUsd: cost, timestamp: ts,
 });
 
-const NOW = Date.UTC(2026, 7, 5, 12, 0, 0);
+const NOW = new Date(2026, 7, 5, 12, 0, 0).getTime();
 
 describe('bucketMsForRange / rangeMs', () => {
   it('maps ranges', () => {
@@ -61,7 +61,7 @@ describe('groupBySource / groupByModel / byDay', () => {
     expect(groupByModel(events, 5)).toHaveLength(5);
   });
   it('byDay uses local YYYY-MM-DD', () => {
-    const d = byDay([ev(Date.UTC(2026, 7, 5, 12), 3, 30)]);
+    const d = byDay([ev(new Date(2026, 7, 5, 12).getTime(), 3, 30)]);
     expect(d[0].day).toBe('2026-08-05');
     expect(d[0].cost).toBe(3);
   });

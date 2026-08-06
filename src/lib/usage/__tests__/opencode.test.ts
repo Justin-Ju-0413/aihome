@@ -43,11 +43,13 @@ describe('scanOpencode', () => {
     });
     expect(checkpoint.ts).toBe(1_782_504_000_000);
   });
-  it('incremental by time_created', () => {
+  it('incremental by time_created with boundary inclusion', () => {
     const dbPath = path.join(dir, 'oc2.db');
     makeDb(dbPath);
-    const { events } = scanOpencode(dbPath, { ts: 1_782_504_000_000, mtime: 0 });
-    expect(events).toEqual([]);
+    const atBoundary = scanOpencode(dbPath, { ts: 1_782_504_000_000, mtime: 0 });
+    expect(atBoundary.events.map((e) => e.rawId)).toEqual(['s1']);
+    const after = scanOpencode(dbPath, { ts: 1_782_504_000_001, mtime: 0 });
+    expect(after.events).toEqual([]);
   });
   it('returns empty when file missing', () => {
     expect(scanOpencode(path.join(dir, 'nope.db'), EMPTY_CHECKPOINT).events).toEqual([]);

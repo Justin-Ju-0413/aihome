@@ -36,6 +36,26 @@ describe('scanCcSwitch', () => {
     const { events } = scanCcSwitch(dbPath, { ts: 150, mtime: 0 });
     expect(events.map((e) => e.rawId)).toEqual(['b']);
   });
+  it('checkpoint boundary: same-ts rows are rescanned (>=)', () => {
+    const dbPath = path.join(dir, 'cc3.db');
+    makeCcSwitchDb(dbPath, [
+      { request_id: 'r1', app_type: 'x', model: 'm', status_code: 200, created_at: 1000 },
+      { request_id: 'r2', app_type: 'x', model: 'm', status_code: 200, created_at: 1000 },
+    ]);
+    const { events } = scanCcSwitch(dbPath, { ts: 1000, mtime: 0 });
+    expect(events.map((e) => e.rawId)).toContain('r2');
+    expect(events.map((e) => e.rawId)).toContain('r1');
+  });
+  it('same-second repro: second same-ts row survives checkpoint', () => {
+    const dbPath = path.join(dir, 'cc4.db');
+    makeCcSwitchDb(dbPath, [
+      { request_id: 'f1', app_type: 'x', model: 'm', status_code: 500, created_at: 1000 },
+      { request_id: 'ok1', app_type: 'x', model: 'm', status_code: 200, created_at: 1000 },
+    ]);
+    const { events } = scanCcSwitch(dbPath, { ts: 1000, mtime: 0 });
+    expect(events).toHaveLength(1);
+    expect(events[0].rawId).toBe('ok1');
+  });
   it('returns empty when file missing', () => {
     const { events, checkpoint } = scanCcSwitch(path.join(dir, 'nope.db'), EMPTY_CHECKPOINT);
     expect(events).toEqual([]);

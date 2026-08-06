@@ -56,6 +56,21 @@ describe('scanClaude', () => {
     const { events } = scanClaude(dir, { ts: 0, mtime: checkpointMtimeAfterFirstScan }, () => null);
     expect(events).toHaveLength(0);
   });
+  it('missing timestamp emits event with timestamp 0', () => {
+    const f = path.join(dir, 'no-ts.jsonl');
+    fs.writeFileSync(
+      f,
+      JSON.stringify({
+        type: 'assistant',
+        uuid: 'u3',
+        usage: { input_tokens: 10, output_tokens: 5 },
+      }) + '\n'
+    );
+    const { events } = scanClaude(dir, { ts: 0, mtime: 0 }, () => null);
+    const hit = events.find((e) => e.rawId === 'no-ts.jsonl:u3');
+    expect(hit).toBeDefined();
+    expect(hit?.timestamp).toBe(0);
+  });
   it('returns empty when dir missing', () => {
     const r = scanClaude(path.join(dir, 'nope'), EMPTY_CHECKPOINT, () => null);
     expect(r.events).toEqual([]);

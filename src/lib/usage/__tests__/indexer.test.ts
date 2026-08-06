@@ -1,4 +1,5 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
+import * as fs from 'fs';
 import * as path from 'path';
 import { DatabaseSync } from 'node:sqlite';
 import { runIndex, checkSourceAvailability, SOURCE_LABELS } from '../indexer';
@@ -65,6 +66,26 @@ describe('runIndex', () => {
     } finally {
       if (prev === undefined) delete process.env.AIHOME_USAGE_HERMES_DB;
       else process.env.AIHOME_USAGE_HERMES_DB = prev;
+    }
+  });
+  it('marks source error when its db file is corrupt', () => {
+    const corrupt = path.join(dir, 'corrupt.db');
+    fs.writeFileSync(corrupt, 'not a sqlite database');
+    const prev = { ...process.env };
+    Object.assign(process.env, {
+      AIHOME_USAGE_CCSWITCH_DB: corrupt,
+      AIHOME_USAGE_OPENCODE_DB: path.join(dir, 'no-oc.db'),
+      AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
+      AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
+      AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_CACHE: path.join(dir, 'corrupt-cache.db'),
+    });
+    try {
+      const res = runIndex(['cc-switch']);
+      const byId = Object.fromEntries(res.sources.map((s) => [s.id, s]));
+      expect(byId['cc-switch'].status).toBe('error');
+    } finally {
+      process.env = prev;
     }
   });
 });

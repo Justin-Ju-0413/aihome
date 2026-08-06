@@ -2511,7 +2511,7 @@ git commit -m "feat(usage): add usage page skeleton with overview and filters"
 - 空数据：画空态文字 "No data in this range"。
 - 容器 `data-testid="usage-kline-chart"`。
 
-- [ ] **Step 1: 写组件**
+- [x] **Step 1: 写组件**
 
 ```tsx
 'use client';
@@ -2645,7 +2645,7 @@ export function KLineChart({ buckets, dimension }: Props) {
 }
 ```
 
-- [ ] **Step 2: 接入 usage/page.tsx**
+- [x] **Step 2: 接入 usage/page.tsx**
 
 把 `data-testid="usage-kline"` 的占位块替换为：
 
@@ -2667,11 +2667,11 @@ export function KLineChart({ buckets, dimension }: Props) {
 
 并 import `KLineChart`。同时 `dimension` 状态已定义（Task 12 骨架中已有），确认 `load` 依赖数组含 `dimension`。
 
-- [ ] **Step 3: 手工验证**
+- [x] **Step 3: 手工验证**
 
 Run: `npm run dev` → /usage，切 5m/24h/7d 观察 K 线渲染与 hover tooltip；切换 Amount/Tokens。
 
-- [ ] **Step 4: lint + commit**
+- [x] **Step 4: lint + commit**
 
 Run: `npm run lint`
 Expected: 0 warnings。

@@ -36,6 +36,21 @@ test.describe('Usage Aggregator', () => {
     await expect(page.locator(selectors.usage.table)).not.toContainText('cc-switch');
   });
 
+  test('range switching renders different kline data', async ({ page }) => {
+    await page.goto('/usage');
+    await expect(page.locator(selectors.usage.klineChart)).toBeVisible();
+    await page.locator('[data-testid="usage-range-7d"]').click();
+    await expect(page.locator(selectors.usage.klineChart)).toBeVisible();
+    await expect(page.locator(selectors.usage.overview)).toBeVisible();
+  });
+
+  test('5m range returns empty kline for fresh fixtures', async ({ request }) => {
+    const res = await request.get('/api/usage/events?range=5m&source=all');
+    expect(res.ok()).toBeTruthy();
+    const data = await res.json();
+    expect(data.kline.length).toBe(0);
+  });
+
   test('rescan flow refreshes data', async ({ page }) => {
     await page.goto('/usage');
     await page.locator(selectors.usage.rescan).click();

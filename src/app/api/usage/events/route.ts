@@ -32,13 +32,31 @@ export async function GET(request: NextRequest) {
     const cache = UsageCache.open(usageCachePath());
     try {
       const now = Date.now();
-      const since = now - Math.max(rangeMs(range), 30 * 24 * 3600_000);
+      const monthStart = new Date(now);
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const since = Math.min(
+        now - Math.max(rangeMs(range), 30 * 24 * 3600_000),
+        monthStart.getTime()
+      );
       const events = cache.queryEvents(sources, since);
+      const totalsEvents = cache.queryEvents(ACTIVE_SOURCES, since);
       const bucketMs = bucketMsForRange(range);
       const windowStart = now - rangeMs(range);
       const windowEvents = events.filter((e) => e.timestamp >= windowStart);
+      const lastRun = Number(cache.getMeta('last_index_ms')) || 0;
       const sourceStatus: SourceInfo[] = ACTIVE_SOURCES.map((id) => {
         const avail = checkSourceAvailability(id);
+        const err = cache.getMeta(`last_index_${id}_error`);
+        if (err !== null && err !== '' && Date.now() - lastRun < 10 * 60_000) {
+          return {
+            id,
+            label: SOURCE_LABELS[id],
+            status: 'error' as const,
+            message: err,
+            eventCount: cache.countEvents(id),
+          };
+        }
         return {
           id,
           label: SOURCE_LABELS[id],
@@ -54,7 +72,7 @@ export async function GET(request: NextRequest) {
         message: 'no local usage data',
       });
       return NextResponse.json({
-        totals: totalsFor(events, now),
+        totals: totalsFor(totalsEvents, now),
         kline: buildKline(windowEvents, bucketMs, dimension),
         stats: {
           byDay: byDay(windowEvents),

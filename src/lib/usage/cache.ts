@@ -41,19 +41,29 @@ export class UsageCache {
     return new UsageCache(db);
   }
 
-  insertEvents(events: ScannedEvent[]): void {
-    if (events.length === 0) return;
+  insertEvents(events: ScannedEvent[]): number {
+    if (events.length === 0) return 0;
     const stmt = this.db.prepare(
       `INSERT INTO events (raw_id, source, provider, model, input_tokens, output_tokens,
          cache_read_tokens, cache_write_tokens, cost_usd, latency_ms, session_id, ts)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (source, raw_id) DO NOTHING`
     );
-    for (const e of events) {
-      stmt.run(e.rawId, e.source, e.provider, e.model, e.inputTokens, e.outputTokens,
-        e.cacheReadTokens, e.cacheWriteTokens, e.costUsd,
-        e.latencyMs ?? null, e.sessionId ?? null, e.timestamp);
+    let inserted = 0;
+    this.db.exec('BEGIN');
+    try {
+      for (const e of events) {
+        const r = stmt.run(e.rawId, e.source, e.provider, e.model, e.inputTokens, e.outputTokens,
+          e.cacheReadTokens, e.cacheWriteTokens, e.costUsd,
+          e.latencyMs ?? null, e.sessionId ?? null, e.timestamp);
+        inserted += Number(r.changes);
+      }
+      this.db.exec('COMMIT');
+    } catch (e) {
+      this.db.exec('ROLLBACK');
+      throw e;
     }
+    return inserted;
   }
 
   getCheckpoint(source: ActiveUsageSource): Checkpoint {

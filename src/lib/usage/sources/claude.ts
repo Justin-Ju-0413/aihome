@@ -76,6 +76,9 @@ export function scanClaude(
       const output = Number(usage.output_tokens) || 0;
       const cacheRead = Number(usage.cache_read_input_tokens) || 0;
       const cacheWrite = Number(usage.cache_creation_input_tokens) || 0;
+      const rawTs = d.timestamp;
+      const parsed = typeof rawTs === 'string' ? Date.parse(rawTs) : Number(rawTs);
+      const timestamp = Number.isFinite(parsed) ? parsed : 0;
       events.push({
         rawId: `${path.basename(file)}:${String(d.uuid ?? idx)}`,
         source: 'claude',
@@ -87,7 +90,7 @@ export function scanClaude(
         cacheWriteTokens: cacheWrite,
         costUsd: pricing ? calculateCost({ input, output, cacheRead, cacheWrite }, pricing) : 0,
         sessionId: d.sessionId == null ? undefined : String(d.sessionId),
-        timestamp: Date.parse(String(d.timestamp)),
+        timestamp,
       });
     });
   }
