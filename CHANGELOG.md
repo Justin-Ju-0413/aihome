@@ -2,6 +2,12 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and releases use Semantic Versioning.
 
+## [0.2.0] - 2026-08-05
+
+### Added
+- Usage dashboard (`/usage`): multi-source spend aggregator with K-line chart, stat charts, and collapsible usage table (CC Switch, Claude Code, Codex, opencode, hermes).
+- Incremental local indexer with checkpoint + dedupe (cache at `~/.aihome/usage-cache.db`).
+
 ## [Unreleased]
 
 - Add CI for lint, production build, and Playwright coverage.

@@ -3090,7 +3090,7 @@ git commit -m "test(usage): add e2e fixtures and usage spec"
 - Modify: `CHANGELOG.md`（新条目 v0.2.0 usage aggregator）
 - 外部仓库：`Justin-Ju-0413/ccswitch-usage-widget` README 重定向（用 `gh`）
 
-- [ ] **Step 1: README 功能加 Usage**
+- [x] **Step 1: README 功能加 Usage**
 
 在 README 功能列表加入一行（英文、与现有格式一致）：
 
@@ -3098,7 +3098,7 @@ git commit -m "test(usage): add e2e fixtures and usage spec"
 - **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
 ```
 
-- [ ] **Step 2: CHANGELOG 加条目**
+- [x] **Step 2: CHANGELOG 加条目**
 
 在 `CHANGELOG.md` 顶部加：
 
@@ -3110,7 +3110,7 @@ git commit -m "test(usage): add e2e fixtures and usage spec"
 - Incremental local indexer with checkpoint + dedupe (cache at `~/.aihome/usage-cache.db`).
 ```
 
-- [ ] **Step 3: ccswitch-usage-widget 重定向**
+- [x] **Step 3: ccswitch-usage-widget 重定向**
 
 ```bash
 gh repo view Justin-Ju-0413/ccswitch-usage-widget --json nameWithOwner
@@ -3124,12 +3124,12 @@ gh repo view Justin-Ju-0413/ccswitch-usage-widget --json nameWithOwner
 
 并更新 description（`gh repo edit Justin-Ju-0413/ccswitch-usage-widget --description 'Merged into AIHome usage dashboard — see Justin-Ju-0413/aihome. Archived.'`）。
 
-- [ ] **Step 4: 全量验证**
+- [x] **Step 4: 全量验证**
 
 Run: `npm run lint && npm run test && npm run build`
 Expected: 全绿；`npm run test:e2e` 亦全绿。
 
-- [ ] **Step 5: Commit + push**
+- [x] **Step 5: Commit + push**（2026-08-06 执行：按调度指令提交留在本地，不 push AIHome 分支；旧仓库 ccswitch-usage-widget 已推送）
 
 ```bash
 git add README.md CHANGELOG.md

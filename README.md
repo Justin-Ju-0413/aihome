@@ -27,6 +27,7 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - **File-system backed** — agents are plain markdown files; create, edit, delete through the UI, scanner re-reads the directory.
 - **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
 - **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths (out-of-workspace requests return HTTP 403).
+- **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
 
 ## Tech stack / 技术栈
 
