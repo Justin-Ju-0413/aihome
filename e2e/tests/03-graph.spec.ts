@@ -1,5 +1,7 @@
 import { test, expect } from '../fixtures/test-data.fixture';
 import { selectors } from '../helpers/selectors';
+import * as fs from 'fs';
+import * as path from 'path';
 
 test.describe('Graph Page', () => {
   test('displays graph page title', async ({ page, testData }) => {
@@ -72,5 +74,22 @@ test.describe('Graph Page', () => {
   test('displays hint about creating connections', async ({ page, testData }) => {
     await page.goto('/graph');
     await expect(page.getByText('Drag between nodes to create connections')).toBeVisible();
+  });
+
+  test('renders dependency edges between related agents', async ({ page, testData }) => {
+    const dep = testData.createAgent('Edge Dependency', 'agent', 'Dependency target');
+    const main = testData.createAgent('Edge Main', 'agent', 'Main agent');
+    fs.appendFileSync(
+      path.join(main.dirPath, 'AGENTS.md'),
+      `\n## Dependencies\n\n- Edge Dependency\n`
+    );
+
+    await page.goto('/graph');
+    await expect(page.locator(selectors.graph.reactFlow)).toHaveCount(1, { timeout: 15000 });
+    await page.waitForTimeout(1000);
+
+    // Dependency edges must render as ReactFlow edges
+    const edges = page.locator('.react-flow__edge');
+    await expect(edges).toHaveCount(1, { timeout: 10000 });
   });
 });

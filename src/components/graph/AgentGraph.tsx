@@ -14,6 +14,8 @@ import {
   Node,
   NodeProps,
   MarkerType,
+  Handle,
+  Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
@@ -104,6 +106,8 @@ function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
 
   return (
     <div className={`px-4 py-3 rounded-lg border-2 ${typeColor} shadow-sm min-w-[200px]`}>
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
       <div className="flex items-center gap-2 mb-1">
         <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${typeBadge}`}>
           {data.type}

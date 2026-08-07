@@ -2,6 +2,8 @@ import * as path from 'path';
 import { defineConfig, devices } from '@playwright/test';
 
 const e2eSyncRoot = path.join(__dirname, 'e2e', '.e2e-sync');
+const port = process.env.PORT ?? '3000';
+const baseURL = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: './e2e/tests',
@@ -20,7 +22,7 @@ export default defineConfig({
   },
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
@@ -36,8 +38,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: process.env.CI ? 'npm run start' : 'npm run dev',
-    url: 'http://localhost:3000',
+    command: process.env.CI ? `npm run start -- -p ${port}` : `npm run dev -- -p ${port}`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
