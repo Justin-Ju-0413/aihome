@@ -44,6 +44,12 @@ export default defineConfig({
       AIHOME_REPO_DIR: path.join(e2eSyncRoot, 'repo'),
       AIHOME_CONFIG_DIR: path.join(e2eSyncRoot, 'config'),
       AIHOME_LEGACY_DIR: path.join(e2eSyncRoot, 'legacy'),
+      AIHOME_USAGE_CCSWITCH_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cc-switch.db'),
+      AIHOME_USAGE_CLAUDE_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'claude-projects'),
+      AIHOME_USAGE_CODEX_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'codex-sessions'),
+      AIHOME_USAGE_OPENCODE_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'opencode.db'),
+      AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
+      AIHOME_USAGE_CACHE: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cache.db'),
     },
   },
 });

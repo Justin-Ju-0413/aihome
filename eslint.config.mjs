@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    ".worktrees/**",
   ]),
   // E2E tests are Playwright tests, not React components: the React Hooks
   // rules do not apply, and test code legitimately uses `any` for API

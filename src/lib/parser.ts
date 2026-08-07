@@ -42,6 +42,10 @@ export function parseAgentsMd(content: string): ParsedAgentContent {
 
     // Extract sections
     if (line.match(/^##\s+/)) {
+      // A section heading terminates the H1 description paragraph, so that
+      // list items belonging to a section are not swallowed into the
+      // description (e.g. `# X` followed directly by `## Dependencies`).
+      descCollected = true;
       if (currentSection) {
         sections.push({
           title: currentSection.title,

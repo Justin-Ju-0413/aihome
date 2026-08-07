@@ -17,17 +17,19 @@ export async function scanDirectories(paths: string[]): Promise<ScanResult> {
   const scannedPaths: string[] = [];
   // agent id -> declared dependency names (resolved to ids in a second pass)
   const depNamesByAgentId = new Map<string, string[]>();
+  const claudeMdFiles: Array<{ filePath: string; dirPath: string }> = [];
 
   for (const basePath of paths) {
     try {
       const absPath = resolve(basePath);
-      await scanDirectory(absPath, absPath, agents, 0, depNamesByAgentId);
+      await scanDirectory(absPath, absPath, agents, 0, depNamesByAgentId, claudeMdFiles);
       scannedPaths.push(absPath);
     } catch (err) {
       errors.push(`Failed to scan ${basePath}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
+  await mergeClaudeMdNodes(agents, claudeMdFiles, depNamesByAgentId);
   resolveDependencies(agents, depNamesByAgentId);
 
   return {
@@ -43,7 +45,8 @@ async function scanDirectory(
   basePath: string,
   agents: AgentNode[],
   depth: number,
-  depNamesByAgentId: Map<string, string[]>
+  depNamesByAgentId: Map<string, string[]>,
+  claudeMdFiles: Array<{ filePath: string; dirPath: string }>
 ): Promise<void> {
   if (depth > MAX_DEPTH) return;
 
@@ -61,7 +64,7 @@ async function scanDirectory(
     const fullPath = join(dirPath, entry.name);
 
     if (entry.isDirectory()) {
-      await scanDirectory(fullPath, basePath, agents, depth + 1, depNamesByAgentId);
+      await scanDirectory(fullPath, basePath, agents, depth + 1, depNamesByAgentId, claudeMdFiles);
     } else if (entry.name === 'AGENTS.md') {
       try {
         const agent = await parseAgentsMdFile(fullPath, dirPath, depNamesByAgentId);
@@ -76,6 +79,8 @@ async function scanDirectory(
       } catch (err) {
         console.error(`Failed to parse ${fullPath}:`, err);
       }
+    } else if (entry.name === 'CLAUDE.md') {
+      claudeMdFiles.push({ filePath: fullPath, dirPath });
     }
   }
 }
@@ -94,6 +99,7 @@ async function parseAgentsMdFile(
     id: generateId(filePath),
     name: parsed.name || 'Untitled Agent',
     type: 'agent',
+    ruleFiles: ['AGENTS.md'],
     description: parsed.description || '',
     filePath,
     dirPath,
@@ -128,6 +134,7 @@ async function parseSkillMdFile(
     id: generateId(filePath),
     name,
     type: 'skill',
+    ruleFiles: ['SKILL.md'],
     description,
     filePath,
     dirPath,
@@ -146,6 +153,60 @@ async function parseSkillMdFile(
   };
 
   depNamesByAgentId.set(agent.id, normalizeDepNames(data['depends-on'] ?? data.dependencies));
+  return agent;
+}
+
+/**
+ * 扫描完成后处理 CLAUDE.md：同目录已有 agent 节点(AGENTS.md)则合并
+ * ruleFiles 标记；否则生成独立 agent 节点。解析复用 parseAgentsMd。
+ */
+async function mergeClaudeMdNodes(
+  agents: AgentNode[],
+  claudeMdFiles: Array<{ filePath: string; dirPath: string }>,
+  depNamesByAgentId: Map<string, string[]>
+): Promise<void> {
+  for (const claude of claudeMdFiles) {
+    const existing = agents.find(
+      a => a.dirPath === claude.dirPath && a.type === 'agent'
+    );
+    if (existing) {
+      if (!existing.ruleFiles.includes('CLAUDE.md')) existing.ruleFiles.push('CLAUDE.md');
+      continue;
+    }
+    const node = await parseClaudeMdFile(claude.filePath, claude.dirPath, depNamesByAgentId);
+    if (node) agents.push(node);
+  }
+}
+
+async function parseClaudeMdFile(
+  filePath: string,
+  dirPath: string,
+  depNamesByAgentId: Map<string, string[]>
+): Promise<AgentNode | null> {
+  const content = await readFile(filePath, 'utf-8');
+  const parsed = parseAgentsMd(content);
+  const stats = await stat(filePath);
+  const associatedFiles = await countAssociatedFiles(dirPath);
+
+  const agent: AgentNode = {
+    id: generateId(filePath),
+    name: parsed.name || 'Untitled Agent',
+    type: 'agent',
+    description: parsed.description || '',
+    filePath,
+    dirPath,
+    status: 'active',
+    ruleFiles: ['CLAUDE.md'],
+    associatedFiles,
+    dependencies: [],
+    calledBy: [],
+    group: 'default',
+    position: { x: 0, y: 0 },
+    createdAt: stats.birthtime.toISOString(),
+    updatedAt: stats.mtime.toISOString()
+  };
+
+  depNamesByAgentId.set(agent.id, extractDependencyNamesFromSections(parsed.sections));
   return agent;
 }
 

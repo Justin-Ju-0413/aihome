@@ -4,6 +4,7 @@ export const selectors = {
     graph: '[data-testid="nav-graph"]',
     agents: '[data-testid="nav-agents"]',
     settings: '[data-testid="nav-settings"]',
+    usage: '[data-testid="nav-usage"]',
   },
   board: {
     title: 'h1:has-text("Agent Board")',
@@ -59,5 +60,18 @@ export const selectors = {
     addPathBtn: '[data-testid="settings-add-path-btn"]',
     addGroupInput: 'input[placeholder="Group name"]',
     addGroupBtn: '[data-testid="settings-add-group-btn"]',
+  },
+  usage: {
+    page: '[data-testid="usage-page"]',
+    overview: '[data-testid="usage-overview"]',
+    overviewToday: '[data-testid="usage-overview-today"]',
+    kline: '[data-testid="usage-kline"]',
+    klineChart: '[data-testid="usage-kline-chart"]',
+    stats: '[data-testid="usage-stats"]',
+    table: '[data-testid="usage-table"]',
+    sourceAll: '[data-testid="usage-source-all"]',
+    sourceClaude: '[data-testid="usage-source-claude"]',
+    range24h: '[data-testid="usage-range-24h"]',
+    rescan: '[data-testid="usage-rescan"]',
   },
 };
