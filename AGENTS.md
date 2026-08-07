@@ -18,6 +18,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 4. **Commit only intended files.** No stray downloads (`.github/*.svg`, etc.). Check `git status` before every commit.
 5. **Timezones:** aggregation code uses LOCAL time boundaries (today/week/month). Tests must construct timestamps with local `new Date(...)`, NOT `Date.UTC(...)` — a UTC-constructed "now" against local boundaries is a test bug, not an implementation bug.
 
-## In-flight work (as of 2026-08-06)
-- `feat/usage-aggregator` branch: usage aggregator implementation (design: `docs/superpowers/specs/2026-08-05-usage-aggregator-design.md`, plan: `docs/superpowers/plans/2026-08-05-usage-aggregator.md`). Tasks 1–9 done, Task 10 `src/lib/usage/aggregate.ts` + tests WIP — has 1 failing test (`__tests__/aggregate.test.ts:49`, test bug per rule 5).
-- `feat/runner-panel` worktree `.worktrees/runner-panel/`: has UNCOMMITTED changes (`src/lib/runner/process-registry.ts` + test) — do not touch, do not commit, do not prune. It is separate in-flight work owned by the user.
+## In-flight work (as of 2026-08-07)
+- ✅ DONE: usage aggregator (feat/usage-aggregator) — merged to main via PR #5 (076084b), all 87 plan tasks ticked. Graph dependency-edge bug fixed separately via PR #7 (7ffacb8). Local e2e now supports `PORT` env to avoid clashing with other projects on port 3000.
+- `feat/runner-panel` worktree `.worktrees/runner-panel/`: ACTIVE in-flight work owned by the user — 34 commits ahead of main (orchestrator, MCP server, /runs panel, scheduler tick). Worktree is currently clean; do not touch, do not commit, do not prune. NOTE: plan `docs/superpowers/plans/2026-08-05-runner-panel.md` has 0/81 boxes ticked despite heavy implementation — plan checkboxes lag behind (user's stream).
+- Workspace root has stray untracked `" 2"`-suffixed duplicate files (`src/app/usage/page 2.tsx`, etc.) — user-owned copies, never `git add` them.
