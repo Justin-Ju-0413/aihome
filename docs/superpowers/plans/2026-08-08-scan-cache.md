@@ -436,7 +436,7 @@ git commit -m "feat(scan): wire in-memory cache into workspace scan (file + dir 
 - Consumes: `scanDirectories(paths, options?)`（Task 2）
 - Produces: 无新公开接口
 
-- [ ] **Step 1: 更新 route 声明**
+- [x] **Step 1: 更新 route 声明**
 
 `src/app/api/agents/route.ts` 现有两处调用（`GET /api/agents` 与单 agent 端点）保持 `scanDirectories(config.paths)`——因为此时默认 `cache: true` 已生效，**无需再改调用代码**。只加一行注释说明缓存（如有.stode 丢进路由内）：
 
@@ -444,7 +444,7 @@ git commit -m "feat(scan): wire in-memory cache into workspace scan (file + dir 
 // 默认开启进程内扫描缓存（见 src/lib/scan-cache.ts），无需透传；scanStats 不暴露为响应头
 ```
 
-- [ ] **Step 2: 跑全量单测 + lint + tsc + build**
+- [x] **Step 2: 跑全量单测 + lint + tsc + build**
 
 Run:
 ```bash
@@ -455,12 +455,12 @@ npm run build
 ```
 Expected: 全绿。
 
-- [ ] **Step 3: 跑 e2e（agents 相关 + 核心流程）**
+- [x] **Step 3: 跑 e2e（agents 相关 + 核心流程）**
 
 Run: `npm run test:e2e`
 Expected: 现有 109 e2e 全绿（尤其 04-agents-list、07-api-contract、09-usage 不回归）。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add src/app/api/agents/route.ts

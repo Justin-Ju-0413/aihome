@@ -9,6 +9,7 @@ import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/p
 export async function GET() {
   try {
     const config = await getWorkspaceConfig();
+    // 默认开启进程内扫描缓存（见 src/lib/scan-cache.ts），无需透传；scanStats 不暴露为响应头
     const result = await scanDirectories(config.paths);
     return NextResponse.json(result.agents);
   } catch (error) {
