@@ -48,7 +48,7 @@
   ```
   注：`getFile` 命中时返回 `{ node: plainObj(node)，depNames: [...deps] }` 的浅拷贝，缓存内部永远保存原始对象（保证 resolveDependencies 的 in-place 污染不跨扫描）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 // src/lib/__tests__/scan-cache.test.ts
@@ -118,12 +118,12 @@ describe('ScanCache', () => {
 });
 ```
 
-- [ ] **Step 2: 运行验证失败**
+- [x] **Step 2: 运行验证失败**
 
 Run: `npm test -- src/lib/__tests__/scan-cache.test.ts`
 Expected: FAIL（`Cannot find module '../scan-cache'`）
 
-- [ ] **Step 3: 最小实现**
+- [x] **Step 3: 最小实现**
 
 ```ts
 // src/lib/scan-cache.ts
@@ -211,12 +211,12 @@ export class ScanCache {
 
 注：`getFile` 亦同时实现**探针语义**——即使未命中也会让 caller 得知（返回 null）。统计用私有 `current` 累加，`stats` getter 返回防突变拷贝。`getDir` 不参与 filesChecked 计数（目录统计是次要成本）。
 
-- [ ] **Step 4: 运行验证通过**
+- [x] **Step 4: 运行验证通过**
 
 Run: `npm test -- src/lib/__tests__/scan-cache.test.ts`
 Expected: PASS（6 用例全绿）
 
-- [ ] **Step 5: lint + typecheck + 提交**
+- [x] **Step 5: lint + typecheck + 提交**
 
 ```bash
 npm run lint && npx tsc --noEmit
@@ -240,7 +240,7 @@ git commit -m "feat: add in-memory scan cache core (fingerprint + file/dir entri
   - `ScanResult` 增加 `scanStats?: ScanCache['stats']`（options.cache 为 false 时省略）
   - 重构 `parseAgentsMdFile` / `parseSkillMdFile` / `parseClaudeMdFile` 提取 `outcome`（{node, depNames}）为纯函数，缓存层包裹。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 // src/lib/__tests__/scanner-cache.test.ts
@@ -320,12 +320,12 @@ describe('scanDirectories with cache', () => {
 
 注意：`fl.m` 第二用例写反了（`scanDirectories({...})` 传对象）——**修正为 `scanDirectories([tmp])`**。
 
-- [ ] **Step 2: 运行验证失败**
+- [x] **Step 2: 运行验证失败**
 
 Run: `npm test -- src/lib/__tests__/scanner-cache.test.ts`
 Expected: FAIL（`scanStats` 不存在、`cache` 选项被忽略）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 改写 `src/lib/scanner.ts`：
 
@@ -411,12 +411,12 @@ async function countAssociatedFiles(dirPath, cache?: ScanCache | null): Promise<
 
 注意：`parseAgentsMdFile`/`parseSkillMdFile`/`parseClaudeMdFile` 原签名要带上 `cache` 参数并传递；`scanDirectory` 递归调用一并传。
 
-- [ ] **Step 4: 运行验证通过**
+- [x] **Step 4: 运行验证通过**
 
 Run: `npm test -- src/lib/__tests__/scanner-cache.test.ts src/lib/__tests__/scanner-claude-md.test.ts`
 Expected: ALL PASS（新增 5 + 既有 5）
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 npm run lint && npx tsc --noEmit

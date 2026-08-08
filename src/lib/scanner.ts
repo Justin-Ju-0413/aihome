@@ -3,6 +3,8 @@ import { join, resolve, basename } from 'path';
 import matter from 'gray-matter';
 import type { AgentNode, ScanResult } from './types';
 import { parseAgentsMd } from './parser';
+import { ScanCache } from './scan-cache';
+import type { ParseOutcome } from './scan-cache';
 
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', '.next', 'dist', 'build', 'coverage',
@@ -11,7 +13,16 @@ const IGNORED_DIRS = new Set([
 
 const MAX_DEPTH = 5;
 
-export async function scanDirectories(paths: string[]): Promise<ScanResult> {
+export interface ScanOptions {
+  cache?: boolean;
+}
+
+// 进程内模块级缓存实例：跨 scanDirectories 调用复用，满足 spec 成功标准
+// "二次扫描命中，reads=0"。cache:false 时按调用屏蔽。
+const scanCache = new ScanCache();
+
+export async function scanDirectories(paths: string[], options?: ScanOptions): Promise<ScanResult> {
+  const cache = options?.cache === false ? null : scanCache;
   const agents: AgentNode[] = [];
   const errors: string[] = [];
   const scannedPaths: string[] = [];
@@ -22,22 +33,24 @@ export async function scanDirectories(paths: string[]): Promise<ScanResult> {
   for (const basePath of paths) {
     try {
       const absPath = resolve(basePath);
-      await scanDirectory(absPath, absPath, agents, 0, depNamesByAgentId, claudeMdFiles);
+      await scanDirectory(absPath, absPath, agents, 0, depNamesByAgentId, claudeMdFiles, cache);
       scannedPaths.push(absPath);
     } catch (err) {
       errors.push(`Failed to scan ${basePath}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
-  await mergeClaudeMdNodes(agents, claudeMdFiles, depNamesByAgentId);
+  await mergeClaudeMdNodes(agents, claudeMdFiles, depNamesByAgentId, cache);
   resolveDependencies(agents, depNamesByAgentId);
 
-  return {
+  const result: ScanResult = {
     agents,
     errors,
     scannedPaths,
     timestamp: new Date().toISOString()
   };
+  if (cache) result.scanStats = cache.stats;
+  return result;
 }
 
 async function scanDirectory(
@@ -46,7 +59,8 @@ async function scanDirectory(
   agents: AgentNode[],
   depth: number,
   depNamesByAgentId: Map<string, string[]>,
-  claudeMdFiles: Array<{ filePath: string; dirPath: string }>
+  claudeMdFiles: Array<{ filePath: string; dirPath: string }>,
+  cache: ScanCache | null
 ): Promise<void> {
   if (depth > MAX_DEPTH) return;
 
@@ -64,17 +78,17 @@ async function scanDirectory(
     const fullPath = join(dirPath, entry.name);
 
     if (entry.isDirectory()) {
-      await scanDirectory(fullPath, basePath, agents, depth + 1, depNamesByAgentId, claudeMdFiles);
+      await scanDirectory(fullPath, basePath, agents, depth + 1, depNamesByAgentId, claudeMdFiles, cache);
     } else if (entry.name === 'AGENTS.md') {
       try {
-        const agent = await parseAgentsMdFile(fullPath, dirPath, depNamesByAgentId);
+        const agent = await parseAgentsMdFile(fullPath, dirPath, depNamesByAgentId, cache);
         if (agent) agents.push(agent);
       } catch (err) {
         console.error(`Failed to parse ${fullPath}:`, err);
       }
     } else if (entry.name === 'SKILL.md') {
       try {
-        const skill = await parseSkillMdFile(fullPath, dirPath, depNamesByAgentId);
+        const skill = await parseSkillMdFile(fullPath, dirPath, depNamesByAgentId, cache);
         if (skill) agents.push(skill);
       } catch (err) {
         console.error(`Failed to parse ${fullPath}:`, err);
@@ -88,14 +102,39 @@ async function scanDirectory(
 async function parseAgentsMdFile(
   filePath: string,
   dirPath: string,
-  depNamesByAgentId: Map<string, string[]>
+  depNamesByAgentId: Map<string, string[]>,
+  cache: ScanCache | null
 ): Promise<AgentNode | null> {
+  const st = await stat(filePath);
+  if (cache) {
+    const fp = cache.fileFingerprint(st);
+    const hit = cache.getFile(filePath, fp);
+    if (hit) {
+      hit.node.associatedFiles = await countAssociatedFiles(dirPath, cache);
+      depNamesByAgentId.set(hit.node.id, hit.depNames);
+      return hit.node;
+    }
+    const outcome = await buildAgentsOutcome(filePath, dirPath, st, cache);
+    cache.setFile(filePath, fp, outcome);
+    depNamesByAgentId.set(outcome.node.id, outcome.depNames);
+    return outcome.node;
+  }
+  const outcome = await buildAgentsOutcome(filePath, dirPath, st, null);
+  depNamesByAgentId.set(outcome.node.id, outcome.depNames);
+  return outcome.node;
+}
+
+async function buildAgentsOutcome(
+  filePath: string,
+  dirPath: string,
+  st: Awaited<ReturnType<typeof stat>>,
+  cache: ScanCache | null
+): Promise<ParseOutcome> {
   const content = await readFile(filePath, 'utf-8');
   const parsed = parseAgentsMd(content);
-  const stats = await stat(filePath);
-  const associatedFiles = await countAssociatedFiles(dirPath);
+  const associatedFiles = await countAssociatedFiles(dirPath, cache);
 
-  const agent: AgentNode = {
+  const node: AgentNode = {
     id: generateId(filePath),
     name: parsed.name || 'Untitled Agent',
     type: 'agent',
@@ -109,28 +148,52 @@ async function parseAgentsMdFile(
     calledBy: [],
     group: 'default',
     position: { x: 0, y: 0 },
-    createdAt: stats.birthtime.toISOString(),
-    updatedAt: stats.mtime.toISOString()
+    createdAt: st.birthtime.toISOString(),
+    updatedAt: st.mtime.toISOString()
   };
 
-  depNamesByAgentId.set(agent.id, extractDependencyNamesFromSections(parsed.sections));
-  return agent;
+  return { node, depNames: extractDependencyNamesFromSections(parsed.sections) };
 }
 
 async function parseSkillMdFile(
   filePath: string,
   dirPath: string,
-  depNamesByAgentId: Map<string, string[]>
+  depNamesByAgentId: Map<string, string[]>,
+  cache: ScanCache | null
 ): Promise<AgentNode | null> {
+  const st = await stat(filePath);
+  if (cache) {
+    const fp = cache.fileFingerprint(st);
+    const hit = cache.getFile(filePath, fp);
+    if (hit) {
+      hit.node.associatedFiles = await countAssociatedFiles(dirPath, cache);
+      depNamesByAgentId.set(hit.node.id, hit.depNames);
+      return hit.node;
+    }
+    const outcome = await buildSkillOutcome(filePath, dirPath, st, cache);
+    cache.setFile(filePath, fp, outcome);
+    depNamesByAgentId.set(outcome.node.id, outcome.depNames);
+    return outcome.node;
+  }
+  const outcome = await buildSkillOutcome(filePath, dirPath, st, null);
+  depNamesByAgentId.set(outcome.node.id, outcome.depNames);
+  return outcome.node;
+}
+
+async function buildSkillOutcome(
+  filePath: string,
+  dirPath: string,
+  st: Awaited<ReturnType<typeof stat>>,
+  cache: ScanCache | null
+): Promise<ParseOutcome> {
   const content = await readFile(filePath, 'utf-8');
   const { data, content: body } = matter(content);
-  const stats = await stat(filePath);
-  const associatedFiles = await countAssociatedFiles(dirPath);
+  const associatedFiles = await countAssociatedFiles(dirPath, cache);
 
   const name = data.name || extractFirstHeading(body) || 'Untitled Skill';
   const description = data.description || extractFirstParagraph(body) || '';
 
-  const agent: AgentNode = {
+  const node: AgentNode = {
     id: generateId(filePath),
     name,
     type: 'skill',
@@ -148,12 +211,11 @@ async function parseSkillMdFile(
     calledBy: [],
     group: 'default',
     position: { x: 0, y: 0 },
-    createdAt: stats.birthtime.toISOString(),
-    updatedAt: stats.mtime.toISOString()
+    createdAt: st.birthtime.toISOString(),
+    updatedAt: st.mtime.toISOString()
   };
 
-  depNamesByAgentId.set(agent.id, normalizeDepNames(data['depends-on'] ?? data.dependencies));
-  return agent;
+  return { node, depNames: normalizeDepNames(data['depends-on'] ?? data.dependencies) };
 }
 
 /**
@@ -163,7 +225,8 @@ async function parseSkillMdFile(
 async function mergeClaudeMdNodes(
   agents: AgentNode[],
   claudeMdFiles: Array<{ filePath: string; dirPath: string }>,
-  depNamesByAgentId: Map<string, string[]>
+  depNamesByAgentId: Map<string, string[]>,
+  cache: ScanCache | null
 ): Promise<void> {
   for (const claude of claudeMdFiles) {
     const existing = agents.find(
@@ -173,7 +236,7 @@ async function mergeClaudeMdNodes(
       if (!existing.ruleFiles.includes('CLAUDE.md')) existing.ruleFiles.push('CLAUDE.md');
       continue;
     }
-    const node = await parseClaudeMdFile(claude.filePath, claude.dirPath, depNamesByAgentId);
+    const node = await parseClaudeMdFile(claude.filePath, claude.dirPath, depNamesByAgentId, cache);
     if (node) agents.push(node);
   }
 }
@@ -181,14 +244,39 @@ async function mergeClaudeMdNodes(
 async function parseClaudeMdFile(
   filePath: string,
   dirPath: string,
-  depNamesByAgentId: Map<string, string[]>
+  depNamesByAgentId: Map<string, string[]>,
+  cache: ScanCache | null
 ): Promise<AgentNode | null> {
+  const st = await stat(filePath);
+  if (cache) {
+    const fp = cache.fileFingerprint(st);
+    const hit = cache.getFile(filePath, fp);
+    if (hit) {
+      hit.node.associatedFiles = await countAssociatedFiles(dirPath, cache);
+      depNamesByAgentId.set(hit.node.id, hit.depNames);
+      return hit.node;
+    }
+    const outcome = await buildClaudeOutcome(filePath, dirPath, st, cache);
+    cache.setFile(filePath, fp, outcome);
+    depNamesByAgentId.set(outcome.node.id, outcome.depNames);
+    return outcome.node;
+  }
+  const outcome = await buildClaudeOutcome(filePath, dirPath, st, null);
+  depNamesByAgentId.set(outcome.node.id, outcome.depNames);
+  return outcome.node;
+}
+
+async function buildClaudeOutcome(
+  filePath: string,
+  dirPath: string,
+  st: Awaited<ReturnType<typeof stat>>,
+  cache: ScanCache | null
+): Promise<ParseOutcome> {
   const content = await readFile(filePath, 'utf-8');
   const parsed = parseAgentsMd(content);
-  const stats = await stat(filePath);
-  const associatedFiles = await countAssociatedFiles(dirPath);
+  const associatedFiles = await countAssociatedFiles(dirPath, cache);
 
-  const agent: AgentNode = {
+  const node: AgentNode = {
     id: generateId(filePath),
     name: parsed.name || 'Untitled Agent',
     type: 'agent',
@@ -202,12 +290,11 @@ async function parseClaudeMdFile(
     calledBy: [],
     group: 'default',
     position: { x: 0, y: 0 },
-    createdAt: stats.birthtime.toISOString(),
-    updatedAt: stats.mtime.toISOString()
+    createdAt: st.birthtime.toISOString(),
+    updatedAt: st.mtime.toISOString()
   };
 
-  depNamesByAgentId.set(agent.id, extractDependencyNamesFromSections(parsed.sections));
-  return agent;
+  return { node, depNames: extractDependencyNamesFromSections(parsed.sections) };
 }
 
 /**
@@ -277,24 +364,55 @@ function resolveDependencies(agents: AgentNode[], depNamesByAgentId: Map<string,
   }
 }
 
-async function countAssociatedFiles(dirPath: string): Promise<AgentNode['associatedFiles']> {
-  const counts = { scripts: 0, references: 0, assets: 0, rules: 0, total: 0 };
+async function countAssociatedFiles(
+  dirPath: string,
+  cache: ScanCache | null
+): Promise<AgentNode['associatedFiles']> {
+  const fresh = async (): Promise<AgentNode['associatedFiles']> => {
+    const counts = { scripts: 0, references: 0, assets: 0, rules: 0, total: 0 };
 
-  try {
-    const entries = await readdir(dirPath, { withFileTypes: true });
+    try {
+      const entries = await readdir(dirPath, { withFileTypes: true });
 
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        if (entry.name === 'scripts') counts.scripts = await countFilesInDir(join(dirPath, entry.name));
-        else if (entry.name === 'references') counts.references = await countFilesInDir(join(dirPath, entry.name));
-        else if (entry.name === 'assets') counts.assets = await countFilesInDir(join(dirPath, entry.name));
-        else if (entry.name === 'rules') counts.rules = await countFilesInDir(join(dirPath, entry.name));
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          if (entry.name === 'scripts') counts.scripts = await countFilesInDir(join(dirPath, entry.name));
+          else if (entry.name === 'references') counts.references = await countFilesInDir(join(dirPath, entry.name));
+          else if (entry.name === 'assets') counts.assets = await countFilesInDir(join(dirPath, entry.name));
+          else if (entry.name === 'rules') counts.rules = await countFilesInDir(join(dirPath, entry.name));
+        }
       }
-    }
-  } catch {}
+    } catch {}
 
-  counts.total = counts.scripts + counts.references + counts.assets + counts.rules;
-  return counts;
+    counts.total = counts.scripts + counts.references + counts.assets + counts.rules;
+    return counts;
+  };
+
+  if (!cache) return fresh();
+
+  const key = await dirFingerprint(dirPath);
+  const hit = cache.getDir(dirPath, key);
+  if (hit) return { ...hit.count };
+  const count = await fresh();
+  cache.setDir(dirPath, key, { count });
+  return count;
+}
+
+// 目录统计的失效键：组合 4 个统计子目录各自的 mtime。
+// 不能只用 dirPath 的 mtime——子目录内文件变化不会更新父目录 mtime。
+async function dirFingerprint(dirPath: string): Promise<number> {
+  const subs = ['scripts', 'references', 'assets', 'rules'];
+  let fp = 0;
+  for (const sub of subs) {
+    let m = 0;
+    try {
+      m = Math.trunc((await stat(join(dirPath, sub))).mtimeMs);
+    } catch {
+      m = 0;
+    }
+    fp = (fp * 31 + 7 * m) | 0;
+  }
+  return fp;
 }
 
 async function countFilesInDir(dirPath: string): Promise<number> {

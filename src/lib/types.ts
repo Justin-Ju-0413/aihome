@@ -65,6 +65,11 @@ export interface ScanResult {
   errors: string[];
   scannedPaths: string[];
   timestamp: string;
+  scanStats?: {
+    filesChecked: number;
+    cacheHits: number;
+    cacheMisses: number;
+  };
 }
 
 export interface FileTreeNode {
