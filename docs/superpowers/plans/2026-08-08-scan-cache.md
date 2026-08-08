@@ -111,9 +111,9 @@ describe('ScanCache', () => {
     c.setFile('/a', { mtimeMs: 1, size: 2 }, { node: { name: 'a' } as never, depNames: [] });
     c.getFile('/a', { mtimeMs: 1, size: 2 });
     c.getFile('/missing', { mtimeMs: 1, size: 2 });
-    expect(c.stats.filesChecked).toBe(3);   // setFile 无统计，getFile 每个一次
+    expect(c.stats.filesChecked).toBe(2);   // getFile 每次计入，setFile 不计
     expect(c.stats.cacheHits).toBe(1);
-    expect(c.stats.cacheMisses).toBe(2);
+    expect(c.stats.cacheMisses).toBe(1);
   });
 });
 ```
@@ -179,13 +179,13 @@ export class ScanCache {
   }
 
   getFile(path: string, fp: ScanFingerprint): ParseOutcome | null {
-    this.stats.filesChecked += 1;
+    this.current.filesChecked += 1;
     const e = this.files.get(path);
     if (e && e.fp.mtimeMs === fp.mtimeMs && e.fp.size === fp.size) {
-      this.stats.cacheHits += 1;
-      return { node: cloneOrNode(e.node), depNames: [...e.depNames] };
+      this.current.cacheHits += 1;
+      return { node: plainCloneNode(e.node), depNames: [...e.depNames] };
     }
-    this.stats.cacheMisses += 1;
+    this.current.cacheMisses += 1;
     return null;
   }
 
@@ -204,12 +204,12 @@ export class ScanCache {
   }
 
   get stats(): ScanStats {
-    return { ...this.stats };
+    return { ...this.current };
   }
 }
 ```
 
-注：`getFile` 亦同时实现**探针语义**——即使未命中也会让 caller 得知（返回 null）。`getDir` 不参与 filesChecked 计数（目录统计是次要成本）。
+注：`getFile` 亦同时实现**探针语义**——即使未命中也会让 caller 得知（返回 null）。统计用私有 `current` 累加，`stats` getter 返回防突变拷贝。`getDir` 不参与 filesChecked 计数（目录统计是次要成本）。
 
 - [ ] **Step 4: 运行验证通过**
 
