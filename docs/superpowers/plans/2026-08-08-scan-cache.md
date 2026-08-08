@@ -471,6 +471,6 @@ git commit -m "chore: keep default cache on in scan API route"
 
 ## Self-Review Checklist
 
-- [ ] spec 的 OOO：扫描缓存命中后 readFile=0、变更失效、新增/删除失效、只读 API —— 分别对应 Task2 测试 3/4/5 与根默认（Task3）
-- [ ] 占位符扫描：Task2 Step3 有 `/* 原逻辑 */` 引导，指向任务第一步已展示的源头，不算占位
-- [ ] 类型一致性：`ScanCache` / `ParseOutcome` / `scanStats` / `ScanOptions` 在全 plan 引用一致；`countAssociatedFiles` 增加第三参数 `cache`，所有 call 点（agent/skill/CLAUDE parse）与 `associatedFiles` 统计统一接
+- [x] spec 的 OOO：扫描缓存命中后 readFile=0、变更失效、新增/删除失效、只读 API —— 分别对应 Task2 测试 3/4/5 与根默认（Task3）
+- [x] 占位符扫描：Task2 Step3 有 `/* 原逻辑 */` 引导，指向任务第一步已展示的源头，不算占位
+- [x] 类型一致性：`ScanCache` / `ParseOutcome` / `scanStats` / `ScanOptions` 在全 plan 引用一致；`countAssociatedFiles` 增加第三参数 `cache`，所有 call 点（agent/skill/CLAUDE parse）与 `associatedFiles` 统计统一接
