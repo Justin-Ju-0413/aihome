@@ -34,15 +34,15 @@
   ```ts
   export interface ScanFingerprint { mtimeMs: number; size: number; }
   export interface ParseOutcome { node: AgentNode; depNames: string[]; }
-  export interface ScanCacheStats { filesChecked: number; cacheHits: number; cacheMisses: number; }
-  export interface ScanDirEntry { associatedFiles: AgentNode['associatedFiles']; }
+  export interface ScanStats { filesChecked: number; cacheHits: number; cacheMisses: number; }
+  export interface ScanDirEntry { count: AgentNode['associatedFiles']; }
   export class ScanCache {
     constructor();                                  // stats 初始 {filesChecked:0,cacheHits:0,cacheMisses:0}
     fileFingerprint(p: { mtimeMs: number; size: number }): ScanFingerprint; // 纯值映射，供 stat 结果直接传入
     getFile(path: string, fp: ScanFingerprint): ParseOutcome | null;
     setFile(path: string, fp: ScanFingerprint, outcome: ParseOutcome): void;
-    getDir(dirPath: string, dirMtimeMs: number): ScanCacheEntry | null;
-    setDir(dirPath: string, dirMtimeMs: number, entry: ScanCacheEntry): void;
+    getDir(dirPath: string, dirMtimeMs: number): ScanDirEntry | null;
+    setDir(dirPath: string, dirMtimeMs: number, entry: ScanDirEntry): void;
     get stats(): ScanStats;
   }
   ```
