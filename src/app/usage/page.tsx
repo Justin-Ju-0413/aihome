@@ -15,6 +15,7 @@ interface EventsResponse {
   stats: { byDay: Array<{ day: string; cost: number; tokens: number; count: number }>; bySource: Array<{ source: string; cost: number; tokens: number; count: number }>; topModels: Array<{ model: string; cost: number; tokens: number; count: number }> };
   table: TableRow[];
   sourceStatus: Array<{ id: string; label: string; status: string; message?: string; eventCount?: number }>;
+  unknownPricing: Array<{ source: string; model: string; count: number }>;
 }
 
 async function fetchEvents(source: string, range: UsageRange, dimension: string): Promise<EventsResponse> {
@@ -97,6 +98,16 @@ export default function UsagePage() {
               </span>
             ))}
           </div>
+          {data.unknownPricing.length > 0 && (
+            <div
+              data-testid="usage-unknown-pricing"
+              className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              未知定价：{data.unknownPricing
+                .map((u) => `${u.model}（${u.source} ×${u.count}）`)
+                .join('、')}
+            </div>
+          )}
           <OverviewCards totals={data.totals} />
           <div data-testid="usage-kline" className="rounded-lg border border-divider bg-white/80 p-4 mb-6">
             <div className="flex items-center justify-between mb-2">
