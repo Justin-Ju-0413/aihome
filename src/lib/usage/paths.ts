@@ -20,3 +20,7 @@ export const USAGE_SOURCE_PATHS: Record<ActiveUsageSource, () => string> = {
 export function usageCachePath(): string {
   return process.env.AIHOME_USAGE_CACHE ?? path.join(configDir(), 'usage-cache.db');
 }
+
+export function pricingOverridesPath(): string {
+  return process.env.AIHOME_USAGE_PRICING_OVERRIDES ?? path.join(process.cwd(), 'data', 'pricing-overrides.json');
+}

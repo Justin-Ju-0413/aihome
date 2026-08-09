@@ -42,6 +42,7 @@ beforeAll(() => {
     AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
     AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
     AIHOME_USAGE_CACHE: cacheDb,
+    AIHOME_USAGE_PRICING_OVERRIDES: path.join(dir, 'no-overrides.json'),
   });
 });
 

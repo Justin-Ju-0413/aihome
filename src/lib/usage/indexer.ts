@@ -1,7 +1,7 @@
-import { USAGE_SOURCE_PATHS, usageCachePath } from './paths';
+import { USAGE_SOURCE_PATHS, usageCachePath, pricingOverridesPath } from './paths';
 import { UsageCache } from './cache';
 import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo, type UsageSource } from './types';
-import { loadCcSwitchPricing, getPricing } from './pricing';
+import { loadCcSwitchPricing, getPricing, loadPricingOverrides } from './pricing';
 import { scanSource, checkSourceAvailability } from './sources';
 export { checkSourceAvailability };
 
@@ -24,7 +24,9 @@ export interface IndexResult {
 export function runIndex(only?: ActiveUsageSource[]): IndexResult {
   const cache = UsageCache.open(usageCachePath());
   const ccPricing = loadCcSwitchPricing(USAGE_SOURCE_PATHS['cc-switch']());
-  const pricing = (model: string) => getPricing(model, ccPricing);
+  const overrides = loadPricingOverrides(pricingOverridesPath());
+  const pricing = (model: string) => getPricing(model, ccPricing, overrides);
+  cache.backfillPricingSource((m) => pricing(m).source);
   const targets = only && only.length > 0 ? only : ACTIVE_SOURCES;
   const sources: SourceInfo[] = [];
   let inserted = 0;

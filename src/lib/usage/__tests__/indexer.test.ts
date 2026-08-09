@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { DatabaseSync } from 'node:sqlite';
 import { runIndex, checkSourceAvailability, SOURCE_LABELS } from '../indexer';
+import { UsageCache } from '../cache';
 import { makeCcSwitchDb, tmpDir, rmTmp } from './fixtures';
 
 const dir = tmpDir('indexer-');
@@ -40,6 +41,7 @@ describe('runIndex', () => {
       AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
       AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
       AIHOME_USAGE_CACHE: cacheDb,
+      AIHOME_USAGE_PRICING_OVERRIDES: path.join(dir, 'no-overrides.json'),
     };
     const prev = { ...process.env };
     Object.assign(process.env, env);
@@ -79,11 +81,48 @@ describe('runIndex', () => {
       AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
       AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
       AIHOME_USAGE_CACHE: path.join(dir, 'corrupt-cache.db'),
+      AIHOME_USAGE_PRICING_OVERRIDES: path.join(dir, 'no-overrides.json'),
     });
     try {
       const res = runIndex(['cc-switch']);
       const byId = Object.fromEntries(res.sources.map((s) => [s.id, s]));
       expect(byId['cc-switch'].status).toBe('error');
+    } finally {
+      process.env = prev;
+    }
+  });
+  it('stamps pricingSource on claude events, tolerates missing override file', () => {
+    const claudeDir = path.join(dir, 'claude-ps');
+    fs.mkdirSync(path.join(claudeDir, 'proj'), { recursive: true });
+    fs.writeFileSync(
+      path.join(claudeDir, 'proj', 's1.jsonl'),
+      JSON.stringify({ type: 'assistant', uuid: 'u1', timestamp: '2026-08-01T10:00:00.000Z',
+        message: { model: 'glm-5.2', usage: { input_tokens: 100, output_tokens: 50 } } }) + '\n' +
+      JSON.stringify({ type: 'assistant', uuid: 'u2', timestamp: '2026-08-01T11:00:00.000Z',
+        message: { model: 'mystery-x', usage: { input_tokens: 10, output_tokens: 5 } } }) + '\n'
+    );
+    const prev = { ...process.env };
+    Object.assign(process.env, {
+      AIHOME_USAGE_CCSWITCH_DB: path.join(dir, 'no-cc.db'),
+      AIHOME_USAGE_OPENCODE_DB: path.join(dir, 'no-oc.db'),
+      AIHOME_USAGE_CLAUDE_DIR: claudeDir,
+      AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
+      AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_CACHE: path.join(dir, 'cache-ps.db'),
+      AIHOME_USAGE_PRICING_OVERRIDES: path.join(dir, 'no-overrides.json'),
+    });
+    try {
+      runIndex(['claude']);
+      const cache = UsageCache.open(path.join(dir, 'cache-ps.db'));
+      try {
+        const rows = cache.queryEvents(['claude'], 0);
+        const byModel = Object.fromEntries(rows.map((r) => [r.model, r]));
+        expect(byModel['glm-5.2'].pricingSource).toBe('bundled');
+        expect(byModel['mystery-x'].pricingSource).toBe('unknown');
+        expect(byModel['mystery-x'].costUsd).toBe(0);
+      } finally {
+        cache.close();
+      }
     } finally {
       process.env = prev;
     }
