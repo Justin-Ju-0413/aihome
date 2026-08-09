@@ -183,3 +183,15 @@ export function buildTable(events: UsageEvent[], now = Date.now()): TableRow[] {
   }
   return out.sort((a, b) => b.cost24h + b.costMonth - (a.cost24h + a.costMonth));
 }
+
+export function groupUnknownPricing(events: UsageEvent[]): Array<{ source: string; model: string; count: number }> {
+  const map = new Map<string, { source: string; model: string; count: number }>();
+  for (const e of events) {
+    if (e.pricingSource !== 'unknown') continue;
+    const key = `${e.source}\u0000${e.model}`;
+    const g = map.get(key) ?? { source: e.source, model: e.model, count: 0 };
+    g.count += 1;
+    map.set(key, g);
+  }
+  return [...map.values()].sort((a, b) => b.count - a.count);
+}

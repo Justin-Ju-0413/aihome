@@ -67,6 +67,7 @@ describe('usage API routes', () => {
     expect(data.kline.length).toBeGreaterThan(0);
     expect(data.table.length).toBeGreaterThanOrEqual(1);
     expect(data.stats.bySource.length).toBeGreaterThanOrEqual(1);
+    expect(data.unknownPricing).toBeDefined();
     expect(data.sourceStatus.length).toBe(6);
     const openclaw = data.sourceStatus.find((s: { id: string }) => s.id === 'openclaw');
     expect(openclaw.status).toBe('not-supported');

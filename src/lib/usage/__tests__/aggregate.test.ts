@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildKline, totalsFor, groupBySource, groupByModel, byDay, buildTable,
-  bucketMsForRange, rangeMs,
+  bucketMsForRange, rangeMs, groupUnknownPricing,
 } from '../aggregate';
 import type { UsageEvent } from '../types';
 
@@ -80,5 +80,15 @@ describe('buildTable', () => {
     expect(rows[0].costMonth).toBe(3);
     expect(rows[0].models[0].model).toBe('m1');
     expect(rows[0].models[0].tokens24h).toBe(10);
+  });
+});
+
+describe('groupUnknownPricing', () => {
+  it('groups unknown-priced events by source+model', () => {
+    const e1 = { ...ev(NOW, 0, 10, 'claude', 'mystery-x'), pricingSource: 'unknown' as const };
+    const e2 = { ...ev(NOW, 0, 20, 'claude', 'mystery-x'), pricingSource: 'unknown' as const };
+    const e3 = { ...ev(NOW, 1, 10, 'cc-switch', 'm1'), pricingSource: undefined };
+    const out = groupUnknownPricing([e1, e2, e3]);
+    expect(out).toEqual([{ source: 'claude', model: 'mystery-x', count: 2 }]);
   });
 });

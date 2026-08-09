@@ -5,7 +5,7 @@ import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo } from '@/lib/u
 import { indexIfStale, SOURCE_LABELS, checkSourceAvailability } from '@/lib/usage/indexer';
 import {
   buildKline, bucketMsForRange, rangeMs, totalsFor, groupBySource, groupByModel,
-  byDay, buildTable, USAGE_RANGES,
+  byDay, buildTable, groupUnknownPricing, USAGE_RANGES,
   type UsageRange, type UsageDimension,
 } from '@/lib/usage/aggregate';
 
@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
           bySource: groupBySource(windowEvents),
           topModels: groupByModel(windowEvents),
         },
+        unknownPricing: groupUnknownPricing(windowEvents),
         table: buildTable(cache.queryEvents(sources, totalsSince), now),
         sourceStatus,
       });
