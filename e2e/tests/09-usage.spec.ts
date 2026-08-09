@@ -57,4 +57,10 @@ test.describe('Usage Aggregator', () => {
     await expect(page.locator(selectors.usage.rescan)).toBeEnabled({ timeout: 20_000 });
     await expect(page.locator(selectors.usage.overview)).toBeVisible();
   });
+
+  test('unknown pricing banner shown for unmapped models', async ({ page }) => {
+    await page.goto('/usage');
+    await expect(page.locator('[data-testid="usage-unknown-pricing"]')).toBeVisible();
+    await expect(page.locator('[data-testid="usage-unknown-pricing"]')).toContainText('mystery-model-x99');
+  });
 });

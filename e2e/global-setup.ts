@@ -55,6 +55,10 @@ export default function globalSetup(): void {
       type: 'assistant', uuid: 'u1', timestamp: new Date(safeMs).toISOString(),
       message: { model: 'glm-5.2', usage: { input_tokens: 500, output_tokens: 100,
         cache_read_input_tokens: 50, cache_creation_input_tokens: 10 } },
+    }) + '\n' +
+    JSON.stringify({
+      type: 'assistant', uuid: 'u2', timestamp: new Date(safeMs).toISOString(),
+      message: { model: 'mystery-model-x99', usage: { input_tokens: 40, output_tokens: 20 } },
     }) + '\n'
   );
 
