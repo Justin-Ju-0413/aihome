@@ -127,6 +127,89 @@ describe('runIndex', () => {
       process.env = prev;
     }
   });
+  it('backfills pricingSource on pre-existing rows with NULL pricing_source', () => {
+    // Pre-seed a cache with rows lacking pricingSource (NULL pricing_source),
+    // as would exist from an index run before the pricing_source migration.
+    const cachePath = path.join(dir, 'cache-backfill.db');
+    const seed = UsageCache.open(cachePath);
+    try {
+      seed.insertEvents([
+        { rawId: 'pre1', source: 'claude', provider: 'claude-code', model: 'glm-5.2',
+          inputTokens: 100, outputTokens: 50, cacheReadTokens: 0, cacheWriteTokens: 0,
+          costUsd: 0, timestamp: 1000 },
+        { rawId: 'pre2', source: 'claude', provider: 'claude-code', model: 'mystery-backfill',
+          inputTokens: 10, outputTokens: 5, cacheReadTokens: 0, cacheWriteTokens: 0,
+          costUsd: 0, timestamp: 1001 },
+      ]);
+    } finally {
+      seed.close();
+    }
+    const prev = { ...process.env };
+    Object.assign(process.env, {
+      AIHOME_USAGE_CCSWITCH_DB: path.join(dir, 'no-cc.db'),
+      AIHOME_USAGE_OPENCODE_DB: path.join(dir, 'no-oc.db'),
+      AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude-backfill'),
+      AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
+      AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_CACHE: cachePath,
+      AIHOME_USAGE_PRICING_OVERRIDES: path.join(dir, 'no-overrides.json'),
+    });
+    try {
+      runIndex(['claude']);
+      const cache = UsageCache.open(cachePath);
+      try {
+        const rows = cache.queryEvents(['claude'], 0);
+        const byId = Object.fromEntries(rows.map((r) => [r.rawId, r]));
+        expect(byId['pre1'].pricingSource).toBe('bundled');
+        expect(byId['pre2'].pricingSource).toBe('unknown');
+      } finally {
+        cache.close();
+      }
+    } finally {
+      process.env = prev;
+    }
+  });
+  it('consumes AIHOME_USAGE_PRICING_OVERRIDES override for scanned events', () => {
+    const claudeDir = path.join(dir, 'claude-ovr');
+    fs.mkdirSync(path.join(claudeDir, 'proj'), { recursive: true });
+    fs.writeFileSync(
+      path.join(claudeDir, 'proj', 's1.jsonl'),
+      JSON.stringify({ type: 'assistant', uuid: 'u1', timestamp: '2026-08-01T10:00:00.000Z',
+        message: { model: 'glm-5.2', usage: { input_tokens: 100, output_tokens: 50 } } }) + '\n'
+    );
+    const overridesPath = path.join(dir, 'overrides.json');
+    fs.writeFileSync(
+      overridesPath,
+      JSON.stringify({
+        'glm-5.2': { inputPerM: 1, outputPerM: 2, cacheReadPerM: 0, cacheWritePerM: 0 },
+      })
+    );
+    const prev = { ...process.env };
+    Object.assign(process.env, {
+      AIHOME_USAGE_CCSWITCH_DB: path.join(dir, 'no-cc.db'),
+      AIHOME_USAGE_OPENCODE_DB: path.join(dir, 'no-oc.db'),
+      AIHOME_USAGE_CLAUDE_DIR: claudeDir,
+      AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
+      AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_CACHE: path.join(dir, 'cache-ovr.db'),
+      AIHOME_USAGE_PRICING_OVERRIDES: overridesPath,
+    });
+    try {
+      runIndex(['claude']);
+      const cache = UsageCache.open(path.join(dir, 'cache-ovr.db'));
+      try {
+        const rows = cache.queryEvents(['claude'], 0);
+        const byModel = Object.fromEntries(rows.map((r) => [r.model, r]));
+        expect(byModel['glm-5.2'].pricingSource).toBe('override');
+        // override price: (100 * 1 + 50 * 2) / 1e6 = 0.0002
+        expect(byModel['glm-5.2'].costUsd).toBeCloseTo((100 * 1 + 50 * 2) / 1e6, 10);
+      } finally {
+        cache.close();
+      }
+    } finally {
+      process.env = prev;
+    }
+  });
 });
 
 describe('SOURCE_LABELS', () => {
