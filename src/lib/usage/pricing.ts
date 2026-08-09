@@ -1,4 +1,4 @@
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { DatabaseSync } from 'node:sqlite';
 
 export interface ModelPricing {
@@ -6,6 +6,13 @@ export interface ModelPricing {
   outputPerM: number;
   cacheReadPerM: number;
   cacheWritePerM: number;
+}
+
+export type PricingSource = 'override' | 'cc-switch' | 'bundled' | 'provider-prefix' | 'unknown';
+
+export interface PricingLookup {
+  pricing: ModelPricing | null;
+  source: PricingSource;
 }
 
 export const BUNDLED_PRICING: Record<string, ModelPricing> = {
@@ -18,6 +25,15 @@ export const BUNDLED_PRICING: Record<string, ModelPricing> = {
   'gpt-5.6-terra': { inputPerM: 1.25, outputPerM: 10, cacheReadPerM: 0.1, cacheWritePerM: 1.25 },
   'deepseek-v4-flash-free': { inputPerM: 0, outputPerM: 0, cacheReadPerM: 0, cacheWritePerM: 0 },
   'glm-5.2': { inputPerM: 0.6, outputPerM: 2.5, cacheReadPerM: 0.1, cacheWritePerM: 0.6 },
+};
+
+// 行业均价（按 provider 前缀回退），可调
+export const PROVIDER_FALLBACK_PRICING: Record<string, ModelPricing> = {
+  'claude-': { inputPerM: 4, outputPerM: 20, cacheReadPerM: 0.4, cacheWritePerM: 5 },
+  'gpt-': { inputPerM: 2.5, outputPerM: 10, cacheReadPerM: 1.25, cacheWritePerM: 2.5 },
+  'deepseek-': { inputPerM: 0.27, outputPerM: 1.1, cacheReadPerM: 0.07, cacheWritePerM: 0.27 },
+  'glm-': { inputPerM: 0.6, outputPerM: 2.5, cacheReadPerM: 0.1, cacheWritePerM: 0.6 },
+  'gemini-': { inputPerM: 0.7, outputPerM: 2.8, cacheReadPerM: 0.1, cacheWritePerM: 0.35 },
 };
 
 export function calculateCost(
@@ -35,9 +51,16 @@ export function calculateCost(
 
 export function getPricing(
   model: string,
-  ccSwitchPricing?: Record<string, ModelPricing> | null
-): ModelPricing | null {
-  return ccSwitchPricing?.[model] ?? BUNDLED_PRICING[model] ?? null;
+  ccSwitchPricing?: Record<string, ModelPricing> | null,
+  overrides?: Record<string, ModelPricing> | null
+): PricingLookup {
+  if (overrides && overrides[model]) return { pricing: overrides[model], source: 'override' };
+  if (ccSwitchPricing?.[model]) return { pricing: ccSwitchPricing[model], source: 'cc-switch' };
+  if (BUNDLED_PRICING[model]) return { pricing: BUNDLED_PRICING[model], source: 'bundled' };
+  for (const [prefix, pricing] of Object.entries(PROVIDER_FALLBACK_PRICING)) {
+    if (model.startsWith(prefix)) return { pricing, source: 'provider-prefix' };
+  }
+  return { pricing: null, source: 'unknown' };
 }
 
 export function loadCcSwitchPricing(dbPath: string): Record<string, ModelPricing> | null {
@@ -69,6 +92,30 @@ export function loadCcSwitchPricing(dbPath: string): Record<string, ModelPricing
       db.close();
     }
   } catch {
+    return null;
+  }
+}
+
+export function loadPricingOverrides(overridesPath: string): Record<string, ModelPricing> | null {
+  if (!existsSync(overridesPath)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(overridesPath, 'utf-8')) as Record<string, unknown>;
+    const out: Record<string, ModelPricing> = {};
+    for (const [model, v] of Object.entries(raw)) {
+      const o = v as Record<string, unknown>;
+      const inputPerM = Number(o.inputPerM);
+      const outputPerM = Number(o.outputPerM);
+      if (!Number.isFinite(inputPerM) || !Number.isFinite(outputPerM)) continue;
+      out[model] = {
+        inputPerM,
+        outputPerM,
+        cacheReadPerM: Number(o.cacheReadPerM) || 0,
+        cacheWritePerM: Number(o.cacheWritePerM) || 0,
+      };
+    }
+    return out;
+  } catch (err) {
+    console.error(`pricing overrides parse failed: ${err instanceof Error ? err.message : String(err)}`);
     return null;
   }
 }
