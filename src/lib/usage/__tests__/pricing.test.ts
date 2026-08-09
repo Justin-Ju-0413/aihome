@@ -89,4 +89,14 @@ describe('loadPricingOverrides', () => {
     fs.writeFileSync(f, '{nope');
     expect(loadPricingOverrides(f)).toBeNull();
   });
+  it('skips null entries without discarding the whole file', () => {
+    const f = path.join(pdir, 'partial-null.json');
+    fs.writeFileSync(f, JSON.stringify({
+      'good-model': { inputPerM: 3, outputPerM: 15, cacheReadPerM: 0.3, cacheWritePerM: 3.75 },
+      'null-model': null,
+    }));
+    expect(loadPricingOverrides(f)).toEqual({
+      'good-model': { inputPerM: 3, outputPerM: 15, cacheReadPerM: 0.3, cacheWritePerM: 3.75 },
+    });
+  });
 });

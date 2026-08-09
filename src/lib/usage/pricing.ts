@@ -103,6 +103,7 @@ export function loadPricingOverrides(overridesPath: string): Record<string, Mode
     const out: Record<string, ModelPricing> = {};
     for (const [model, v] of Object.entries(raw)) {
       const o = v as Record<string, unknown>;
+      if (!o || typeof o !== 'object') continue;
       const inputPerM = Number(o.inputPerM);
       const outputPerM = Number(o.outputPerM);
       if (!Number.isFinite(inputPerM) || !Number.isFinite(outputPerM)) continue;

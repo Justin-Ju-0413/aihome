@@ -38,7 +38,7 @@
   - `export function loadPricingOverrides(overridesPath: string): Record<string, ModelPricing> | null`
   - `export function getPricing(model: string, ccSwitchPricing?: Record<string, ModelPricing> | null, overrides?: Record<string, ModelPricing> | null): PricingLookup`
 
-- [ ] **Step 1: 写失败测试（扩展 pricing.test.ts）**
+- [x] **Step 1: 写失败测试（扩展 pricing.test.ts）**
 
 先更新 imports：
 ```ts
@@ -110,12 +110,12 @@ describe('loadPricingOverrides', () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/pricing.test.ts`
 Expected: FAIL（TS 报 `PROVIDER_FALLBACK_PRICING` / `loadPricingOverrides` 未导出；`getPricing` 返回对象而非 `ModelPricing`）
 
-- [ ] **Step 3: 实现 pricing.ts**
+- [x] **Step 3: 实现 pricing.ts**
 
 修改顶部 import：
 ```ts
@@ -188,12 +188,12 @@ export function loadPricingOverrides(overridesPath: string): Record<string, Mode
 }
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/pricing.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/pricing.ts src/lib/usage/__tests__/pricing.test.ts
@@ -215,7 +215,7 @@ git commit -m "feat(usage): pricing five-tier fallback with PricingSource"
 - Consumes: `PricingLookup` / `PricingSource`（Task 1）
 - Produces: `UsageEvent.pricingSource?: PricingSource`；`Adapter = (path, cp, pricing: (m) => PricingLookup) => AdapterScan`
 
-- [ ] **Step 1: 写失败测试（改 claude.test.ts / codex.test.ts）**
+- [x] **Step 1: 写失败测试（改 claude.test.ts / codex.test.ts）**
 
 claude.test.ts：
 ```ts
@@ -237,12 +237,12 @@ codex.test.ts：同样加 `lookup`，把 2 处替换；在第一个用例追加�
 expect(events[0].pricingSource).toBe('bundled');
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/claude.test.ts src/lib/usage/__tests__/codex.test.ts`
 Expected: FAIL（TS：类型不匹配，`pricingProvider` 期望 `(m) => ModelPricing | null`）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 types.ts：顶部加 import，`UsageEvent` 加字段：
 ```ts
@@ -301,12 +301,12 @@ costUsd: lookup.pricing
 pricingSource: lookup.source,
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/claude.test.ts src/lib/usage/__tests__/codex.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/types.ts src/lib/usage/sources/index.ts src/lib/usage/sources/claude.ts src/lib/usage/sources/codex.ts src/lib/usage/__tests__/claude.test.ts src/lib/usage/__tests__/codex.test.ts
@@ -327,7 +327,7 @@ git commit -m "feat(usage): stamp pricingSource on claude/codex events"
   - `UsageCache.open` 内嵌 `PRAGMA user_version` 迁移（V1→V2）
   - `UsageCache.backfillPricingSource(resolve: (model: string) => PricingSource | null): number`
 
-- [ ] **Step 1: 写失败测试（cache.test.ts 追加）**
+- [x] **Step 1: 写失败测试（cache.test.ts 追加）**
 
 在文件顶部 import 补 `DatabaseSync`：
 ```ts
@@ -373,12 +373,12 @@ it('writes and reads pricing_source on insert/query', () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/cache.test.ts`
 Expected: FAIL（`backfillPricingSource` 不存在；迁移未加列导致 query 报错或无 pricingSource）
 
-- [ ] **Step 3: 实现 cache.ts**
+- [x] **Step 3: 实现 cache.ts**
 
 顶部 import 补 `PricingSource`：
 ```ts
@@ -463,12 +463,12 @@ function migrateSchema(db: DatabaseSync): void {
   }
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/cache.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/cache.ts src/lib/usage/__tests__/cache.test.ts
@@ -489,7 +489,7 @@ git commit -m "feat(usage): pricing_source column migration + backfill"
 - Consumes: `loadPricingOverrides`（Task 1）、`UsageCache.backfillPricingSource`（Task 3）
 - Produces: `pricingOverridesPath()`（paths.ts），`runIndex` 每次读 override + 开库后回填
 
-- [ ] **Step 1: 写失败测试（indexer.test.ts 追加）**
+- [x] **Step 1: 写失败测试（indexer.test.ts 追加）**
 
 在文件顶部 import 补：
 ```ts
@@ -538,12 +538,12 @@ it('stamps pricingSource on claude events, tolerates missing override file', () 
 
 （indexer.test.ts 顶部需 `import { UsageCache } from '../cache';`）
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/indexer.test.ts`
 Expected: FAIL（`pricingOverridesPath` 未导出或 pricingSource 未写入）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 paths.ts 追加：
 ```ts
@@ -566,7 +566,7 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
   const targets = only && only.length > 0 ? only : ACTIVE_SOURCES;
 ```
 
-- [ ] **Step 4: 运行全部单测确认通过（含现有 indexer/api-routes）**
+- [x] **Step 4: 运行全部单测确认通过（含现有 indexer/api-routes）**
 
 先给 indexer.test.ts 和 api-routes.test.ts 的每个 `Object.assign(process.env, {...})` 追加一行：
 ```ts
@@ -577,7 +577,7 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
 Run: `npx vitest run src/lib/usage/`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/paths.ts src/lib/usage/indexer.ts src/lib/usage/__tests__/indexer.test.ts src/lib/usage/__tests__/api-routes.test.ts
@@ -597,7 +597,7 @@ git commit -m "feat(usage): read pricing overrides + backfill on index"
 - Consumes: `UsageEvent.pricingSource`（Task 2）
 - Produces: `groupUnknownPricing(events): Array<{ source: string; model: string; count: number }>`；route 响应 `unknownPricing`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 aggregate.test.ts 追加：
 ```ts
@@ -619,12 +619,12 @@ api-routes.test.ts 第一个用例 `events: aggregates cached data` 内加断言
     expect(data.unknownPricing).toBeDefined();
 ```
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
 Run: `npx vitest run src/lib/usage/__tests__/aggregate.test.ts src/lib/usage/__tests__/api-routes.test.ts`
 Expected: FAIL（`groupUnknownPricing` 未导出 / `unknownPricing` 不在响应）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 aggregate.ts 文件末尾追加：
 ```ts
@@ -663,12 +663,12 @@ import {
       });
 ```
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 Run: `npx vitest run src/lib/usage/__tests__/aggregate.test.ts src/lib/usage/__tests__/api-routes.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/usage/aggregate.ts src/app/api/usage/events/route.ts src/lib/usage/__tests__/aggregate.test.ts src/lib/usage/__tests__/api-routes.test.ts
@@ -686,7 +686,7 @@ git commit -m "feat(usage): expose unknownPricing aggregation in events API"
 - Consumes: 响应新增 `unknownPricing` 字段（Task 5）
 - Produces: `[data-testid="usage-unknown-pricing"]` 提示条（有 unknown 时渲染，含模型名 + 来源 + 次数）
 
-- [ ] **Step 1: 更新 EventsResponse 类型 + 渲染徽标**
+- [x] **Step 1: 更新 EventsResponse 类型 + 渲染徽标**
 
 `EventsResponse` 接口加：
 ```ts
@@ -707,12 +707,12 @@ git commit -m "feat(usage): expose unknownPricing aggregation in events API"
           )}
 ```
 
-- [ ] **Step 2: 验证构建**
+- [x] **Step 2: 验证构建**
 
 Run: `npx tsc --noEmit && npm run build`
 Expected: PASS（无 TS 报错、build 成功）
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/usage/page.tsx

@@ -52,6 +52,7 @@ export default defineConfig({
       AIHOME_USAGE_OPENCODE_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'opencode.db'),
       AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
       AIHOME_USAGE_CACHE: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cache.db'),
+      AIHOME_USAGE_PRICING_OVERRIDES: path.join(process.cwd(), 'e2e', '.e2e-usage', 'no-overrides.json'),
     },
   },
 });
