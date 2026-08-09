@@ -6,14 +6,14 @@ import { scanCodex } from './codex';
 import { scanOpencode } from './opencode';
 import { scanHermes } from './hermes';
 import { USAGE_SOURCE_PATHS } from '../paths';
-import type { ModelPricing } from '../pricing';
+import type { PricingLookup } from '../pricing';
 
 export interface AdapterScan {
   events: ScannedEvent[];
   checkpoint: Checkpoint;
 }
 
-type Adapter = (path: string, cp: Checkpoint, pricing: (m: string) => ModelPricing | null) => AdapterScan;
+type Adapter = (path: string, cp: Checkpoint, pricing: (m: string) => PricingLookup) => AdapterScan;
 
 const ADAPTERS: Record<ActiveUsageSource, Adapter> = {
   'cc-switch': (p, cp) => scanCcSwitch(p, cp),
@@ -32,7 +32,7 @@ export function checkSourceAvailability(id: ActiveUsageSource): { ok: boolean; r
 export function scanSource(
   id: ActiveUsageSource,
   cp: Checkpoint,
-  pricing: (m: string) => ModelPricing | null
+  pricing: (m: string) => PricingLookup
 ): AdapterScan {
   const p = USAGE_SOURCE_PATHS[id]();
   return ADAPTERS[id](p, cp, pricing);

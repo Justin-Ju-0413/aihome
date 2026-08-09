@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Checkpoint, ScannedEvent } from '../types';
-import { calculateCost, type ModelPricing } from '../pricing';
+import { calculateCost, type PricingLookup } from '../pricing';
 
 interface RawUsage {
   input_tokens?: number;
@@ -45,7 +45,7 @@ function collectJsonlFiles(dir: string): string[] {
 export function scanClaude(
   dir: string,
   cp: Checkpoint,
-  pricingProvider: (model: string) => ModelPricing | null
+  pricingProvider: (model: string) => PricingLookup
 ): { events: ScannedEvent[]; checkpoint: Checkpoint } {
   const events: ScannedEvent[] = [];
   let maxMtime = cp.mtime;
@@ -71,7 +71,7 @@ export function scanClaude(
           ? (d.message as Record<string, unknown>).model
           : d.model) ?? 'unknown'
       );
-      const pricing = pricingProvider(model);
+      const lookup = pricingProvider(model);
       const input = Number(usage.input_tokens) || 0;
       const output = Number(usage.output_tokens) || 0;
       const cacheRead = Number(usage.cache_read_input_tokens) || 0;
@@ -88,7 +88,8 @@ export function scanClaude(
         outputTokens: output,
         cacheReadTokens: cacheRead,
         cacheWriteTokens: cacheWrite,
-        costUsd: pricing ? calculateCost({ input, output, cacheRead, cacheWrite }, pricing) : 0,
+        costUsd: lookup.pricing ? calculateCost({ input, output, cacheRead, cacheWrite }, lookup.pricing) : 0,
+        pricingSource: lookup.source,
         sessionId: d.sessionId == null ? undefined : String(d.sessionId),
         timestamp,
       });

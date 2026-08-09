@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Checkpoint, ScannedEvent } from '../types';
-import { calculateCost, type ModelPricing } from '../pricing';
+import { calculateCost, type PricingLookup } from '../pricing';
 
 export function scanCodex(
   dir: string,
   cp: Checkpoint,
-  pricingProvider: (model: string) => ModelPricing | null
+  pricingProvider: (model: string) => PricingLookup
 ): { events: ScannedEvent[]; checkpoint: Checkpoint } {
   const events: ScannedEvent[] = [];
   let maxMtime = cp.mtime;
@@ -56,7 +56,7 @@ export function scanCodex(
       const input = Number(usage.input_tokens) || 0;
       const output = Number(usage.output_tokens) || 0;
       const cacheRead = Number(usage.cached_input_tokens) || 0;
-      const pricing = pricingProvider(currentModel);
+      const lookup = pricingProvider(currentModel);
       const rawTs = d.timestamp;
       const parsed = typeof rawTs === 'string' ? Date.parse(rawTs) : NaN;
       const timestamp = Number.isFinite(parsed) ? parsed : Number(rawTs) || 0;
@@ -69,9 +69,10 @@ export function scanCodex(
         outputTokens: output,
         cacheReadTokens: cacheRead,
         cacheWriteTokens: 0,
-        costUsd: pricing
-          ? calculateCost({ input, output, cacheRead, cacheWrite: 0 }, pricing)
+        costUsd: lookup.pricing
+          ? calculateCost({ input, output, cacheRead, cacheWrite: 0 }, lookup.pricing)
           : 0,
+        pricingSource: lookup.source,
         sessionId: d.session_id == null ? undefined : String(d.session_id),
         timestamp,
       });

@@ -4,7 +4,12 @@ import * as path from 'path';
 import { scanClaude } from '../sources/claude';
 import { tmpDir, rmTmp } from './fixtures';
 import { EMPTY_CHECKPOINT } from '../types';
-import { BUNDLED_PRICING } from '../pricing';
+import { BUNDLED_PRICING, type PricingLookup } from '../pricing';
+
+const lookup = (m: string): PricingLookup => {
+  const pricing = BUNDLED_PRICING[m] ?? null;
+  return { pricing, source: pricing ? 'bundled' : 'unknown' };
+};
 
 let checkpointMtimeAfterFirstScan = 0;
 
@@ -40,7 +45,7 @@ describe('scanClaude', () => {
     fs.mkdirSync(sub, { recursive: true });
     const f = path.join(sub, 's1.jsonl');
     fs.writeFileSync(f, `${NEW_FORMAT_LINE}\n${OLD_FORMAT_LINE}\nbroken-line\n`);
-    const { events, checkpoint } = scanClaude(dir, EMPTY_CHECKPOINT, (m) => BUNDLED_PRICING[m] ?? null);
+    const { events, checkpoint } = scanClaude(dir, EMPTY_CHECKPOINT, lookup);
     expect(events).toHaveLength(2);
     expect(events[0]).toMatchObject({
       rawId: 's1.jsonl:u1', source: 'claude', provider: 'claude-code', model: 'glm-5.2',
@@ -48,12 +53,14 @@ describe('scanClaude', () => {
       timestamp: 1_785_578_400_000,
     });
     expect(events[0].costUsd).toBeGreaterThan(0);
+    expect(events[0].pricingSource).toBe('bundled');
+    expect(events[1].pricingSource).toBe('bundled');
     expect(events[1].model).toBe('claude-sonnet-4-5');
     expect(checkpoint.mtime).toBeGreaterThan(0);
     checkpointMtimeAfterFirstScan = checkpoint.mtime;
   });
   it('mtime incremental: skips unmodified files', () => {
-    const { events } = scanClaude(dir, { ts: 0, mtime: checkpointMtimeAfterFirstScan }, () => null);
+    const { events } = scanClaude(dir, { ts: 0, mtime: checkpointMtimeAfterFirstScan }, lookup);
     expect(events).toHaveLength(0);
   });
   it('missing timestamp emits event with timestamp 0', () => {
@@ -66,13 +73,13 @@ describe('scanClaude', () => {
         usage: { input_tokens: 10, output_tokens: 5 },
       }) + '\n'
     );
-    const { events } = scanClaude(dir, { ts: 0, mtime: 0 }, () => null);
+    const { events } = scanClaude(dir, { ts: 0, mtime: 0 }, lookup);
     const hit = events.find((e) => e.rawId === 'no-ts.jsonl:u3');
     expect(hit).toBeDefined();
     expect(hit?.timestamp).toBe(0);
   });
   it('returns empty when dir missing', () => {
-    const r = scanClaude(path.join(dir, 'nope'), EMPTY_CHECKPOINT, () => null);
+    const r = scanClaude(path.join(dir, 'nope'), EMPTY_CHECKPOINT, lookup);
     expect(r.events).toEqual([]);
   });
 });

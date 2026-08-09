@@ -4,7 +4,12 @@ import * as path from 'path';
 import { scanCodex } from '../sources/codex';
 import { tmpDir, rmTmp } from './fixtures';
 import { EMPTY_CHECKPOINT } from '../types';
-import { BUNDLED_PRICING } from '../pricing';
+import { BUNDLED_PRICING, type PricingLookup } from '../pricing';
+
+const lookup = (m: string): PricingLookup => {
+  const pricing = BUNDLED_PRICING[m] ?? null;
+  return { pricing, source: pricing ? 'bundled' : 'unknown' };
+};
 
 const dir = tmpDir('codex-');
 afterAll(() => rmTmp(dir));
@@ -37,7 +42,7 @@ describe('scanCodex', () => {
     fs.mkdirSync(sub, { recursive: true });
     const f = path.join(sub, 'rollout-1.jsonl');
     fs.writeFileSync(f, `${configEvent}\n${usageEvent}\n${emptyInfoEvent}\nbad-json\n`);
-    const { events, checkpoint } = scanCodex(dir, EMPTY_CHECKPOINT, (m) => BUNDLED_PRICING[m] ?? null);
+    const { events, checkpoint } = scanCodex(dir, EMPTY_CHECKPOINT, lookup);
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
       rawId: 'rollout-1.jsonl:1', source: 'codex', provider: 'codex', model: 'gpt-5.5',
@@ -45,10 +50,11 @@ describe('scanCodex', () => {
       timestamp: 1_785_585_600_000,
     });
     expect(events[0].costUsd).toBeGreaterThan(0);
+    expect(events[0].pricingSource).toBe('bundled');
     expect(checkpoint.mtime).toBeGreaterThan(0);
   });
   it('skips files without usage data and missing dirs', () => {
-    const { events } = scanCodex(path.join(dir, 'nope'), EMPTY_CHECKPOINT, () => null);
+    const { events } = scanCodex(path.join(dir, 'nope'), EMPTY_CHECKPOINT, lookup);
     expect(events).toEqual([]);
   });
 });

@@ -1,3 +1,5 @@
+import type { PricingSource } from './pricing';
+
 export type UsageSource =
   | 'cc-switch' | 'claude' | 'codex' | 'opencode' | 'hermes' | 'openclaw';
 export type ActiveUsageSource = Exclude<UsageSource, 'openclaw'>;
@@ -15,6 +17,7 @@ export interface UsageEvent {
   cacheReadTokens: number;
   cacheWriteTokens: number;
   costUsd: number;
+  pricingSource?: PricingSource;
   latencyMs?: number;
   sessionId?: string;
   timestamp: number;
