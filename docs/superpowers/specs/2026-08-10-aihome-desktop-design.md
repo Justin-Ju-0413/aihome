@@ -52,7 +52,7 @@ AIHome = 一个可双击运行的桌面软件，做四件事：**看**（看板/
 | 桌面壳 | Tauri 2（非 Electron） | 用户已选；体积小、原生快 |
 | Next.js 集成 | **standalone 模式** + Rust 侧 spawn 子进程 | 现有 20+ `/api/*` 路由、115 单测、110 e2e 全保留，风险最低 |
 | 端口 | 固定 **3010**，仅绑定 127.0.0.1 | 避开 3000 dev 端口冲突；standalone 默认 localhost |
-| 特权边界 | webview 无文件/网络特权；symlink/registry 走 Rust commands | 收敛现有 `/api/files` 沙箱风险面 |
+| 特权边界 | webview 无文件/网络特权；symlink/registry 走 Node fs（服务端校验路径） | 收敛现有 `/api/files` 沙箱风险面；web/桌面同一代码路径 |
 | 注册表存储 | `~/.aihome/registry.db`（SQLite） | 与 `~/.aihome/` 运行时状态同根；沿用 PRAGMA user_version 迁移模式 |
 | 悬浮窗数据 | 复用 `/api/usage/events` 轮询（30s），不新增 Rust 读库命令 | 现有 API 已提供聚合，最小改动 |
 | skillhub 处置 | **并存**两个同步模块（git 四端 + symlink 注册表） | 用户已确认；机制不同，互不干扰 |
@@ -117,7 +117,7 @@ AIHome = 一个可双击运行的桌面软件，做四件事：**看**（看板/
 | `sync-engine.ts` | 同步编排：遍历启用平台 → symlink → 状态写入；冲突保护（目标已存在且非注册表链接 → conflict 跳过）；删除级联 |
 | `doctor.ts` | 断裂链接检测（readlink 指向源不存在）+ 一键修复 |
 
-- **symlink 执行**：经 Rust command（`symlink_create` / `symlink_read` / `symlink_exists`），webview 无直接 fs 权限
+- **symlink 执行**：走 Node `fs.symlink/readlink/unlink`（服务端进程内，AIHome 本就是 Node 服务）——**修正**：最初设想 Rust commands，但 web 形态与桌面形态需同一代码路径（e2e 依赖 HTTP），且现有 `/api/files` 沙箱模式已在服务端做路径校验，Node fs 不新增风险面。Rust 侧只负责窗口/托盘/自启/进程生命周期。
 - **Windows junction**：适配器层预留接口，P3 评估（本机 macOS 优先验证）
 - **冲突保护承诺**：绝不覆盖用户手动安装的目录（skillhub 原语义）
 
