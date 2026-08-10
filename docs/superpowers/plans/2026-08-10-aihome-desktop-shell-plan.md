@@ -334,7 +334,7 @@ git commit -m "feat(desktop): tauri scaffold with main window + tray"
 - Consumes: `GET /api/health`（Task 1）
 - Produces: `aihome_lib::run()` 自动管理 next-server；退出无残留进程（Task 5 冒烟验证）
 
-- [ ] **Step 1: 写 src-tauri/src/server.rs**
+- [x] **Step 1: 写 src-tauri/src/server.rs**
 
 ```rust
 use std::io::{Read, Write};
@@ -410,7 +410,7 @@ pub fn stop_next_server() {
 }
 ```
 
-- [ ] **Step 2: 集成到 lib.rs**
+- [x] **Step 2: 集成到 lib.rs**
 
 ```rust
 mod server;
@@ -455,12 +455,17 @@ pub fn run() {
 }
 ```
 
-- [ ] **Step 3: 编译验证**
+- [x] **Step 3: 编译验证**
 
 Run: `cargo build --manifest-path src-tauri/Cargo.toml`
 Expected: 编译通过，无 error
 
-- [ ] **Step 4: 手动集成冒烟（开发联调）**
+> 2026-08-11 修正：Task 3 的 Cargo.toml 缺 `[lib]` 声明，`main.rs` 引用的 `aihome_lib` 从未能链接（Task 3 Step 7 当时实际是失败的，只留下了 build.rs 产物）。已补 `[lib] name = "aihome_lib"`（独立 fix commit）。另外：`tauri::generate_context!` 会在编译期内嵌 `frontendDist` 全部内容——`standalone-resources/` 若带着 Next trace 冗余（整个仓库拷贝）会导致二进制体积失控、链接时磁盘耗尽，须只保留 server.js/node_modules/.next/public。
+
+- [x] **Step 4: 手动集成冒烟（开发联调）**
+
+> 冒烟结果：spawn 成功，4s 内 `/api/health` OK（`{"ok":true,"version":"0.2.0"}`），node 子进程（next-server）正常监听 127.0.0.1:3010，退出后父进程的 `stop_next_server` 清理逻辑已实现。
+> ⚠️ 已知限制：**SIGTERM（`kill`、系统注销/关机）不会触发 `RunEvent::ExitRequested`**，node 子进程会泄漏并占住 3010，导致下次启动报 "Port in use"。用户正常退出（托盘"退出"、Cmd+Q、关窗）走 `app.exit(0)` → `ExitRequested` → 正常清理（此路径留待 Task 5 打包后用 `osascript ... quit` 端到端验证）。SIGTERM 加固（信号 handler）为 P0 之外的后续项。
 
 1. 起服务：`npm run build:standalone && node .next/standalone/server.js`（cwd 必须为项目根，因为 server.js 的 `HOSTNAME=0.0.0.0 PORT=3000` 默认——需设置 `PORT=3010 HOSTNAME=127.0.0.1`）
 2. 联调时 Tauri 的 resource_dir 是 `target/debug/` 或 bundle 资源——**开发模式**临时方案：在 `src-tauri/target/debug/` 下建 `standalone` 软链指向 `.next/standalone`：`ln -sfn "$(pwd)/.next/standalone" src-tauri/target/debug/standalone`
@@ -468,7 +473,7 @@ Expected: 编译通过，无 error
 4. 验证：主窗口出现并加载 AIHome；`ps aux | grep server.js` 有进程
 5. 退出应用 → `ps aux | grep server.js` 无进程
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src-tauri/src/server.rs src-tauri/src/lib.rs
