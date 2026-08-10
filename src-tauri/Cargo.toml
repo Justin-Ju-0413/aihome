@@ -4,6 +4,10 @@ version = "0.3.0"
 description = "AIHome desktop"
 edition = "2021"
 
+[lib]
+name = "aihome_lib"
+crate-type = ["lib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
