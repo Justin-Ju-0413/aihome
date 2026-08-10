@@ -14,7 +14,7 @@
 - vault 文件路径：`AIHOME_VAULT_FILE` ?? `~/.aihome/vault.enc`；备份目录：`AIHOME_VAULT_BACKUP_DIR` ?? `~/.aihome/backups`
 - 工具配置文件路径环境变量（e2e/测试必须覆盖）：`AIHOME_VAULT_CLAUDE_CODE_CONFIG` / `AIHOME_VAULT_CODEX_CONFIG` / `AIHOME_VAULT_CODEX_AUTH` / `AIHOME_VAULT_OPENCODE_CONFIG`
 - `apiKey` 永不回传前端（一律 `maskKey()` 脱敏）；key 不写日志、不进 usage 事件
-- 锁定态写操作 → HTTP 423；密码错 → 401；冲突 → 409；配置写失败 → 503；vault 损坏 → 500 固定文案「vault 文件损坏或密码错误」
+- 锁定态写操作 → HTTP 423；密码错 → 401；冲突 → 409；vault 损坏/配置写失败 → 500 固定文案「vault 文件损坏或密码错误」（用户裁决 2026-08-10：不区分 503）
 - 测试：单测 `npm test`，e2e `PORT=3100 npm run test:e2e`，lint `npm run lint`，类型 `npx tsc --noEmit`——每次任务结束全绿才提交
 - 提交消息风格：`feat(vault): ...` / `fix(vault): ...` / `test(vault): ...`（对齐仓库 `feat(scan):` 风格）
 - 测试一切 tmp 目录隔离，绝不触碰真实 `~/.claude` / `~/.codex` / `~/.config/opencode`（靠环境变量重定向）
@@ -551,8 +551,8 @@ git commit -m "feat(vault): add provider templates and input validation"
   - claude-code 注入字段：`env.ANTHROPIC_BASE_URL` / `env.ANTHROPIC_AUTH_TOKEN` / `env.ANTHROPIC_MODEL` / `env.AIHOME_VAULT_PROVIDER`（= providerId 标记）
   - claude-code `configPath()`：`AIHOME_VAULT_CLAUDE_CODE_CONFIG` ?? `~/.claude/settings.json`
 
-**语义**：
-- `detect`：文件缺失 → `{missing, null}`；JSON 解析失败 → `{conflict, null, 'settings.json 不是合法 JSON'}`；注入 4 字段不全 → `{ok, null}`；注入字段指纹 ≠ lastWritten（或无记录）→ `{conflict, null, '注入字段被手动修改'}`；匹配 → `{ok, AIHOME_VAULT_PROVIDER}`
+**语义**（用户裁决 2026-08-10：任一注入字段存在即 conflict）：
+- `detect`：文件缺失 → `{missing, null}`；JSON 解析失败 → `{conflict, null, 'settings.json 不是合法 JSON'}`；注入 4 字段任一存在：4 字段齐全且指纹匹配 → `{ok, AIHOME_VAULT_PROVIDER}`，否则（字段不全或指纹不符）→ `{conflict, null, '注入字段被手动修改'}`；注入字段全部不存在 → `{ok, null}`
 - fingerprint = `fingerprintOf(JSON.stringify([baseUrl, apiKey, model, id]))`
 - `activate`：detect conflict 则不写直接返回 → backupConfig → JSON 合并写 4 字段 → 返回 `{state: ok + providerId, fingerprint}`
 - `deactivate`：删 4 字段；env 空则删 env；返回 `{ok, null}`
@@ -760,8 +760,8 @@ export const claudeCodeAdapter: ToolAdapter = {
     const cfg = readJson(file);
     if (!cfg) return { fileState: 'conflict', activeProviderId: null, conflictDetail: 'settings.json 不是合法 JSON' };
     const env = (cfg.env ?? {}) as Record<string, string>;
-    const hasInjected = CLAUDE_CODE_FIELDS.every((k) => typeof env[k] === 'string');
-    if (!hasInjected) return { fileState: 'ok', activeProviderId: null };
+    const anyInjected = CLAUDE_CODE_FIELDS.some((k) => typeof env[k] === 'string');
+    if (!anyInjected) return { fileState: 'ok', activeProviderId: null };
     const fp = fingerprintOf(JSON.stringify([
       env.ANTHROPIC_BASE_URL, env.ANTHROPIC_AUTH_TOKEN, env.ANTHROPIC_MODEL, env.AIHOME_VAULT_PROVIDER,
     ]));
@@ -840,6 +840,7 @@ git commit -m "feat(vault): add adapter framework and claude-code adapter"
   - `codexAuthPath()`：`AIHOME_VAULT_CODEX_AUTH` ?? `~/.codex/auth.json`（key 落 auth.json：`{ "AIHOME_VAULT_<providerId>": "<key>" }`）
   - 段标记：`[model_providers.vault_<providerId>]`；段体：`name = "..."` / `base_url = "..."` / `env_key = "AIHOME_VAULT_<id>"`
   - model 行：`model = "vault_<id>/<model>"`——仅当现值是 `vault_` 前缀或不存在时写/替换；用户自定义 model 行不动
+  - **fingerprint = `fingerprintOf(JSON.stringify([baseUrl, apiKey, providerId]))`**（用户裁决 2026-08-10：不含 model，避免「用户自定义 model 行 + 注入段共存」误判 conflict）
 
 **TOML 行级编辑规则**（不引库）：
 - 段查找：`^\[model_providers\.vault_` 起始行；段体到下一个 `^\[` 行（不含）为止
@@ -1046,9 +1047,7 @@ export const codexAdapter: ToolAdapter = {
       const keyVal = auth[segName(providerId)] ?? '';
       const baseUrl = lines.slice(idx + 1)
         .find((l) => /^base_url\s*=/.test(l))?.split('=')[1]?.trim().replace(/"/g, '') ?? '';
-      const modelLine = lines.find((l) => /^model\s*=/.test(l) && /vault_/.test(l)) ?? '';
-      const model = modelLine.split('=')[1]?.trim().replace(/"/g, '').split('/').pop() ?? '';
-      const fp = fingerprintOf(JSON.stringify([baseUrl, keyVal, model, providerId]));
+      const fp = fingerprintOf(JSON.stringify([baseUrl, keyVal, providerId]));
       const written = data.lastWritten['codex'];
       if (!written || written.fingerprint !== fp) {
         return { fileState: 'conflict', activeProviderId: null, conflictDetail: '注入字段被手动修改' };
@@ -1077,7 +1076,7 @@ export const codexAdapter: ToolAdapter = {
     const auth = readAuth();
     auth[segName(p.id)] = p.apiKey;
     writeAuth(auth);
-    const fingerprint = fingerprintOf(JSON.stringify([p.baseUrl, p.apiKey, p.model, p.id]));
+    const fingerprint = fingerprintOf(JSON.stringify([p.baseUrl, p.apiKey, p.id]));
     return { state: { fileState: 'ok', activeProviderId: p.id }, fingerprint };
   },
 
@@ -1137,7 +1136,7 @@ git commit -m "feat(vault): add codex TOML adapter with auth.json injection"
   - `TOOL_ADAPTERS: Record<ToolId, ToolAdapter>`（claude-code / codex / opencode）
   - opencode `configPath()`：`AIHOME_VAULT_OPENCODE_CONFIG` ?? `~/.config/opencode/opencode.json`
   - 注入：`provider.vault_<id>` 段（`npm: "@ai-sdk/openai-compatible"` / `baseURL` / `headers.Authorization: "Bearer <key>"` / `models: { "<model>": { name: "<model>" } }`）+ 顶层 `model: "vault_<id>/<model>"`（仅当现值 `vault_` 前缀或不存在时写）
-  - fingerprint：`fingerprintOf(JSON.stringify([baseUrl, apiKey, model, id]))`
+  - **fingerprint = `fingerprintOf(JSON.stringify([baseUrl, apiKey, id]))`**（用户裁决 2026-08-10：同 codex，不含 model）
   - 格式细节以 opencode 配置文档为准；实现时若与实际格式有出入（如段结构不同），以官方文档核对后微调实现与测试
 
 - [ ] **Step 1: Write the failing test**
@@ -1273,12 +1272,8 @@ export const opencodeAdapter: ToolAdapter = {
     if (!entry) return { fileState: 'ok', activeProviderId: null };
     const providerId = entry.slice('vault_'.length);
     const seg = providers[entry] as { baseURL?: string; headers?: Record<string, string> };
-    const modelLine = cfg.model as string | undefined;
-    const model = typeof modelLine === 'string' && modelLine.startsWith('vault_')
-      ? modelLine.split('/').pop()
-      : '';
     const key = seg.headers?.Authorization?.replace(/^Bearer /, '') ?? '';
-    const fp = fingerprintOf(JSON.stringify([seg.baseURL ?? '', key, model, providerId]));
+    const fp = fingerprintOf(JSON.stringify([seg.baseURL ?? '', key, providerId]));
     const written = data.lastWritten['opencode'];
     if (!written || written.fingerprint !== fp) {
       return { fileState: 'conflict', activeProviderId: null, conflictDetail: '注入字段被手动修改' };
@@ -1306,7 +1301,7 @@ export const opencodeAdapter: ToolAdapter = {
       cfg.model = `${id}/${p.model}`;
     }
     fs.writeFileSync(file, JSON.stringify(cfg, null, 2));
-    const fingerprint = fingerprintOf(JSON.stringify([p.baseUrl, p.apiKey, p.model, p.id]));
+    const fingerprint = fingerprintOf(JSON.stringify([p.baseUrl, p.apiKey, p.id]));
     return { state: { fileState: 'ok', activeProviderId: p.id }, fingerprint };
   },
 
