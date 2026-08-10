@@ -60,3 +60,7 @@ e2e/.e2e-sync/
 
 # e2e usage fixture runtime state
 e2e/.e2e-usage/
+
+# tauri desktop shell
+/src-tauri/target/
+/standalone-resources/

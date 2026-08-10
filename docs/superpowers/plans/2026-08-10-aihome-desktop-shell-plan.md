@@ -33,7 +33,7 @@
 - Consumes: 无（独立）
 - Produces: `GET /api/health` → `{ ok: true, version: '0.2.0' }`（Task 4 轮询用）；`scripts/copy-standalone-assets.mjs`（Task 5 打包用）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```typescript
 // src/lib/__tests__/health-route.test.ts
@@ -51,12 +51,12 @@ describe('GET /api/health', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `npx vitest run src/lib/__tests__/health-route.test.ts`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现**
+- [x] **Step 3: 实现**
 
 ```typescript
 // src/app/api/health/route.ts
@@ -68,12 +68,12 @@ export async function GET() {
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run src/lib/__tests__/health-route.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: 配置 standalone 构建**
+- [x] **Step 5: 配置 standalone 构建**
 
 修改 `next.config.ts`：
 ```typescript
@@ -116,17 +116,17 @@ console.log('standalone assets copied, port pinned to 3010');
 "build:standalone": "next build && node scripts/copy-standalone-assets.mjs"
 ```
 
-- [ ] **Step 6: 验证 standalone 构建**
+- [x] **Step 6: 验证 standalone 构建**
 
 Run: `npm run build:standalone`
 Expected: `.next/standalone/server.js` 存在，`.next/standalone/.next/static` 与 `.next/standalone/public` 非空
 
-- [ ] **Step 7: 回归**
+- [x] **Step 7: 回归**
 
 Run: `npm run lint` + `npx tsc --noEmit`
 Expected: 0 error
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add next.config.ts package.json scripts/copy-standalone-assets.mjs src/app/api/health/route.ts src/lib/__tests__/health-route.test.ts
@@ -143,19 +143,19 @@ git commit -m "feat(desktop): standalone build config + health route"
 - Consumes: 无
 - Produces: 可用的 `cargo`/`rustc`（Task 3 前置）
 
-- [ ] **Step 1: 向用户呈现安装方案，等待选择**
+- [x] **Step 1: 向用户呈现安装方案，等待选择**
 
 方案 A（推荐，homebrew 用户）：`brew install rustup-init && rustup-init -y --default-toolchain stable`
 方案 B：rustup 官方脚本 `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
 **必须等用户明确选择后才执行。**
 
-- [ ] **Step 2: 安装并验证**
+- [x] **Step 2: 安装并验证**
 
 Run: `cargo --version && rustc --version`
 Expected: 两个版本号输出
 
-- [ ] **Step 3: 记录（空提交，仅留痕）**
+- [x] **Step 3: 记录（空提交，仅留痕）**
 
 ```bash
 git commit --allow-empty -m "chore(desktop): rust toolchain installed ($(cargo --version | awk '{print $2}'))"
@@ -179,7 +179,7 @@ git commit --allow-empty -m "chore(desktop): rust toolchain installed ($(cargo -
 - Consumes: Rust 工具链（Task 2）
 - Produces: `cargo run` 可启动的壳（主窗口加载 `http://127.0.0.1:3010`）；`src-tauri/src/lib.rs` 的 `run()`（Task 4 注入进程管理）
 
-- [ ] **Step 1: 写 Cargo.toml**
+- [x] **Step 1: 写 Cargo.toml**
 
 ```toml
 [package]
@@ -198,7 +198,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-- [ ] **Step 2: 写 tauri.conf.json**
+- [x] **Step 2: 写 tauri.conf.json**
 
 ```json
 {
@@ -237,7 +237,7 @@ serde_json = "1"
 }
 ```
 
-- [ ] **Step 3: 写 build.rs 与 capabilities**
+- [x] **Step 3: 写 build.rs 与 capabilities**
 
 `src-tauri/build.rs`：
 ```rust
@@ -255,7 +255,7 @@ fn main() {
 }
 ```
 
-- [ ] **Step 4: 写 main.rs 与 lib.rs（最小壳 + 托盘）**
+- [x] **Step 4: 写 main.rs 与 lib.rs（最小壳 + 托盘）**
 
 `src-tauri/src/main.rs`：
 ```rust
@@ -295,7 +295,7 @@ pub fn run() {
 }
 ```
 
-- [ ] **Step 5: 图标（macOS 打包必需）**
+- [x] **Step 5: 图标（macOS 打包必需）**
 
 准备一张 1024×1024 PNG（可用 `.github/persona-banner.svg` 转 PNG，或 `sips` 从任意图缩放），然后：
 ```bash
@@ -303,19 +303,19 @@ npx @tauri-apps/cli icon /path/to/icon-1024.png --output src-tauri/icons
 ```
 （`npx` 自动拉取 tauri-cli；`tauri icon` 会生成 `icons/` 全套，含 tray/icon）
 
-- [ ] **Step 6: .gitignore 追加**
+- [x] **Step 6: .gitignore 追加**
 
 ```
 /src-tauri/target/
 /standalone-resources/
 ```
 
-- [ ] **Step 7: 编译验证**
+- [x] **Step 7: 编译验证**
 
 Run: `cargo build --manifest-path src-tauri/Cargo.toml`
 Expected: 编译成功（首次拉 crate 较慢，可 `cargo build` 等待）
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src-tauri/ .gitignore
