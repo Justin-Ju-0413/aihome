@@ -2,8 +2,10 @@ import * as path from 'path';
 import { defineConfig, devices } from '@playwright/test';
 
 const e2eSyncRoot = path.join(__dirname, 'e2e', '.e2e-sync');
-const port = process.env.PORT ?? '3000';
+// 默认 3011：3000 常被其他项目占用（travel-planner 等），Tauri 壳用 3010
+const port = process.env.PORT ?? '3011';
 const baseURL = `http://localhost:${port}`;
+const mockBalanceURL = 'http://127.0.0.1:3210';
 
 export default defineConfig({
   testDir: './e2e/tests',
@@ -37,21 +39,34 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: process.env.CI ? `npm run start -- -p ${port}` : `npm run dev -- -p ${port}`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      AIHOME_REPO_DIR: path.join(e2eSyncRoot, 'repo'),
-      AIHOME_CONFIG_DIR: path.join(e2eSyncRoot, 'config'),
-      AIHOME_LEGACY_DIR: path.join(e2eSyncRoot, 'legacy'),
-      AIHOME_USAGE_CCSWITCH_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cc-switch.db'),
-      AIHOME_USAGE_CLAUDE_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'claude-projects'),
-      AIHOME_USAGE_CODEX_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'codex-sessions'),
-      AIHOME_USAGE_OPENCODE_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'opencode.db'),
-      AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
-      AIHOME_USAGE_CACHE: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cache.db'),
+  webServer: [
+    {
+      // workbench 余额查询 mock（不触网）
+      command: `node e2e/mock-balance-server.mjs`,
+      url: mockBalanceURL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 30_000,
     },
-  },
+    {
+      command: process.env.CI ? `npm run start -- -p ${port}` : `npm run dev -- -p ${port}`,
+      url: baseURL,
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      env: {
+        AIHOME_REPO_DIR: path.join(e2eSyncRoot, 'repo'),
+        AIHOME_CONFIG_DIR: path.join(e2eSyncRoot, 'config'),
+        AIHOME_LEGACY_DIR: path.join(e2eSyncRoot, 'legacy'),
+        AIHOME_USAGE_CCSWITCH_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cc-switch.db'),
+        AIHOME_USAGE_CLAUDE_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'claude-projects'),
+        AIHOME_USAGE_CODEX_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'codex-sessions'),
+        AIHOME_USAGE_OPENCODE_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'opencode.db'),
+        AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
+        AIHOME_USAGE_CACHE: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cache.db'),
+        AIHOME_WORKBENCH_DB: path.join(e2eSyncRoot, '..', '.e2e-workbench', 'workbench.db'),
+        AIHOME_WORKBENCH_DEEPSEEK_BASE_URL: mockBalanceURL,
+        AIHOME_WORKBENCH_OPENROUTER_BASE_URL: `${mockBalanceURL}/api/v1`,
+        AIHOME_WORKBENCH_OPENAI_BASE_URL: mockBalanceURL,
+      },
+    },
+  ],
 });

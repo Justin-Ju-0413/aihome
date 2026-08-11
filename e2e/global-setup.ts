@@ -26,6 +26,8 @@ export default function globalSetup(): void {
   );
   fs.mkdirSync(repo, { recursive: true });
 
+  fs.rmSync(path.join(root, 'e2e', '.e2e-workbench'), { recursive: true, force: true });
+
   const usageRoot = path.join(root, 'e2e', '.e2e-usage');
   fs.rmSync(usageRoot, { recursive: true, force: true });
   fs.mkdirSync(path.join(usageRoot, 'claude-projects', 'proj'), { recursive: true });
