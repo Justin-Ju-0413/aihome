@@ -28,6 +28,7 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
 - **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths (out-of-workspace requests return HTTP 403).
 - **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
+- **Console** (`/console`) — the FileVision runtime merged in: file tree browser with live watching, Agent run console (start/stop Claude Code & Codex, step progress, logs, diffs & rollback), pipelines, one-click task dispatch with auto provider/model scheduling and fallback, Hermes sessions/skills/launch, dashboard stats and history timeline. Data lives in SQLite at `~/.aihome/filevision.db`; legacy `file-visualizer/data.db` is auto-migrated on first run.
 
 ## Tech stack / 技术栈
 

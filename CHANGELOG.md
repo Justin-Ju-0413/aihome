@@ -9,6 +9,11 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Enforce configured workspace boundaries for files, scans, Agent IDs, and creation paths.
 - Document the local-only security model and focused roadmap.
 
+### Added
+- **Console page (`/console`)**: merge of the FileVision runtime — file tree browser with live file watching, Agent run console (create/start/stop Claude Code & Codex agents, step progress, logs, diffs & rollback), pipeline orchestration, one-click task dispatch with auto provider/model scheduling and fallback chains, Hermes integration (sessions, skills, launch/abort), dashboard stats, history timeline, and runtime settings drawer.
+- All FileVision capabilities exposed under the `/api/fv/*` namespace (SQLite-backed at `~/.aihome/filevision.db`); real-time updates via event-bus cursor polling instead of WebSocket.
+- One-time auto-migration from the legacy `file-visualizer/data.db` via `VACUUM INTO` (override with `AIHOME_FV_LEGACY_DB`).
+
 ## [0.2.0] - 2026-08-05
 
 ### Added

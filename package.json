@@ -24,6 +24,7 @@
     "@types/dagre": "^0.7.54",
     "@uiw/react-md-editor": "^4.1.1",
     "@xyflow/react": "^12.11.0",
+    "chokidar": "^5.0.0",
     "clsx": "^2.1.1",
     "dagre": "^0.8.5",
     "date-fns": "^4.4.0",
