@@ -1,6 +1,7 @@
+use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::sync::Mutex;
 use std::thread;
@@ -11,27 +12,73 @@ const HEALTH_URL: &str = "/api/health";
 
 static CHILD: Mutex<Option<Child>> = Mutex::new(None);
 
+/// 调试用：GUI 应用 stderr 不可见，直接落盘
+pub fn log(msg: &str) {
+    use std::io::Write as _;
+    let path = "/tmp/aihome-shell.log";
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(f, "{msg}");
+    }
+}
+
 pub fn port_in_use() -> bool {
     TcpStream::connect(("127.0.0.1", PORT)).is_ok()
 }
 
-pub fn start_next_server(exe_dir: &Path) -> Result<(), String> {
+/// standalone 必须是可写目录：web 应用会把 `.aihome/`、`data/` 等运行时状态
+/// 写到 `process.cwd()`（即 spawn 时的 current_dir）。
+/// - dev（target/debug/standalone 软链）本身可写 → 直接用
+/// - bundle（dmg 里的 Resources/standalone）只读 → 用 ditto 复制到 app_data_dir
+fn writable_standalone(src: &Path, data_dir: &Path) -> Result<PathBuf, String> {
+    if is_writable(src) {
+        return Ok(src.to_path_buf());
+    }
+    let dst = data_dir.join("standalone");
+    if !dst.join("server.js").exists() {
+        log("copying standalone to writable app data dir (ditto)");
+        let status = Command::new("ditto")
+            .arg(src)
+            .arg(&dst)
+            .status()
+            .map_err(|e| format!("failed to run ditto: {e}"))?;
+        if !status.success() {
+            return Err(format!("ditto failed with status {status}"));
+        }
+    }
+    Ok(dst)
+}
+
+fn is_writable(dir: &Path) -> bool {
+    let probe = dir.join(".aihome-write-probe");
+    match fs::File::create(&probe) {
+        Ok(f) => {
+            drop(f);
+            let _ = fs::remove_file(&probe);
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+pub fn start_next_server(exe_dir: &Path, data_dir: &Path) -> Result<(), String> {
     if port_in_use() {
         return Err(format!(
             "Port {} is already in use. AIHome needs it free.",
             PORT
         ));
     }
-    let standalone = exe_dir.join("standalone");
-    let server_js = standalone.join("server.js");
+    let src = exe_dir.join("standalone");
+    let server_js = src.join("server.js");
     if !server_js.exists() {
         return Err(format!("standalone server not found: {}", server_js.display()));
     }
+    let standalone = writable_standalone(&src, data_dir)?;
     let child = Command::new("node")
-        .arg(&server_js)
+        .arg(standalone.join("server.js"))
         .current_dir(&standalone)
         .spawn()
         .map_err(|e| format!("failed to spawn next server: {e}"))?;
+    log(&format!("next-server spawned pid={}", child.id()));
     *CHILD.lock().unwrap() = Some(child);
     Ok(())
 }
@@ -65,7 +112,10 @@ fn health_check() -> Result<(), ()> {
 
 pub fn stop_next_server() {
     if let Some(mut child) = CHILD.lock().unwrap().take() {
+        log(&format!("stop_next_server: killing child pid={}", child.id()));
         let _ = child.kill();
         let _ = child.wait();
+    } else {
+        log("stop_next_server: no child registered");
     }
 }

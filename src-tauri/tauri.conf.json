@@ -29,6 +29,7 @@
     "active": true,
     "targets": ["dmg"],
     "category": "DeveloperTool",
-    "shortDescription": "Agent ecosystem workspace"
+    "shortDescription": "Agent ecosystem workspace",
+    "resources": { "../standalone-resources/standalone": "standalone" }
   }
 }

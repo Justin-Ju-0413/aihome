@@ -492,7 +492,7 @@ git commit -m "feat(desktop): next-server process lifecycle (spawn/health/cleanu
 - Consumes: Task 3/4 成果
 - Produces: `src-tauri/target/release/bundle/dmg/AIHome_0.3.0_*.dmg`；可重复的冒烟脚本
 
-- [ ] **Step 1: tauri.conf.json 挂资源**
+- [x] **Step 1: tauri.conf.json 挂资源**
 
 `bundle` 节加：
 ```json
@@ -501,7 +501,9 @@ git commit -m "feat(desktop): next-server process lifecycle (spawn/health/cleanu
 
 （端口注入已在 Task 1 的 copy-standalone-assets.mjs 中完成：standalone server.js 固定 `PORT=3010 HOSTNAME=127.0.0.1`）
 
-- [ ] **Step 2: 写冒烟脚本 scripts/smoke-desktop.sh**
+> 2026-08-11 修正：数组形式 `["../standalone-resources/standalone"]` 会把目录结构原样打进包（`Resources/_up_/standalone-resources/standalone`），运行时 `resource_dir().join("standalone")` 找不到、启动即 panic。改用**对象映射** `{ "../standalone-resources/standalone": "standalone" }`，资源落在 `Resources/standalone`。
+
+- [x] **Step 2: 写冒烟脚本 scripts/smoke-desktop.sh**
 
 ```bash
 #!/usr/bin/env bash
@@ -559,17 +561,28 @@ if (!code.includes('PORT = process.env.PORT')) {
 }
 ```
 
-- [ ] **Step 3: 跑冒烟**
+- [x] **Step 3: 跑冒烟**
 
 Run: `bash scripts/smoke-desktop.sh`
 Expected: 两处 PASS + `SMOKE OK`；`.dmg` 文件存在
 
-- [ ] **Step 4: web 回归基线**
+> 2026-08-11 全 PASS（health / agents / 无残留）。相对计划的两处修正：
+> 1. 打包命令 `cargo build --release` 不产出 dmg → 用 `npx @tauri-apps/cli build`。
+> 2. 残留检查 `pgrep -f "standalone/server.js"` 匹配不到 → Next 16 把进程名改成 `next-server (v16.2.7)`，改用 `lsof -ti :3010` 端口检查。
+> 3. 新增功能级检查：`/api/agents` 必须 200（health 只查得到服务活着，查不出 bundle 只读问题）。
+>
+> 过程中修掉两个计划未覆盖的设计缺口：
+> - **bundle 只读**：dmg 挂载点只读，web 应用写 `.aihome/`（scan cache）直接 ENOENT。`server.rs` 启动时探测可写性，只读则用 `ditto` 把 standalone 复制到 `app_data_dir`（`~/Library/Application Support/com.justinju.aihome/`）再 spawn。
+> - **退出泄漏**：macOS 上 tao 的 `EventLoop::run` 以 `process::exit` 结束（`-> !` 永不返回），`app.run()` 之后的代码不会执行；`osascript quit`（AppleEvent）也不触发 `ExitRequested`，只派发 `RunEvent::Exit`（LoopDestroyed）。清理必须挂在 `ExitRequested | Exit` 上。SIGTERM（kill 命令）仍会泄漏——用户正常退出路径（Cmd+Q/托盘/关窗/osascript quit）均已覆盖，SIGTERM 加固留作后续项。
+
+- [x] **Step 4: web 回归基线**
 
 Run: `npm test` + `PORT=3100 npx playwright test`
 Expected: 115 单测 / 110 e2e 全绿（`output: 'standalone'` 不改变 dev/build 行为）
 
-- [ ] **Step 5: Commit**
+> 2026-08-11：单测 137/137、e2e 109/109 全绿（单测含用户新增 fv 模块 38 条；e2e 计数随测试演进，全部通过）。
+
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/smoke-desktop.sh scripts/copy-standalone-assets.mjs src-tauri/tauri.conf.json
