@@ -37,7 +37,7 @@
   - `class Registry`：`open()` / `close()` / `version()` / `migrate()` / `addSkill(skill: NewSkill): string` / `listSkills(): SkillRow[]` / `deleteSkill(id: string): void` / `setSyncState(skillId, platform, status: SyncStatus, error?)` / `getSyncState(skillId, platform): SyncStateRow | null` / `listPlatforms(): PlatformRow[]` / `registerPlatform(name, installDir)` / `setPlatformEnabled(name, enabled: boolean)`
   - `type SkillRow = { id, name, description, source_dir, installed_at }`；`type PlatformRow = { name, enabled: 0|1, install_dir }`；`type SyncStatus = 'linked'|'broken'|'conflict'|'removed'`；`type SyncStateRow = { skill_id, platform, status, error, linked_at }`；`type NewSkill = { name, description, source_dir }`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```typescript
 // src/lib/registry/registry.test.ts
@@ -105,12 +105,12 @@ describe('Registry', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `npx vitest run src/lib/registry/registry.test.ts`
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现 types.ts**
+- [x] **Step 3: 实现 types.ts**
 
 ```typescript
 // src/lib/registry/types.ts
@@ -145,7 +145,7 @@ export type NewSkill = {
 };
 ```
 
-- [ ] **Step 4: 实现 registry.ts**
+- [x] **Step 4: 实现 registry.ts**
 
 ```typescript
 // src/lib/registry/registry.ts
@@ -264,17 +264,17 @@ export class Registry {
 }
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run: `npx vitest run src/lib/registry/registry.test.ts`
 Expected: 6 passed
 
-- [ ] **Step 6: 回归**
+- [x] **Step 6: 回归**
 
 Run: `npm test`
 Expected: 全绿（115 + 6 = 121）
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/registry/types.ts src/lib/registry/registry.ts src/lib/registry/registry.test.ts
@@ -299,7 +299,7 @@ git commit -m "feat(registry): sqlite registry with CRUD + sync state (schema v1
   - `isManagedLink(targetPath: string, canonicalDir: string): boolean`（lstat 是 symlink 且 realpath 等于 canonical realpath）
   - `type PlatformLink = { name: string; skillDir: string }`（供测试注入 fake 平台目录）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```typescript
 // src/lib/registry/adapters.test.ts
@@ -366,12 +366,12 @@ describe('isManagedLink', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `npx vitest run src/lib/registry/adapters.test.ts`
 Expected: FAIL
 
-- [ ] **Step 3: 实现 adapters.ts**
+- [x] **Step 3: 实现 adapters.ts**
 
 ```typescript
 // src/lib/registry/adapters.ts
@@ -431,12 +431,12 @@ export function isManagedLink(targetPath: string, canonicalDir: string): boolean
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run src/lib/registry/adapters.test.ts`
 Expected: 7 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/registry/adapters.ts src/lib/registry/adapters.test.ts
