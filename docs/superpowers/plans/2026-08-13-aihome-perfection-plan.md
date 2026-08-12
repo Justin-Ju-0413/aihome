@@ -65,7 +65,7 @@
 
 ## Phase 3: 功能补齐
 
-- [ ] **3.1 P1 技能注册表**（按 `2026-08-10-aihome-registry-plan{,-part2,-part3}.md` 逐任务执行并勾选）
+- [x] **3.1 P1 技能注册表**（按 `2026-08-10-aihome-registry-plan{,-part2,-part3}.md` 逐任务执行并勾选）
   - skillhub 并入：`~/.aihome/registry.db` + symlink 分发 claude-code/codex/workbuddy + 冲突保护 + doctor
 - [ ] **3.2 P2 TokenTicker widget**（按 `2026-08-10-aihome-widget-plan.md`）
   - `/widget` 页 + kline.ts + Tauri 置顶透明窗 + 托盘开关
