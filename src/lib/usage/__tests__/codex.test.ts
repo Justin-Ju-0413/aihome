@@ -51,4 +51,36 @@ describe('scanCodex', () => {
     const { events } = scanCodex(path.join(dir, 'nope'), EMPTY_CHECKPOINT, () => null);
     expect(events).toEqual([]);
   });
+  it('respects mtime checkpoint: skips unchanged files, scans newer ones', () => {
+    // 独立扫描根，避免扫到其他测试的旧文件
+    const root2 = path.join(dir, 'isolated');
+    const sub = path.join(root2, '2026', '09');
+    fs.mkdirSync(sub, { recursive: true });
+    const f = path.join(sub, 'rollout-2.jsonl');
+    fs.writeFileSync(f, `${configEvent}\n${usageEvent}\n`);
+    const first = scanCodex(root2, EMPTY_CHECKPOINT, (m) => BUNDLED_PRICING[m] ?? null);
+    expect(first.events).toHaveLength(1);
+
+    // 用第一次的 checkpoint 再扫：mtime 未变 → 0 条
+    const second = scanCodex(root2, first.checkpoint, (m) => BUNDLED_PRICING[m] ?? null);
+    expect(second.events).toHaveLength(0);
+
+    // 新写一个文件 → 只扫到新文件
+    fs.writeFileSync(path.join(sub, 'rollout-3.jsonl'), `${configEvent}\n${usageEvent}\n`);
+    const third = scanCodex(root2, first.checkpoint, (m) => BUNDLED_PRICING[m] ?? null);
+    expect(third.events).toHaveLength(1);
+    expect(third.events[0].rawId.startsWith('rollout-3.jsonl')).toBe(true);
+  });
+  it('unknown model pricing yields zero cost (no crash)', () => {
+    const sub = path.join(dir, '2026', '10');
+    fs.mkdirSync(sub, { recursive: true });
+    fs.writeFileSync(
+      path.join(sub, 'rollout-4.jsonl'),
+      `${JSON.stringify({ type: 'event_msg', payload: { model: 'x-unknown-9x' } })}\n${usageEvent}\n`
+    );
+    const { events } = scanCodex(dir, EMPTY_CHECKPOINT, () => null);
+    const ev = events.find((e) => e.rawId.startsWith('rollout-4.jsonl'));
+    expect(ev).toBeTruthy();
+    expect(ev!.costUsd).toBe(0);
+  });
 });
