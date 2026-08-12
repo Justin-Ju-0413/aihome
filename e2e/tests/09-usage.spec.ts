@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 import { selectors } from '../helpers/selectors';
+
+// 与 playwright.config.ts 的 AIHOME_USAGE_CACHE 同路径（e2e worker 看不到 webServer env）
+const USAGE_CACHE_DB = path.join(__dirname, '..', '.e2e-usage', 'cache.db');
 
 test.describe('Usage Aggregator', () => {
   test('isolation guard: dev server must use .e2e-usage fixture paths', async ({ request }) => {
@@ -11,7 +16,12 @@ test.describe('Usage Aggregator', () => {
   });
 
   test('stale header marks background reindex (fire-and-forget)', async ({ request }) => {
-    // 必须是本组第一个触发索引的请求（fixture 全新库 → stale=true → 后台重索引）
+    // 确定性制造 stale：删除 e2e 缓存库。否则套件中 01-navigation 的 /usage 访问
+    // 已先触发索引（缓存新鲜）→ stale 恒为 false，无法测到 fire-and-forget 路径。
+    fs.rmSync(USAGE_CACHE_DB, { force: true });
+    fs.rmSync(`${USAGE_CACHE_DB}-wal`, { force: true });
+    fs.rmSync(`${USAGE_CACHE_DB}-shm`, { force: true });
+    // 全新缓存库 → 首个请求 stale=true → 后台重索引（不阻塞本次请求）
     const first = await request.get('/api/usage/events?range=24h');
     expect(first.ok()).toBeTruthy();
     expect(first.headers()['x-stale']).toBe('true');
