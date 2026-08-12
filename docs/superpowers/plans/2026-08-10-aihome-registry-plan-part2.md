@@ -34,7 +34,7 @@
 
 **测试 fixture 约定**：所有测试用 `mkdtempSync` 根目录 + `AIHOME_REGISTRY_DIR` env；平台目录 = `<root>/platform` 并 `registerPlatform('claude-code', platformDir)` + `setPlatformEnabled`；规范副本用手动 `mkdirSync(getSkillsDir()/id)` 或用 `importSkill` 生成。**不触碰真实 home 目录。**
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```typescript
 // src/lib/registry/sync-engine.test.ts
@@ -164,12 +164,12 @@ describe('importSkill', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `npx vitest run src/lib/registry/sync-engine.test.ts`
 Expected: FAIL
 
-- [ ] **Step 3: 实现 sync-engine.ts**
+- [x] **Step 3: 实现 sync-engine.ts**
 
 ```typescript
 // src/lib/registry/sync-engine.ts
@@ -291,17 +291,17 @@ export function importSkill(reg: Registry, opts: { name: string; sourcePath: str
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run src/lib/registry/sync-engine.test.ts`
 Expected: 10 passed
 
-- [ ] **Step 5: 回归**
+- [x] **Step 5: 回归**
 
 Run: `npm test`
 Expected: 全绿（121 + 21 = 142 左右）
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/lib/registry/sync-engine.ts src/lib/registry/sync-engine.test.ts
@@ -322,7 +322,7 @@ git commit -m "feat(registry): sync engine with conflict guard + dry-run + impor
   - `type DoctorIssue = { skill: string; platform: string; type: 'missing_canonical'|'missing_link'|'real_directory'|'wrong_target'; detail: string; fixed?: boolean }`
   - `runDoctor(reg: Registry, opts?: { fix?: boolean }): DoctorIssue[]`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```typescript
 // src/lib/registry/doctor.test.ts
@@ -406,12 +406,12 @@ describe('runDoctor', () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `npx vitest run src/lib/registry/doctor.test.ts`
 Expected: FAIL
 
-- [ ] **Step 3: 实现 doctor.ts**
+- [x] **Step 3: 实现 doctor.ts**
 
 ```typescript
 // src/lib/registry/doctor.ts
@@ -500,12 +500,12 @@ export function runDoctor(reg: Registry, opts: { fix?: boolean } = {}): DoctorIs
 }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run src/lib/registry/doctor.test.ts`
 Expected: 6 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/registry/doctor.ts src/lib/registry/doctor.test.ts
