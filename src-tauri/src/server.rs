@@ -34,16 +34,19 @@ fn writable_standalone(src: &Path, data_dir: &Path) -> Result<PathBuf, String> {
         return Ok(src.to_path_buf());
     }
     let dst = data_dir.join("standalone");
-    if !dst.join("server.js").exists() {
-        log("copying standalone to writable app data dir (ditto)");
-        let status = Command::new("ditto")
-            .arg(src)
-            .arg(&dst)
-            .status()
-            .map_err(|e| format!("failed to run ditto: {e}"))?;
-        if !status.success() {
-            return Err(format!("ditto failed with status {status}"));
-        }
+    // 每次启动都重新复制：bundle 内 standalone 随 dmg 版本更新，若只在首次
+    // 创建副本，用户升级后 node 仍会跑旧版代码。41MB 本地复制 <1s，可接受。
+    // 副本内的 .aihome scan cache 会随重建清空（只影响首次扫描速度）；
+    // 用户数据（~/.aihome/ 下的 usage/workbench/fv DB）不受影响。
+    log("copying standalone to writable app data dir (ditto)");
+    let _ = fs::remove_dir_all(&dst);
+    let status = Command::new("ditto")
+        .arg(src)
+        .arg(&dst)
+        .status()
+        .map_err(|e| format!("failed to run ditto: {e}"))?;
+    if !status.success() {
+        return Err(format!("ditto failed with status {status}"));
     }
     Ok(dst)
 }
