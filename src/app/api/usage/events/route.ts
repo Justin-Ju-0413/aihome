@@ -80,6 +80,8 @@ export async function GET(request: NextRequest) {
         },
         table: buildTable(cache.queryEvents(sources, totalsSince), now),
         sourceStatus,
+        // 五层定价均 miss 的模型（UI 显示"未知定价"提示）
+        unknownPricingModels: JSON.parse(cache.getMeta('unknown_pricing_models') ?? '[]') as string[],
       });
       // 后台正在刷新时标记 stale，前端可据此提示
       res.headers.set('x-stale', stale ? 'true' : 'false');

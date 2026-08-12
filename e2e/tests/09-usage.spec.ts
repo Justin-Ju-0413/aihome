@@ -62,6 +62,15 @@ test.describe('Usage Aggregator', () => {
     expect(data.kline.length).toBe(0);
   });
 
+  test('unknown pricing model shows badge in table', async ({ page }) => {
+    await page.goto('/usage');
+    // 展开 cc-switch 行，未知模型应带"未知定价"徽章
+    await page.locator('tr', { hasText: 'cc-switch' }).first().click();
+    await expect(page.locator('[data-testid="unknown-pricing-badge"]')).toBeVisible();
+    await expect(page.locator('[data-testid="unknown-pricing-badge"]')).toHaveText('未知定价');
+    await expect(page.locator('tr', { hasText: 'x-unknown-model-9x' })).toBeVisible();
+  });
+
   test('rescan flow refreshes data', async ({ page }) => {
     await page.goto('/usage');
     await page.locator(selectors.usage.rescan).click();

@@ -9,7 +9,7 @@ function costColor(v: number): string {
   return 'text-emerald-600';
 }
 
-export function UsageTable({ rows }: { rows: TableRow[] }) {
+export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow[]; unknownPricingModels?: string[] }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (source: string) => {
     setExpanded((prev) => {
@@ -59,7 +59,14 @@ export function UsageTable({ rows }: { rows: TableRow[] }) {
                 {open &&
                   row.models.map((m) => (
                     <tr key={`${row.source}-${m.model}`} className="border-b border-divider bg-neutral-50/50 text-xs">
-                      <td className="px-8 py-2 text-secondary">{m.model}</td>
+                      <td className="px-8 py-2 text-secondary">
+                        {m.model}
+                        {unknownPricingModels.includes(m.model) && (
+                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700" data-testid="unknown-pricing-badge">
+                            未知定价
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 text-right text-secondary">{m.tokens24h.toLocaleString()}</td>
                       <td className={`px-4 py-2 text-right ${costColor(m.cost24h)}`}>${m.cost24h.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right text-secondary">{m.tokensMonth.toLocaleString()}</td>

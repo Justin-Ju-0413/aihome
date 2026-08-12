@@ -49,6 +49,9 @@ export default function globalSetup(): void {
     'r-ok', 'p1', 'opencode', 'deepseek-v4-flash', 100, 50, 0, 0, '0.01', 300, 's1', 200, safeSec);
   ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     'r-fail', 'p1', 'opencode', 'deepseek-v4-flash', 1, 1, 0, 0, '0', 100, 's1', 500, safeSec - 60);
+  // 未知模型：五层定价全部 miss，UI 应显示"未知定价"徽章
+  ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'r-unknown', 'p1', 'opencode', 'x-unknown-model-9x', 10, 5, 0, 0, '0', 100, 's1', 200, safeSec - 120);
   ccDb.close();
 
   fs.writeFileSync(

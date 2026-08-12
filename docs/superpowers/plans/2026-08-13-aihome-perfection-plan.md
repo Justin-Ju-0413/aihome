@@ -49,7 +49,7 @@
   - 验收：单测覆盖清理边界（本地时间构造过期数据）；e2e 断言 stale 响应头 + 清理后 count 收缩
   - Commit: `feat(usage): retention policy + async reindex (v0.3 P0-3)`
 
-- [ ] **1.3 定价五层回退**（v0.3 P0-2）
+- [x] **1.3 定价五层回退**（v0.3 P0-2）
   - `getPricing` 五层：ccSwitch → BUNDLED → provider 前缀 fallback 池（claude-*/gpt-*/deepseek-*/glm-*/gemini-* 行业均价）→ unknown 标记 → `data/pricing-override.json` 用户覆盖（最高优先级）
   - 前端成本面板对 unknown 显示"未知定价"提示
   - 验收：pricing 单测覆盖五层优先级；e2e 面板未知模型提示

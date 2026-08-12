@@ -1,7 +1,7 @@
 import { USAGE_SOURCE_PATHS, usageCachePath } from './paths';
 import { UsageCache } from './cache';
 import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo, type UsageSource } from './types';
-import { loadCcSwitchPricing, getPricing } from './pricing';
+import { loadCcSwitchPricing, getPricingWithStatus } from './pricing';
 import { scanSource, checkSourceAvailability } from './sources';
 export { checkSourceAvailability };
 
@@ -24,7 +24,13 @@ export interface IndexResult {
 export function runIndex(only?: ActiveUsageSource[]): IndexResult {
   const cache = UsageCache.open(usageCachePath());
   const ccPricing = loadCcSwitchPricing(USAGE_SOURCE_PATHS['cc-switch']());
-  const pricing = (model: string) => getPricing(model, ccPricing);
+  // 收集五层定价都 miss 的模型（UI 显示"未知定价"提示，而非静默 0）
+  const unknownModels = new Set<string>();
+  const pricing = (model: string) => {
+    const r = getPricingWithStatus(model, ccPricing);
+    if (r.source === 'unknown') unknownModels.add(model);
+    return r.pricing;
+  };
   const targets = only && only.length > 0 ? only : ACTIVE_SOURCES;
   const sources: SourceInfo[] = [];
   let inserted = 0;
@@ -33,6 +39,11 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
       try {
         const cp = cache.getCheckpoint(id);
         const { events, checkpoint } = scanSource(id, cp, pricing);
+        // 收集五层定价 miss 的模型：显式检查（不依赖各源是否调用 pricing 回调，
+        // 如 cc-switch 直接用日志 cost、从不触发 pricing）
+        for (const e of events) {
+          if (getPricingWithStatus(e.model, ccPricing).source === 'unknown') unknownModels.add(e.model);
+        }
         inserted += cache.insertEvents(events);
         cache.setCheckpoint(id, checkpoint);
         cache.setMeta(`last_index_${id}`, String(Date.now()));
@@ -76,6 +87,7 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
       });
     }
     cache.setMeta('last_index_ms', String(Date.now()));
+    cache.setMeta('unknown_pricing_models', JSON.stringify([...unknownModels]));
     // 每轮索引后执行保留清理（防 events 表无限膨胀）
     cache.purgeExpired();
   } finally {
