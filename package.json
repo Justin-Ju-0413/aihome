@@ -1,6 +1,6 @@
 {
   "name": "aihome",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -15,7 +15,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "clean:rust": "cargo clean --manifest-path src-tauri/Cargo.toml && rm -rf standalone-resources"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

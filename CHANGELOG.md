@@ -2,17 +2,21 @@
 
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and releases use Semantic Versioning.
 
+## [0.3.0] - 2026-08-13
+
+### Added
+- **Desktop app** — Tauri 2 shell packaging AIHome as a double-clickable macOS dmg: spawns the standalone Next.js server on `127.0.0.1:3010`, health-polling window, tray menu, launch-at-login, and a repeatable smoke script (`scripts/smoke-desktop.sh`).
+- **Workbench** (`/workbench`): AI platform collection with API key management (multi-key per site, current-key switching) and live balance badges for DeepSeek / OpenAI / OpenRouter; settings section for auto-refresh.
+- **API key encryption at rest** — AES-256-GCM with macOS Keychain master key (env override for tests); legacy plaintext keys auto-migrate on read; database permission tightened to 0600.
+- **Console page (`/console`)** — FileVision runtime merge: file tree with live watching, agent run console (Claude Code / Codex start-stop, step progress, logs, diffs & rollback), pipeline orchestration, one-click task dispatch with auto provider/model scheduling and fallback chains, Hermes integration, dashboard, history timeline, runtime settings drawer. Exposed under `/api/fv/*` (SQLite at `~/.aihome/filevision.db`, event-bus cursor polling); one-time migration from legacy `file-visualizer/data.db`.
+- **Workbench merge** — sites/keys/balance CRUD under `/api/workbench/*` with legacy `ai-workbench` DB one-time migration.
+
 ## [Unreleased]
 
 - Add CI for lint, production build, and Playwright coverage.
 - Validate workspace configuration before persistence.
 - Enforce configured workspace boundaries for files, scans, Agent IDs, and creation paths.
 - Document the local-only security model and focused roadmap.
-
-### Added
-- **Console page (`/console`)**: merge of the FileVision runtime — file tree browser with live file watching, Agent run console (create/start/stop Claude Code & Codex agents, step progress, logs, diffs & rollback), pipeline orchestration, one-click task dispatch with auto provider/model scheduling and fallback chains, Hermes integration (sessions, skills, launch/abort), dashboard stats, history timeline, and runtime settings drawer.
-- All FileVision capabilities exposed under the `/api/fv/*` namespace (SQLite-backed at `~/.aihome/filevision.db`); real-time updates via event-bus cursor polling instead of WebSocket.
-- One-time auto-migration from the legacy `file-visualizer/data.db` via `VACUUM INTO` (override with `AIHOME_FV_LEGACY_DB`).
 
 ## [0.2.0] - 2026-08-05
 
