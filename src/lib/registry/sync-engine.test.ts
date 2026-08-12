@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Registry } from './registry';
@@ -80,7 +80,6 @@ describe('syncSkills', () => {
     const other = path.join(root, 'other');
     mkdirSync(other);
     const link = path.join(platformDir, 'my-skill');
-    const { symlinkSync } = require('node:fs') as typeof import('node:fs');
     symlinkSync(other, link, 'dir');
     const results = syncSkills(reg);
     expect(results[0].status).toBe('synced');
