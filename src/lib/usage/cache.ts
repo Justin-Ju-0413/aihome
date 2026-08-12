@@ -3,6 +3,9 @@ import * as path from 'path';
 import { DatabaseSync } from 'node:sqlite';
 import type { ActiveUsageSource, Checkpoint, ScannedEvent } from './types';
 
+/** 事件保留天数（默认 90，可用 AIHOME_USAGE_RETENTION_DAYS 覆盖为 7/30/90） */
+export const USAGE_RETENTION_DAYS = Number(process.env.AIHOME_USAGE_RETENTION_DAYS) || 90;
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS events (
   raw_id TEXT NOT NULL,
@@ -20,6 +23,7 @@ CREATE TABLE IF NOT EXISTS events (
   PRIMARY KEY (source, raw_id)
 );
 CREATE INDEX IF NOT EXISTS idx_events_ts ON events(source, ts);
+CREATE INDEX IF NOT EXISTS idx_events_ts_plain ON events(ts);
 CREATE TABLE IF NOT EXISTS checkpoints (
   source TEXT PRIMARY KEY,
   ts INTEGER NOT NULL DEFAULT 0,
@@ -111,6 +115,13 @@ export class UsageCache {
       .prepare('SELECT COUNT(*) AS n FROM events WHERE source = ?')
       .get(source) as { n: number };
     return Number(row.n);
+  }
+
+  /** 清理超过保留窗口（USAGE_RETENTION_DAYS）的旧事件，返回删除条数 */
+  purgeExpired(nowMs: number = Date.now()): number {
+    const cutoff = nowMs - USAGE_RETENTION_DAYS * 24 * 3600_000;
+    const r = this.db.prepare('DELETE FROM events WHERE ts < ?').run(cutoff);
+    return Number(r.changes);
   }
 
   getMeta(key: string): string | null {

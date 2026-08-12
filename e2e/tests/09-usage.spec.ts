@@ -10,6 +10,17 @@ test.describe('Usage Aggregator', () => {
     expect(cc.path).toContain('.e2e-usage');
   });
 
+  test('stale header marks background reindex (fire-and-forget)', async ({ request }) => {
+    // 必须是本组第一个触发索引的请求（fixture 全新库 → stale=true → 后台重索引）
+    const first = await request.get('/api/usage/events?range=24h');
+    expect(first.ok()).toBeTruthy();
+    expect(first.headers()['x-stale']).toBe('true');
+    // 后台索引完成后再次请求 → 数据新鲜
+    const second = await request.get('/api/usage/events?range=24h');
+    expect(second.ok()).toBeTruthy();
+    expect(second.headers()['x-stale']).toBe('false');
+  });
+
   test('page renders overview, kline, stats, table from fixtures', async ({ page }) => {
     await page.goto('/usage');
     await expect(page.locator(selectors.usage.overview)).toBeVisible();

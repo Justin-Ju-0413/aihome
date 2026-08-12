@@ -13,7 +13,8 @@ const DIMENSIONS: UsageDimension[] = ['cost', 'tokens'];
 
 export async function GET(request: NextRequest) {
   try {
-    indexIfStale();
+    // fire-and-forget：过期则后台重索引，本次请求先返回缓存数据
+    const stale = indexIfStale();
     const { searchParams } = new URL(request.url);
     const sourceParam = searchParams.get('source') ?? 'all';
     const rangeParam = searchParams.get('range') ?? '24h';
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
         status: 'not-supported' as const,
         message: 'no local usage data',
       });
-      return NextResponse.json({
+      const res = NextResponse.json({
         totals: totalsFor(totalsEvents, now),
         kline: buildKline(windowEvents, bucketMs, dimension),
         stats: {
@@ -80,6 +81,9 @@ export async function GET(request: NextRequest) {
         table: buildTable(cache.queryEvents(sources, totalsSince), now),
         sourceStatus,
       });
+      // 后台正在刷新时标记 stale，前端可据此提示
+      res.headers.set('x-stale', stale ? 'true' : 'false');
+      return res;
     } finally {
       cache.close();
     }

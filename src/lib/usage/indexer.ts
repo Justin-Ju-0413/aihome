@@ -76,20 +76,50 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
       });
     }
     cache.setMeta('last_index_ms', String(Date.now()));
+    // 每轮索引后执行保留清理（防 events 表无限膨胀）
+    cache.purgeExpired();
   } finally {
     cache.close();
   }
   return { sources, inserted };
 }
 
-export function indexIfStale(maxAgeMs = 5 * 60_000): void {
+// 后台重索引并发守卫：同一进程内同一时刻只跑一个任务，重复触发排队合并
+let backgroundRunning = false;
+let backgroundQueued = false;
+
+export function triggerBackgroundIndex(): void {
+  if (backgroundRunning) {
+    backgroundQueued = true;
+    return;
+  }
+  backgroundRunning = true;
+  setImmediate(() => {
+    try {
+      runIndex();
+    } finally {
+      backgroundRunning = false;
+      if (backgroundQueued) {
+        backgroundQueued = false;
+        triggerBackgroundIndex();
+      }
+    }
+  });
+}
+
+/**
+ * 惰性索引改为 fire-and-forget：先读缓存立即返回，过期时后台重索引。
+ * 返回 true 表示数据可能陈旧、后台正在刷新（调用方应带 x-stale 响应头）。
+ */
+export function indexIfStale(maxAgeMs = 5 * 60_000): boolean {
   const cache = UsageCache.open(usageCachePath());
-  let stale = true;
+  let stale: boolean;
   try {
     const last = Number(cache.getMeta('last_index_ms')) || 0;
     stale = Date.now() - last > maxAgeMs;
   } finally {
     cache.close();
   }
-  if (stale) runIndex();
+  if (stale) triggerBackgroundIndex();
+  return stale;
 }
