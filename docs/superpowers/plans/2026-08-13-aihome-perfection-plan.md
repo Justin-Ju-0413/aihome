@@ -37,12 +37,12 @@
 
 ## Phase 1: 可靠性与安全加固
 
-- [ ] **1.1 SIGTERM/SIGINT 加固**（桌面壳）
+- [x] **1.1 SIGTERM/SIGINT 加固**（桌面壳）
   - server.rs/lib.rs：libc 信号处理——收到 SIGTERM/SIGINT 时先 `stop_next_server()` 再退出（正常退出路径 ExitRequested|Exit 已覆盖，补信号路径；macOS 注销/关机/`kill` 场景）
   - 验收：`kill <app-pid>` 后 `lsof -ti :3010` 无残留；smoke 脚本加 SIGTERM 场景检查
   - Commit: `fix(desktop): clean up next-server on SIGTERM/SIGINT`
 
-- [ ] **1.2 usage-cache 保留策略 + 异步化**（v0.3 P0-3）
+- [x] **1.2 usage-cache 保留策略 + 异步化**（v0.3 P0-3）
   - 保留：`USAGE_RETENTION_DAYS`（默认 90，可配置 7/30/90），启动 + 每轮索引后 `DELETE FROM events WHERE ts < now-90d`
   - 异步：`indexIfStale` 改 fire-and-forget——先读缓存立即返回，后台重索引；响应头 `x-stale: true`；同源并发约束
   - 顺手：`ts` 单列索引

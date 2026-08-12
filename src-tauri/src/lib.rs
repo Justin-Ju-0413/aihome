@@ -7,6 +7,9 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 必须在任何线程创建前阻塞终止信号（SIGTERM/SIGINT），sigwait 线程随后接管
+    server::block_termination_signals();
+
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -34,6 +37,8 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
+
+    server::install_signal_waiter(app.handle().clone());
 
     // 注意：macOS 上 tao 的 EventLoop::run 以 process::exit 结束（永不返回），
     // 所以 run() 之后的代码不会执行；退出前最后派发的是 RunEvent::Exit

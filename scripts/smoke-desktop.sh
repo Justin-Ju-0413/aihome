@@ -63,5 +63,22 @@ if lsof -ti :3010 > /dev/null 2>&1; then
 fi
 echo "PASS: no residual process"
 
+# SIGTERM 场景：kill 命令退出也必须清理（信号加固验证）
+open "$APP"
+for i in $(seq 1 20); do
+  curl -sf -m 2 http://127.0.0.1:3010/api/health > /dev/null && break
+  sleep 1
+done
+APP_PID=$(pgrep -f "AIHome.app/Contents/MacOS/aihome" | head -1)
+[ -n "$APP_PID" ] || { echo "FAIL: app not running for SIGTERM test"; hdiutil detach /tmp/aihome-mnt -quiet; exit 1; }
+kill -TERM "$APP_PID"
+sleep 3
+if lsof -ti :3010 > /dev/null 2>&1; then
+  echo "FAIL: next-server leaked after SIGTERM"
+  hdiutil detach /tmp/aihome-mnt -quiet
+  exit 1
+fi
+echo "PASS: no residual after SIGTERM"
+
 hdiutil detach /tmp/aihome-mnt -quiet
 echo "SMOKE OK"

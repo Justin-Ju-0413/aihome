@@ -122,3 +122,34 @@ pub fn stop_next_server() {
         log("stop_next_server: no child registered");
     }
 }
+
+/// 阻塞 SIGTERM/SIGINT（须在任何线程创建前调用，主线程掩码会被子线程继承），
+/// 然后由专用线程 `sigwait` 处理：收到信号走 `app_handle.exit(0)` 正常退出路径
+/// （ExitRequested|Exit → stop_next_server），避免信号 handler 里跑非 async-signal-safe 代码。
+pub fn block_termination_signals() {
+    unsafe {
+        let mut set: libc::sigset_t = std::mem::zeroed();
+        libc::sigemptyset(&mut set);
+        libc::sigaddset(&mut set, libc::SIGTERM);
+        libc::sigaddset(&mut set, libc::SIGINT);
+        libc::pthread_sigmask(libc::SIG_BLOCK, &set, std::ptr::null_mut());
+    }
+}
+
+pub fn install_signal_waiter(app_handle: tauri::AppHandle) {
+    thread::spawn(move || loop {
+        let mut sig: libc::c_int = 0;
+        let mut set: libc::sigset_t = unsafe { std::mem::zeroed() };
+        unsafe {
+            libc::sigemptyset(&mut set);
+            libc::sigaddset(&mut set, libc::SIGTERM);
+            libc::sigaddset(&mut set, libc::SIGINT);
+            if libc::sigwait(&set, &mut sig) != 0 {
+                break;
+            }
+        }
+        log(&format!("termination signal {sig} received, exiting via app.exit(0)"));
+        app_handle.exit(0);
+        break;
+    });
+}
