@@ -91,6 +91,8 @@ function open(): DatabaseSync {
   // 仅默认路径（真实使用）自动从旧 ai-workbench 库拷贝
   if (!process.env.AIHOME_WORKBENCH_DB) migrateLegacyDb(target);
   fs.mkdirSync(path.dirname(target), { recursive: true });
+  // DB 含加密 API key，权限收紧到仅本人可读写（默认 644 同机其他用户可读）
+  if (fs.existsSync(target)) fs.chmodSync(target, 0o600);
   const db = new DatabaseSync(target);
   db.exec('PRAGMA foreign_keys = ON');
   migrate(db);

@@ -1,4 +1,6 @@
 import { openWorkbenchDb, siteSlug, nowIso } from './db';
+import { decryptKey, encryptKey, isEncrypted } from './crypto';
+import type { DatabaseSync } from 'node:sqlite';
 import type { Site, SiteInput, KeyRecord, KeyView, Settings, Provider, CheckStatus } from './types';
 
 // node:sqlite 行类型（列名 snake_case）
@@ -47,12 +49,22 @@ export function maskKey(key: string): string {
   return `${prefix}***${key.slice(-4)}`;
 }
 
-const VIEW = (r: KeyRow): KeyView => ({
-  id: r.id, siteId: r.site_id, label: r.label, provider: r.provider as Provider,
-  masked: maskKey(r.key_encrypted), isCurrent: r.is_current === 1,
-  lastCheckStatus: r.last_check_status as CheckStatus, lastBalanceJson: r.last_balance_json,
-  lastCheckAt: r.last_check_at,
-});
+// 掩码基于解密后的明文（库里是密文，直接掩码会显示乱码）；
+// 解密失败（如主密钥变化）时兜底显示 `***`，不拖垮列表
+const VIEW = (r: KeyRow): KeyView => {
+  let masked: string;
+  try {
+    masked = maskKey(decryptKey(r.key_encrypted));
+  } catch {
+    masked = '***';
+  }
+  return {
+    id: r.id, siteId: r.site_id, label: r.label, provider: r.provider as Provider,
+    masked, isCurrent: r.is_current === 1,
+    lastCheckStatus: r.last_check_status as CheckStatus, lastBalanceJson: r.last_balance_json,
+    lastCheckAt: r.last_check_at,
+  };
+};
 
 export function listSites(): Site[] {
   const db = openWorkbenchDb();
@@ -119,7 +131,7 @@ export function saveKey(siteId: string, input: { label: string; provider: Provid
   db.prepare(
     `INSERT INTO keys (site_id, label, provider, key_encrypted, is_current, created_at)
      VALUES (?, ?, ?, ?, 1, ?)`
-  ).run(siteId, input.label, input.provider, input.key.trim(), nowIso());
+  ).run(siteId, input.label, input.provider, encryptKey(input.key.trim()), nowIso());
   const row = db.prepare('SELECT * FROM keys WHERE id = last_insert_rowid()').get() as unknown as KeyRow;
   return VIEW(row);
 }
@@ -130,7 +142,8 @@ export function updateKey(id: number, input: { label?: string; key?: string }): 
   if (!row) return null;
   if (input.key !== undefined && !input.key.trim()) throw new Error('key 不能为空');
   db.prepare('UPDATE keys SET label = ?, key_encrypted = ? WHERE id = ?').run(
-    input.label ?? row.label, input.key !== undefined ? input.key.trim() : row.key_encrypted, id
+    input.label ?? row.label,
+    input.key !== undefined ? encryptKey(input.key.trim()) : row.key_encrypted, id
   );
   return VIEW(db.prepare('SELECT * FROM keys WHERE id = ?').get(id) as unknown as KeyRow);
 }
@@ -156,13 +169,27 @@ export function setCurrentKey(siteId: string, keyId: number): void {
 export function getCurrentKeyRecord(siteId: string): KeyRecord | null {
   const db = openWorkbenchDb();
   const row = db.prepare('SELECT * FROM keys WHERE site_id = ? AND is_current = 1').get(siteId) as unknown as KeyRow | undefined;
-  return row ? ROW_TO_KEY_RECORD(row) : null;
+  return row ? withPlaintextKey(db, row) : null;
 }
 
 export function getKeyRecord(id: number): KeyRecord | null {
   const db = openWorkbenchDb();
   const row = db.prepare('SELECT * FROM keys WHERE id = ?').get(id) as unknown as KeyRow | undefined;
-  return row ? ROW_TO_KEY_RECORD(row) : null;
+  return row ? withPlaintextKey(db, row) : null;
+}
+
+/** 解密 + 旧明文自动迁移：读到的 key 返回明文（balance 查询用），同时把旧明文加密写回 */
+function withPlaintextKey(db: DatabaseSync, row: KeyRow): KeyRecord {
+  const rec = ROW_TO_KEY_RECORD(row);
+  const stored = row.key_encrypted;
+  if (isEncrypted(stored)) {
+    rec.key = decryptKey(stored);
+  } else {
+    // 旧库明文（迁移前保存的 key）：加密写回，下次起不再落盘明文
+    rec.key = stored;
+    db.prepare('UPDATE keys SET key_encrypted = ? WHERE id = ?').run(encryptKey(stored), row.id);
+  }
+  return rec;
 }
 
 export function clearAllKeys(): number {

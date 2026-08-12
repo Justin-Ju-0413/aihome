@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import {
   createSite, getSite, updateSite, deleteSite,
   listKeys, saveKey, deleteKey, setCurrentKey,
@@ -99,6 +100,34 @@ describe('keys crud', () => {
     const k = saveKey(site.id, { label: 'a', provider: 'deepseek', key: 'sk-secret-xyz' });
     const rec = getKeyRecord(k.id);
     expect(rec?.key).toBe('sk-secret-xyz');
+  });
+  it('stores keys encrypted at rest', () => {
+    const site = createSite(siteInput);
+    const k = saveKey(site.id, { label: 'a', provider: 'deepseek', key: 'sk-at-rest-check' });
+    const raw = new DatabaseSync(process.env.AIHOME_WORKBENCH_DB!);
+    const stored = raw.prepare('SELECT key_encrypted FROM keys WHERE id = ?').get(k.id) as { key_encrypted: string };
+    raw.close();
+    expect(stored.key_encrypted).toMatch(/^enc:v1:/);
+    expect(stored.key_encrypted).not.toContain('sk-at-rest-check');
+  });
+  it('migrates legacy plaintext key to encrypted on read', () => {
+    const site = createSite(siteInput);
+    // 模拟旧版库：绕过 saveKey 直接插明文
+    const raw = new DatabaseSync(process.env.AIHOME_WORKBENCH_DB!);
+    const inserted = raw.prepare(
+      `INSERT INTO keys (site_id, label, provider, key_encrypted, is_current, created_at)
+       VALUES (?, '旧', 'deepseek', ?, 1, ?)`
+    ).run(site.id, 'sk-legacy-plaintext', new Date().toISOString());
+    raw.close();
+
+    const rec = getKeyRecord(Number(inserted.lastInsertRowid));
+    expect(rec?.key).toBe('sk-legacy-plaintext');
+
+    // 读取后库内应已加密，且不再含明文
+    const raw2 = new DatabaseSync(process.env.AIHOME_WORKBENCH_DB!);
+    const stored = raw2.prepare('SELECT key_encrypted FROM keys WHERE id = ?').get(rec!.id) as { key_encrypted: string };
+    raw2.close();
+    expect(stored.key_encrypted).toMatch(/^enc:v1:/);
   });
 });
 
