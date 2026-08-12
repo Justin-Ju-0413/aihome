@@ -12,7 +12,7 @@ export type PlatformRow = {
   install_dir: string;
 };
 
-export type SyncStatus = 'linked' | 'broken' | 'conflict' | 'removed';
+export type SyncStatus = 'linked' | 'broken' | 'conflict' | 'removed' | 'failed';
 
 export type SyncStateRow = {
   skill_id: string;
