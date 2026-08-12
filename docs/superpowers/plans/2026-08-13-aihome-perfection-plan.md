@@ -57,7 +57,7 @@
 
 ## Phase 2: 测试补强
 
-- [ ] **2.1 安全核心单测**：path-security（`..`/符号链接/unicode 边界）、workspace-config 校验、parser 解析
+- [x] **2.1 安全核心单测**：path-security（`..`/符号链接/unicode 边界）、workspace-config 校验、parser 解析
 - [ ] **2.2 fv 高风险模块**：orchestrator（调度/fallback 链，mock adapter）、agent-runner（stream-json 解析/快照 diff）、process-registry（崩溃恢复）、file-watcher（chokidar 事件）
 - [ ] **2.3 usage 薄适配器**：codex/hermes 适配器 fixtures 补齐
 - 验收：新测试全绿；覆盖率明显提升
