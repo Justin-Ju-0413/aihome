@@ -33,7 +33,7 @@
 - Consumes: Task 1-4 全部 lib 模块
 - Produces: REST 契约（Task 6 UI 消费）
 
-- [ ] **Step 1: 写 skills 列表路由（聚合平台状态）**
+- [x] **Step 1: 写 skills 列表路由（聚合平台状态）**
 
 ```typescript
 // src/app/api/registry/skills/route.ts
@@ -65,7 +65,7 @@ export async function GET() {
 }
 ```
 
-- [ ] **Step 2: 写 sync / import / doctor 路由**
+- [x] **Step 2: 写 sync / import / doctor 路由**
 
 ```typescript
 // src/app/api/registry/sync/route.ts
@@ -154,7 +154,7 @@ export async function POST() {
 }
 ```
 
-- [ ] **Step 3: 写删除路由（级联）**
+- [x] **Step 3: 写删除路由（级联）**
 
 ```typescript
 // src/app/api/registry/skills/[id]/route.ts
@@ -179,7 +179,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 }
 ```
 
-- [ ] **Step 4: playwright.config.ts 补 env + 写 e2e**
+- [x] **Step 4: playwright.config.ts 补 env + 写 e2e**
 
 在 `webServer.env` 中加：
 ```typescript
@@ -234,17 +234,17 @@ test.describe('Registry API flow', () => {
 });
 ```
 
-- [ ] **Step 5: 跑测试**
+- [x] **Step 5: 跑测试**
 
 Run: `npm test` + `PORT=3100 npx playwright test e2e/tests/registry.spec.ts`
 Expected: 单测全绿；registry e2e 通过
 
-- [ ] **Step 6: 全量回归**
+- [x] **Step 6: 全量回归**
 
 Run: `PORT=3100 npx playwright test`
 Expected: 110 + 1 = 111 全绿
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/app/api/registry/ playwright.config.ts e2e/tests/registry.spec.ts
@@ -265,12 +265,12 @@ git commit -m "feat(registry): registry REST API + e2e flow"
 - Consumes: `/api/registry/*`（Task 5）
 - Produces: 导航可见的注册表页（列表/导入/同步/dry-run/doctor/修复/删除）
 
-- [ ] **Step 1: 读 TopNav 现有导航模式**
+- [x] **Step 1: 读 TopNav 现有导航模式**
 
 Read: `src/components/layout/TopNav.tsx`
 沿用现有 `<Link href="/xxx">` + lucide 图标的样式（看 Usage/Sync 怎么写的，照抄其结构）。
 
-- [ ] **Step 2: 写 SkillRow 组件**
+- [x] **Step 2: 写 SkillRow 组件**
 
 ```tsx
 // src/components/registry/SkillRow.tsx
@@ -321,7 +321,7 @@ export function SkillRow({ skill }: { skill: Skill }) {
 }
 ```
 
-- [ ] **Step 3: 写 RegistryPanel 组件**
+- [x] **Step 3: 写 RegistryPanel 组件**
 
 ```tsx
 // src/components/registry/RegistryPanel.tsx
@@ -446,7 +446,7 @@ export function RegistryPanel() {
 }
 ```
 
-- [ ] **Step 4: 写页面 + TopNav 链接**
+- [x] **Step 4: 写页面 + TopNav 链接**
 
 ```tsx
 // src/app/skills/page.tsx
@@ -473,17 +473,17 @@ TopNav：仿现有 Usage/Sync 导航项加：
 ```
 （按 TopNav 现有结构、图标、类名照抄模式）
 
-- [ ] **Step 5: 手动验证**
+- [x] **Step 5: 手动验证**
 
 Run: `npm run dev -- -p 3100` → 打开 `http://127.0.0.1:3100/skills`
 Expected: 导航有「注册表」；页面渲染；导入（用 `data/sample-agents/code-assistant` 目录路径试一次）→ 同步 → 徽标变化
 
-- [ ] **Step 6: 全量验证**
+- [x] **Step 6: 全量验证**
 
 Run: `npm run lint`、`npx tsc --noEmit`、`npm test`、`PORT=3100 npx playwright test`
 Expected: 全绿（lint 0 error、tsc 干净、单测全绿、111 e2e 全绿）
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/app/skills/ src/components/registry/ src/components/layout/TopNav.tsx
