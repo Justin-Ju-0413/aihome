@@ -10,6 +10,9 @@ import { emitEvent } from './events';
 
 export const activeProcesses = new Map<string, ChildProcess>();
 
+/** 用户主动停止的 agent：close 晚到时不得把 stopped 覆盖为 completed/error */
+const stopRequested = new Set<string>();
+
 export interface AgentRow extends Row {
   id: string;
   name: string;
@@ -161,6 +164,18 @@ export function startAgent(agentId: string): number {
 
   proc.on('close', (code) => {
     activeProcesses.delete(agentId);
+    // 用户主动停止：SIGTERM 已发、状态已置 stopped，close 晚到时保持 stopped
+    if (stopRequested.has(agentId)) {
+      stopRequested.delete(agentId);
+      stmts.insertLog({ agentId, type: 'status', content: 'Agent stopped by user', structured: '{}' });
+      stmts.insertHistory({
+        type: 'agent', title: agent.name + ' 已停止',
+        description: 'Stopped by user', agentId, filePath: '',
+      });
+      emitEvent({ type: 'agent:complete', agentId, status: 'stopped', agent: getAgentDetail(agentId) });
+      if (agent.pipeline_id) updatePipelineProgress(agent.pipeline_id);
+      return;
+    }
     const finalStatus = code === 0 ? 'completed' : 'error';
     const allSteps = stmts.getSteps(agentId);
 
@@ -219,6 +234,7 @@ export function stopAgent(agentId: string): boolean {
   const proc = activeProcesses.get(agentId);
   if (proc) {
     proc.kill('SIGTERM');
+    stopRequested.add(agentId);
     activeProcesses.delete(agentId);
     stmts.updateAgentStatus({
       id: agentId, status: 'stopped', progress: 0, currentStep: 0,
