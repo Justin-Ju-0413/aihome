@@ -120,18 +120,26 @@ export function startAgent(agentId: string): number {
   const steps = stmts.getSteps(agentId);
   const totalSteps = steps.length || 1;
 
+  // 流式行解析：chunk 可能切断 JSON 行，按换行重装完整行后再解析
+  const structuredParser = createJsonLineParser((line) => {
+    if (line.trim().startsWith('{')) {
+      const parsed = parseStructuredOutput(line, agent.provider);
+      if (parsed.tools.length > 0 || parsed.edits.length > 0) {
+        stmts.insertLog({
+          agentId, type: 'structured', content: JSON.stringify(parsed),
+          structured: JSON.stringify(parsed),
+        });
+        emitEvent({ type: 'agent:structured', agentId, data: parsed });
+      }
+    }
+    detectStepProgress(line, steps, stepIndex, agentId, (newIdx) => { stepIndex = newIdx; });
+  });
+
   proc.stdout.on('data', (data: Buffer) => {
     const text = data.toString();
     stmts.insertLog({ agentId, type: 'stdout', content: text, structured: '{}' });
 
-    const parsed = parseStructuredOutput(text, agent.provider);
-    if (parsed.tools.length > 0 || parsed.edits.length > 0) {
-      stmts.insertLog({
-        agentId, type: 'structured', content: JSON.stringify(parsed),
-        structured: JSON.stringify(parsed),
-      });
-      emitEvent({ type: 'agent:structured', agentId, data: parsed });
-    }
+    structuredParser(text);
     tokenCount += Math.ceil(text.length / 4);
 
     const maxProgress = parseInt(vals['agent.max_running_progress'] || '95');
@@ -143,8 +151,6 @@ export function startAgent(agentId: string): number {
     emitEvent({
       type: 'agent:output', agentId, data: text, progress, currentStep: stepIndex,
     });
-
-    detectStepProgress(text, steps, stepIndex, agentId, (newIdx) => { stepIndex = newIdx; });
   });
 
   proc.stderr.on('data', (data: Buffer) => {
@@ -261,28 +267,42 @@ function detectStepProgress(
   }
 }
 
-export function parseStructuredOutput(text: string, provider: string): { tools: Array<{ name: string; input: Record<string, unknown> }>; edits: Array<{ file: string; action: string }>; messages: string[] } {
-  const result: { tools: Array<{ name: string; input: Record<string, unknown> }>; edits: Array<{ file: string; action: string }>; messages: string[] } = { tools: [], edits: [], messages: [] };
-  if (provider === 'claude') {
-    const lines = text.split('\n').filter((l) => l.trim().startsWith('{'));
-    for (const line of lines) {
-      try {
-        const obj = JSON.parse(line);
-        if (obj.type === 'assistant' && obj.message?.content) {
-          const content = Array.isArray(obj.message.content) ? obj.message.content : [obj.message.content];
-          for (const c of content) {
-            if (c.type === 'tool_use') {
-              result.tools.push({ name: c.name, input: c.input ?? {} });
-              if (c.name === 'Edit' || c.name === 'Write') {
-                result.edits.push({ file: c.input?.file_path || c.input?.path || '', action: c.name });
-              }
-            }
-            if (c.type === 'text') result.messages.push(c.text?.substring(0, 200));
+export interface StructuredOutput {
+  tools: Array<{ name: string; input: Record<string, unknown> }>;
+  edits: Array<{ file: string; action: string }>;
+  messages: string[];
+}
+
+function emptyStructuredOutput(): StructuredOutput {
+  return { tools: [], edits: [], messages: [] };
+}
+
+/** 解析一行 claude stream-json（对象累积到 result）。非 JSON / 非 assistant 行静默跳过。 */
+function parseClaudeJsonLine(line: string, result: StructuredOutput): void {
+  try {
+    const obj = JSON.parse(line);
+    if (obj.type === 'assistant' && obj.message?.content) {
+      const content = Array.isArray(obj.message.content) ? obj.message.content : [obj.message.content];
+      for (const c of content) {
+        if (c.type === 'tool_use') {
+          result.tools.push({ name: c.name, input: c.input ?? {} });
+          if (c.name === 'Edit' || c.name === 'Write') {
+            result.edits.push({ file: c.input?.file_path || c.input?.path || '', action: c.name });
           }
         }
-      } catch {
-        // 跳过非 JSON 行
+        if (c.type === 'text') result.messages.push(c.text?.substring(0, 200));
       }
+    }
+  } catch {
+    // 跳过非 JSON 行
+  }
+}
+
+export function parseStructuredOutput(text: string, provider: string): StructuredOutput {
+  const result = emptyStructuredOutput();
+  if (provider === 'claude') {
+    for (const line of text.split('\n')) {
+      if (line.trim().startsWith('{')) parseClaudeJsonLine(line, result);
     }
   } else {
     if (text.includes('edit') || text.includes('write') || text.includes('modify')) {
@@ -290,6 +310,31 @@ export function parseStructuredOutput(text: string, provider: string): { tools: 
     }
   }
   return result;
+}
+
+/**
+ * 流式 JSON 增量解析器：stdout chunk 落在任意字节边界，把 chunk 拼进行缓冲、
+ * 按换行切出完整行回调，残尾留到下一 chunk。JSON 行被切断时不再整条丢失。
+ * 无换行的超长缓冲（防御性）按整块回调一次并清空，避免内存无限膨胀。
+ */
+export function createJsonLineParser(
+  onLine: (line: string) => void,
+  maxBufferBytes = 1_000_000
+): (chunk: string) => void {
+  let buffer = '';
+  return (chunk: string) => {
+    buffer += chunk;
+    let idx: number;
+    while ((idx = buffer.indexOf('\n')) !== -1) {
+      const line = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 1);
+      if (line.trim()) onLine(line);
+    }
+    if (buffer.length > maxBufferBytes) {
+      if (buffer.trim()) onLine(buffer);
+      buffer = '';
+    }
+  };
 }
 
 export function createSnapshot(agentId: string, filePath: string): string | null {
