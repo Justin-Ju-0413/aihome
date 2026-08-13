@@ -34,11 +34,13 @@ export default function AgentsPage() {
   // 全文模式：服务端按 markdown 正文匹配（debounce 300ms），结果只影响本页
   useEffect(() => {
     if (!fullText) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 全文模式切换重置
       setFullTextResults(null);
       return;
     }
     const q = search.trim();
     if (!q) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 清空搜索恢复全量
       setFullTextResults(null);
       return;
     }
