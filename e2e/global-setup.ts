@@ -24,6 +24,26 @@ export default function globalSetup(): void {
     path.join(config, 'sync-config.json'),
     JSON.stringify({ version: 1, endpoints: { alpha, beta } }, null, 2)
   );
+  // config.json：保证首页 redirect /board（无 config 时首页会跳 /onboarding）。
+  // 11-onboarding.spec.ts 会自管删除/恢复此文件来测首用引导。
+  // paths 指向真实 data（等价无 config 时的 DEFAULT），让不依赖 testData 的
+  // API 契约测试扫到 sample-agents；groups 必须非空（validateWorkspaceConfig 要求）。
+  fs.writeFileSync(
+    path.join(config, 'config.json'),
+    JSON.stringify(
+      {
+        name: 'AIHome',
+        paths: [path.join(root, 'data')],
+        groups: [
+          { id: 'default', name: 'Default', color: '#6366f1', description: 'Default group' },
+          { id: 'agents', name: 'Agents', color: '#10b981', description: 'Agent definitions' },
+          { id: 'skills', name: 'Skills', color: '#f59e0b', description: 'Skill definitions' },
+        ],
+      },
+      null,
+      2
+    )
+  );
   fs.mkdirSync(repo, { recursive: true });
 
   fs.rmSync(path.join(root, 'e2e', '.e2e-workbench'), { recursive: true, force: true });
