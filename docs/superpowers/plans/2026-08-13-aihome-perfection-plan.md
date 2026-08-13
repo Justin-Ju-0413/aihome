@@ -21,7 +21,7 @@
   - 验收：`/api/health` 返回 version 0.3.0；`npm test` 全绿
   - Commit: `chore: bump version 0.2.0 -> 0.3.0`
 
-- [ ] **0.2 推送分支 + 提 PR**
+- [x] **0.2 推送分支 + 提 PR**（PR #11 merged 2026-08-13，CI quality 全绿）
   - 推送 `feat/desktop-app`（23+ commits）到 GitHub，`gh pr create` 合并到 main
   - 验收：PR 可合并；描述含功能摘要与测试状态
   - Commit: 无（仅推送/PR）
