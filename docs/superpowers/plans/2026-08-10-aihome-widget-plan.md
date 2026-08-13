@@ -36,12 +36,12 @@
   - `spendTier(amountUsd: number): 'green'|'yellow'|'red'`
   - `http://127.0.0.1:3010/widget` 页面（Task 2 Tauri 窗口加载）
 
-- [ ] **Step 1: 读 TokenTicker 聚合逻辑确认语义**
+- [x] **Step 1: 读 TokenTicker 聚合逻辑确认语义**
 
 Read: `~/Documents/05-项目代码/ccswitch-usage-widget/ccswitch_widget.py` 中 OHLC 桶聚合与涨跌幅部分
 确认：桶内 open=首笔、close=末笔、high/low=极值、count=笔数；涨跌幅 = (close-open)/open。
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 ```typescript
 // src/lib/widget/kline.test.ts
@@ -92,12 +92,12 @@ describe('spendTier', () => {
 });
 ```
 
-- [ ] **Step 3: 跑测试确认失败**
+- [x] **Step 3: 跑测试确认失败**
 
 Run: `npx vitest run src/lib/widget/kline.test.ts`
 Expected: FAIL
 
-- [ ] **Step 4: 实现 kline.ts**
+- [x] **Step 4: 实现 kline.ts**
 
 ```typescript
 // src/lib/widget/kline.ts
@@ -146,12 +146,12 @@ export function spendTier(amountUsd: number): SpendTier {
 }
 ```
 
-- [ ] **Step 5: 跑测试确认通过**
+- [x] **Step 5: 跑测试确认通过**
 
 Run: `npx vitest run src/lib/widget/kline.test.ts`
 Expected: 7 passed
 
-- [ ] **Step 6: 实现 KLine 组件**
+- [x] **Step 6: 实现 KLine 组件**
 
 ```tsx
 // src/components/widget/KLine.tsx
@@ -192,7 +192,7 @@ export function KLine({ candles }: { candles: Candle[] }) {
 }
 ```
 
-- [ ] **Step 7: 实现 WidgetApp**
+- [x] **Step 7: 实现 WidgetApp**
 
 ```tsx
 // src/components/widget/WidgetApp.tsx
@@ -267,7 +267,7 @@ export function WidgetApp() {
 }
 ```
 
-- [ ] **Step 8: 实现页面**
+- [x] **Step 8: 实现页面**
 
 ```tsx
 // src/app/widget/page.tsx
@@ -284,12 +284,12 @@ export default function WidgetPage() {
 }
 ```
 
-- [ ] **Step 9: 手动验证**
+- [x] **Step 9: 手动验证**
 
 Run: `npm run dev -- -p 3100` → 打开 `http://127.0.0.1:3100/widget`
 Expected: 紧凑 K 线渲染（有 usage 数据则显示 K 线与总额；无数据显示空图不报错）
 
-- [ ] **Step 10: 全量验证 + Commit**
+- [x] **Step 10: 全量验证 + Commit**
 
 Run: `npm test`、`npm run lint`、`npx tsc --noEmit`
 Expected: 全绿
@@ -312,7 +312,7 @@ git commit -m "feat(widget): TokenTicker k-line widget page (TS port)"
 - Consumes: Task 1（/widget 页面）
 - Produces: 托盘开关悬浮窗、自启切换；退出清理 next-server
 
-- [ ] **Step 1: tauri.conf.json 加悬浮窗窗口**
+- [x] **Step 1: tauri.conf.json 加悬浮窗窗口**
 
 ```json
 "windows": [
@@ -341,7 +341,7 @@ git commit -m "feat(widget): TokenTicker k-line widget page (TS port)"
 ]
 ```
 
-- [ ] **Step 2: capabilities 加 widget 窗口**
+- [x] **Step 2: capabilities 加 widget 窗口**
 
 ```json
 {
@@ -351,7 +351,7 @@ git commit -m "feat(widget): TokenTicker k-line widget page (TS port)"
 }
 ```
 
-- [ ] **Step 3: lib.rs 扩展托盘菜单**
+- [x] **Step 3: lib.rs 扩展托盘菜单**
 
 ```rust
 mod server;
@@ -440,7 +440,7 @@ pub fn run() {
 
 注意：`app.autolaunch()` 返回 `tauri_plugin_autostart::ManagerExt` 的扩展方法——需在文件顶部 `use tauri_plugin_autostart::ManagerExt;`。`autostart` 菜单项事件里的 `?` 语法：`match` 分支返回 `Result<(), Box<dyn Error>>` 时 `event.item` 为 `Option<&MenuItem>`。
 
-- [ ] **Step 4: 编译 + 手动验证**
+- [x] **Step 4: 编译 + 手动验证**
 
 Run: `cargo build --manifest-path src-tauri/Cargo.toml`
 若 `autostart` 分支编译报错（`?` 不能用于非 Result），改写为：
@@ -460,7 +460,7 @@ Run: `cargo build --manifest-path src-tauri/Cargo.toml`
 2. `cargo run --manifest-path src-tauri/Cargo.toml`
 3. 验证：托盘菜单四项；「悬浮窗」开关出现 320×480 透明置顶窗（显示 K 线）；自启开关切换不报错；退出后 `pgrep -f server.js` 为空
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src-tauri/tauri.conf.json src-tauri/src/lib.rs src-tauri/capabilities/default.json
