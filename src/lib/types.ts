@@ -58,6 +58,8 @@ export interface WorkspaceConfig {
   paths: string[];
   groups: AgentGroup[];
   layout: Record<string, { x: number; y: number }>;
+  /** 只读演示模式：true 时写 API 返回 403（也可用 AIHOME_READONLY=1 覆盖） */
+  readonly?: boolean;
 }
 
 export interface ScanResult {

@@ -158,14 +158,20 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={handleSaveConfig}
-            disabled={isSaving}
+            disabled={isSaving || config?.readonly === true}
             data-testid="settings-save-btn"
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
+            title={config?.readonly === true ? '只读演示模式：写操作已禁用' : undefined}
           >
             <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save'}
+            {config?.readonly === true ? '只读模式' : isSaving ? 'Saving...' : 'Save'}
           </button>
         </div>
+        {config?.readonly === true && (
+          <p className="mt-2 text-xs text-amber-600" data-testid="readonly-banner">
+            只读演示模式：工作区写操作已禁用（AIHOME_READONLY 或 config.readonly）
+          </p>
+        )}
       </header>
 
       <div className="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">

@@ -6,6 +6,7 @@ import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
 import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/path-security';
 import { filterByFullText } from '@/lib/search';
+import { assertWritable } from '@/lib/readonly';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,14 +31,15 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch agents:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch agents' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    await assertWritable();
     const body = await request.json();
     const { type, name, description, dirPath } = body;
 
@@ -111,8 +113,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Failed to create agent:', error);
     return NextResponse.json(
-      { error: 'Failed to create agent' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }
