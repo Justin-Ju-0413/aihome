@@ -30,6 +30,17 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
 - **Console** (`/console`) — the FileVision runtime merged in: file tree browser with live watching, Agent run console (start/stop Claude Code & Codex, step progress, logs, diffs & rollback), pipelines, one-click task dispatch with auto provider/model scheduling and fallback, Hermes sessions/skills/launch, dashboard stats and history timeline. Data lives in SQLite at `~/.aihome/filevision.db`; legacy `file-visualizer/data.db` is auto-migrated on first run.
 
+## Desktop app / 桌面版
+
+```bash
+npm run build:standalone   # 产出 .next/standalone + 复制 static/public
+bash scripts/smoke-desktop.sh  # 打包 .dmg + 冒烟验证
+```
+
+打包产物在 `src-tauri/target/release/bundle/dmg/AIHome_0.3.0_*.dmg`，双击即用，无需 Node 环境。
+桌面版 = 全部 web 功能 + 托盘菜单（显示/隐藏主窗口、悬浮窗开关、开机自启、退出）+ 悬浮窗（置顶用量 K 线）。
+仅绑定 `127.0.0.1:3010`。
+
 ## Tech stack / 技术栈
 
 - [Next.js 16](https://nextjs.org/) (App Router, Turbopack) + [React 19](https://react.dev/)

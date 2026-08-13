@@ -1,5 +1,7 @@
 # AIHome 桌面化整合设计（Desktop Consolidation Design）
 
+> **状态：已实现（2026-08-14）**。实现计划：`docs/superpowers/plans/2026-08-10-aihome-desktop-shell-plan.md`（P0）、`-registry-plan*.md`（P1）、`-widget-plan.md`（P2）。M2（2026-08-05 sync 设计文档的桌面壳）已落地。
+
 > 2026-08-10。目标：把 AIHome 集成为一个完整可运行的桌面软件——Tauri 桌面壳 + 剩余未合并工具（skillhub 技能注册表）并入，TokenTicker 以悬浮窗形态回归。
 
 ## 1. 背景与现状核实
@@ -166,6 +168,8 @@ AIHome = 一个可双击运行的桌面软件，做四件事：**看**（看板/
 - **版本**：AIHome v0.2.0 → **v0.3.0**（桌面形态 + 注册表 + 悬浮窗；CHANGELOG 同步）
 - **文档**：README 桌面版章节 + 截图（主窗口/悬浮窗/注册表页）；2026-08-05 sync 合并设计文档标注 M2 已落地
 - **Windows**：打包评估（不做交付承诺）；skillhub Windows junction 逻辑保留但暂不验证
+
+**Windows 评估（2026-08-14）**：Tauri 支持 Windows bundle；next-server 进程树清理需用 `taskkill /T /F /PID`；junction 逻辑保留在 sync-engine（Node fs.symlink 在 Windows 下对目录默认创建 junction，无需额外代码）。暂不在本机验证，交付 macOS .dmg。
 
 ## 7. 不做的事（YAGNI）
 
