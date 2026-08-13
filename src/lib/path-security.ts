@@ -1,4 +1,4 @@
-import { realpath } from 'fs/promises';
+import { lstat, realpath } from 'fs/promises';
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'path';
 
 /**
@@ -52,4 +52,26 @@ export async function isNewPathWithinWorkspace(
   } catch {
     return false;
   }
+}
+
+/**
+ * Authorize a file write. Existing paths (including symlinks) must resolve
+ * through realpath into the workspace; only truly new paths may fall back to
+ * parent-directory resolution. This prevents the existing||new combo bypass
+ * where a symlink inside the workspace pointing outside is authorized as a
+ * "new" path and writeFile follows the link out of the sandbox.
+ */
+export async function isWritablePathWithinWorkspace(
+  targetPath: string,
+  rootPaths: string[]
+): Promise<boolean> {
+  let exists = true;
+  try {
+    await lstat(targetPath);
+  } catch {
+    exists = false;
+  }
+  return exists
+    ? isExistingPathWithinWorkspace(targetPath, rootPaths)
+    : isNewPathWithinWorkspace(targetPath, rootPaths);
 }
