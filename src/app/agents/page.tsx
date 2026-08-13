@@ -11,6 +11,8 @@ export default function AgentsPage() {
   const { agents, setAgents, setIsScanning, isScanning } = useAppStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [search, setSearch] = useState('');
+  const [fullText, setFullText] = useState(false);
+  const [fullTextResults, setFullTextResults] = useState<typeof agents | null>(null);
 
   const loadAgents = useCallback(async () => {
     try {
@@ -29,10 +31,37 @@ export default function AgentsPage() {
     loadAgents();
   }, [loadAgents]);
 
-  const filteredAgents = agents.filter(a => 
-    !search || a.name.toLowerCase().includes(search.toLowerCase()) ||
-    a.description.toLowerCase().includes(search.toLowerCase())
-  );
+  // 全文模式：服务端按 markdown 正文匹配（debounce 300ms），结果只影响本页
+  useEffect(() => {
+    if (!fullText) {
+      setFullTextResults(null);
+      return;
+    }
+    const q = search.trim();
+    if (!q) {
+      setFullTextResults(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/agents?q=${encodeURIComponent(q)}&full=1`);
+        const data = await res.json();
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 全文搜索 debounce 结果回填
+        setFullTextResults(data);
+      } catch {
+        setFullTextResults(null);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, fullText]);
+
+  // 全文模式直接用服务端结果（避免本地 name/desc 二次过滤误删正文命中项）
+  const filteredAgents = fullText && fullTextResults !== null
+    ? fullTextResults
+    : agents.filter(a =>
+        !search || a.name.toLowerCase().includes(search.toLowerCase()) ||
+        a.description.toLowerCase().includes(search.toLowerCase())
+      );
 
   return (
     <div className="h-full flex flex-col">
@@ -52,6 +81,16 @@ export default function AgentsPage() {
               className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
             />
           </div>
+          <label className="flex items-center gap-1.5 text-sm text-text-body cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={fullText}
+              onChange={(e) => setFullText(e.target.checked)}
+              data-testid="agents-fulltext"
+              className="accent-primary"
+            />
+            全文
+          </label>
           <div className="flex border border-card-border rounded-lg bg-white/80">
             <button
               onClick={() => setViewMode('grid')}
