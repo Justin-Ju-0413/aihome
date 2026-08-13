@@ -21,12 +21,6 @@ export async function GET() {
           eventCount: cache.countEvents(id),
         });
       }
-      sources.push({
-        id: 'openclaw',
-        label: SOURCE_LABELS.openclaw,
-        status: 'not-supported',
-        message: 'no local usage data',
-      });
     } finally {
       cache.close();
     }

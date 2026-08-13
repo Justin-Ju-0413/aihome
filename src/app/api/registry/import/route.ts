@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { Registry } from '@/lib/registry/registry';
 import { importSkill } from '@/lib/registry/sync-engine';
+import { assertWritable } from '@/lib/readonly';
 
 export async function POST(req: Request) {
   try {
+    await assertWritable();
     const body = (await req.json()) as { name: string; sourcePath: string };
     if (!body?.name || !body?.sourcePath) {
       return NextResponse.json({ error: 'name and sourcePath required' }, { status: 400 });
@@ -15,6 +17,9 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Registry import error:', error);
-    return NextResponse.json({ error: 'Failed to import' }, { status: 500 });
+    return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }

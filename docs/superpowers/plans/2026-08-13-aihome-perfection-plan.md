@@ -21,7 +21,7 @@
   - 验收：`/api/health` 返回 version 0.3.0；`npm test` 全绿
   - Commit: `chore: bump version 0.2.0 -> 0.3.0`
 
-- [ ] **0.2 推送分支 + 提 PR**
+- [x] **0.2 推送分支 + 提 PR**（PR #11 merged 2026-08-13，CI quality 全绿）
   - 推送 `feat/desktop-app`（23+ commits）到 GitHub，`gh pr create` 合并到 main
   - 验收：PR 可合并；描述含功能摘要与测试状态
   - Commit: 无（仅推送/PR）
@@ -73,9 +73,9 @@
 
 ## Phase 4: 体验完善 + closeout
 
-- [ ] **4.1 OpenClaw 用量源**（v0.3 P1-4，依赖 1.2 的索引健康）
-- [ ] **4.2 roadmap P1-5 体验项**：全文搜索、健康面板、首用引导、只读演示（按 v0.3-roadmap 描述）
-- [ ] **4.3 closeout**：版本同步（0.1 已含）、截图补全、**旧仓库归档**（file-visualizer / ai-workbench / skill-sync —— 破坏性操作，执行前逐个确认）
+- [x] **4.1 OpenClaw 用量源**（v0.3 P1-4，依赖 1.2 的索引健康）
+- [x] **4.2 roadmap P1-5 体验项**：全文搜索、健康面板、首用引导、只读演示（按 v0.3-roadmap 描述）
+- [x] **4.3 closeout**：版本同步（0.1 已含）、截图补全、**旧仓库归档**（file-visualizer / ai-workbench / skillhub → `_archive/`，2026-08-14 用户确认）
 
 ---
 

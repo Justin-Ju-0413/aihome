@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_SOURCES, type ActiveUsageSource } from '@/lib/usage/types';
 import { runIndex } from '@/lib/usage/indexer';
+import { assertWritable } from '@/lib/readonly';
 
 export async function POST(request: NextRequest) {
   try {
+    await assertWritable();
     const text = await request.text();
     let body: Record<string, unknown> = {};
     if (text) {

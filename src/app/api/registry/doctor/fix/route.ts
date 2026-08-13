@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { Registry } from '@/lib/registry/registry';
 import { runDoctor } from '@/lib/registry/doctor';
+import { assertWritable } from '@/lib/readonly';
 
 export async function POST() {
   try {
+    await assertWritable();
     const reg = new Registry();
     reg.open();
     const issues = runDoctor(reg, { fix: true });
@@ -11,6 +13,9 @@ export async function POST() {
     return NextResponse.json({ issues });
   } catch (error) {
     console.error('Registry doctor fix error:', error);
-    return NextResponse.json({ error: 'Failed to fix' }, { status: 500 });
+    return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }

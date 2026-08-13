@@ -1,5 +1,7 @@
 import { test, expect } from '../fixtures/test-data.fixture';
 import { selectors } from '../helpers/selectors';
+import * as fs from 'fs';
+import * as path from 'path';
 
 test.describe('Agents List Page', () => {
   test('displays agents page title', async ({ page, testData }) => {
@@ -85,6 +87,23 @@ test.describe('Agents List Page', () => {
 
     await page.locator(selectors.agents.search).fill('CASE TEST');
     await expect(page.locator('main h3').filter({ hasText: 'Case Test' })).toBeVisible();
+  });
+
+  test('full-text search matches markdown body', async ({ page, testData }) => {
+    testData.createAgent('Body Agent', 'agent', 'Visible desc');
+    // 正文写一个独特词（name/description 都不含）
+    const dir = testData.createAgent('Body Agent', 'agent', 'Visible desc').dirPath;
+    fs.appendFileSync(path.join(dir, 'AGENTS.md'), '\n## Notes\n\nflumox-quasar-secret word\n');
+    await page.goto('/agents');
+    await page.waitForTimeout(1000);
+
+    // 普通搜索（name/desc）搜不到正文词
+    await page.locator(selectors.agents.search).fill('flumox-quasar');
+    await expect(page.locator('main h3').filter({ hasText: 'Body Agent' })).not.toBeVisible();
+
+    // 勾选全文 → 服务端正文匹配命中
+    await page.getByTestId('agents-fulltext').check();
+    await expect(page.locator('main h3').filter({ hasText: 'Body Agent' })).toBeVisible();
   });
 
   test('clicking agent card navigates to detail page', async ({ page, testData }) => {

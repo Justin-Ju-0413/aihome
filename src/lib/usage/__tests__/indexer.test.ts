@@ -43,6 +43,7 @@ describe('runIndex', () => {
       AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
       AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
       AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
       AIHOME_USAGE_CACHE: cacheDb,
     };
     const prev = { ...process.env };
@@ -54,7 +55,7 @@ describe('runIndex', () => {
       expect(byId['cc-switch'].eventCount).toBe(1);
       expect(byId.opencode.status).toBe('ready');
       expect(byId.opencode.eventCount).toBe(1);
-      expect(byId.openclaw.status).toBe('not-supported');
+      expect(byId.openclaw.status).toBe('unavailable');
       expect(res.inserted).toBe(2);
       const res2 = runIndex();
       expect(res2.inserted).toBe(0);
@@ -82,6 +83,7 @@ describe('runIndex', () => {
       AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
       AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
       AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
       AIHOME_USAGE_CACHE: path.join(dir, 'corrupt-cache.db'),
     });
     try {

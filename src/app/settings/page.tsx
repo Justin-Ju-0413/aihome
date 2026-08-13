@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download } from 'lucide-react';
+import Link from 'next/link';
+import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download, HeartPulse } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
 import { toast } from 'sonner';
 import { EndpointSettings } from '@/components/sync/EndpointSettings';
@@ -140,6 +141,14 @@ export default function SettingsPage() {
         <p className="text-sm text-muted mt-2">Configure workspace and preferences</p>
 
         <div className="flex items-center justify-center gap-3 mt-6">
+          <Link
+            href="/health"
+            data-testid="settings-health-link"
+            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border bg-white/80"
+          >
+            <HeartPulse className="w-4 h-4" />
+            健康检查
+          </Link>
           <button
             onClick={handleExport}
             className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border bg-white/80"
@@ -149,14 +158,20 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={handleSaveConfig}
-            disabled={isSaving}
+            disabled={isSaving || config?.readonly === true}
             data-testid="settings-save-btn"
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
+            title={config?.readonly === true ? '只读演示模式：写操作已禁用' : undefined}
           >
             <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save'}
+            {config?.readonly === true ? '只读模式' : isSaving ? 'Saving...' : 'Save'}
           </button>
         </div>
+        {config?.readonly === true && (
+          <p className="mt-2 text-xs text-amber-600" data-testid="readonly-banner">
+            只读演示模式：工作区写操作已禁用（AIHOME_READONLY 或 config.readonly）
+          </p>
+        )}
       </header>
 
       <div className="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">

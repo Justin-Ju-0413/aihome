@@ -14,7 +14,7 @@ export const SOURCE_LABELS: Record<UsageSource, string> = {
   openclaw: 'openclaw',
 };
 
-export const ALL_SOURCES: UsageSource[] = [...ACTIVE_SOURCES, 'openclaw'];
+export const ALL_SOURCES: UsageSource[] = ACTIVE_SOURCES;
 
 export interface IndexResult {
   sources: SourceInfo[];
@@ -36,6 +36,18 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
   let inserted = 0;
   try {
     for (const id of targets) {
+      // 路径不存在 → 不扫描，标 unavailable（避免无谓扫描 + 虚假 ready）
+      const avail = checkSourceAvailability(id);
+      if (!avail.ok) {
+        sources.push({
+          id,
+          label: SOURCE_LABELS[id],
+          status: 'unavailable',
+          message: avail.reason,
+          eventCount: cache.countEvents(id),
+        });
+        continue;
+      }
       try {
         const cp = cache.getCheckpoint(id);
         const { events, checkpoint } = scanSource(id, cp, pricing);
@@ -67,15 +79,6 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
       }
     }
     for (const id of ALL_SOURCES) {
-      if (id === 'openclaw') {
-        sources.push({
-          id: 'openclaw',
-          label: SOURCE_LABELS.openclaw,
-          status: 'not-supported',
-          message: 'no local usage data (upstream does not expose it)',
-        });
-        continue;
-      }
       if (sources.some((s) => s.id === id)) continue;
       const avail = checkSourceAvailability(id);
       sources.push({

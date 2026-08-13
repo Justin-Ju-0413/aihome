@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWorkspaceConfig, saveWorkspaceConfig, validateWorkspaceConfig } from '@/lib/workspace-config';
+import { assertWritable } from '@/lib/readonly';
 
 export async function GET() {
   try {
@@ -8,14 +9,15 @@ export async function GET() {
   } catch (error) {
     console.error('Failed to fetch workspace config:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch config' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
+    await assertWritable();
     const body = await request.json();
     const config = await getWorkspaceConfig();
     const updated = {
@@ -33,8 +35,8 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Failed to update workspace config:', error);
     return NextResponse.json(
-      { error: 'Failed to update config' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }

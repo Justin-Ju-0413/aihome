@@ -1,9 +1,9 @@
 export type UsageSource =
   | 'cc-switch' | 'claude' | 'codex' | 'opencode' | 'hermes' | 'openclaw';
-export type ActiveUsageSource = Exclude<UsageSource, 'openclaw'>;
+export type ActiveUsageSource = UsageSource;
 
 export const ACTIVE_SOURCES: ActiveUsageSource[] = [
-  'cc-switch', 'claude', 'codex', 'opencode', 'hermes',
+  'cc-switch', 'claude', 'codex', 'opencode', 'hermes', 'openclaw',
 ];
 
 export interface UsageEvent {

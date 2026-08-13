@@ -64,12 +64,6 @@ export async function GET(request: NextRequest) {
           eventCount: cache.countEvents(id),
         };
       });
-      sourceStatus.push({
-        id: 'openclaw',
-        label: SOURCE_LABELS.openclaw,
-        status: 'not-supported' as const,
-        message: 'no local usage data',
-      });
       const res = NextResponse.json({
         totals: totalsFor(totalsEvents, now),
         kline: buildKline(windowEvents, bucketMs, dimension),

@@ -5,6 +5,7 @@ import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
 import { isExistingPathWithinWorkspace } from '@/lib/path-security';
+import { assertWritable } from '@/lib/readonly';
 
 async function getAuthorizedAgentPath(id: string): Promise<string | null> {
   const config = await getWorkspaceConfig();
@@ -49,6 +50,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await assertWritable();
     const { id } = await params;
     const body = await request.json();
     const filePath = await getAuthorizedAgentPath(id);
@@ -69,9 +71,9 @@ export async function PUT(
   } catch (error) {
     console.error('Failed to update agent:', error);
     return NextResponse.json(
-      { error: 'Failed to update agent' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }
 
@@ -80,6 +82,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await assertWritable();
     const { id } = await params;
     const filePath = await getAuthorizedAgentPath(id);
     if (!filePath) return NextResponse.json({ error: 'Path is outside the configured workspace' }, { status: 403 });
@@ -92,8 +95,8 @@ export async function DELETE(
   } catch (error) {
     console.error('Failed to delete agent:', error);
     return NextResponse.json(
-      { error: 'Failed to delete agent' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }
