@@ -41,6 +41,7 @@ beforeAll(() => {
     AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
     AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
     AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+    AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
     AIHOME_USAGE_CACHE: cacheDb,
   });
 });
@@ -68,7 +69,7 @@ describe('usage API routes', () => {
     expect(data.stats.bySource.length).toBeGreaterThanOrEqual(1);
     expect(data.sourceStatus.length).toBe(6);
     const openclaw = data.sourceStatus.find((s: { id: string }) => s.id === 'openclaw');
-    expect(openclaw.status).toBe('not-supported');
+    expect(openclaw.status).toBe('unavailable');
   });
   it('events: invalid range falls back to default', async () => {
     const res = await eventsGet(makeRequest('http://localhost/api/usage/events?range=bogus'));

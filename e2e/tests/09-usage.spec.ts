@@ -47,7 +47,7 @@ test.describe('Usage Aggregator', () => {
     const data = await res.json();
     expect(data.totals.requests).toBeGreaterThanOrEqual(4);
     expect(data.stats.bySource.length).toBeGreaterThanOrEqual(4);
-    expect(data.sourceStatus.find((s: { id: string }) => s.id === 'openclaw').status).toBe('not-supported');
+    expect(data.sourceStatus.find((s: { id: string }) => s.id === 'openclaw').status).toBe('ready');
   });
 
   test('source filter narrows data', async ({ page }) => {

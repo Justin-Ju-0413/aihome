@@ -32,6 +32,8 @@ export default function globalSetup(): void {
   fs.rmSync(usageRoot, { recursive: true, force: true });
   fs.mkdirSync(path.join(usageRoot, 'claude-projects', 'proj'), { recursive: true });
   fs.mkdirSync(path.join(usageRoot, 'codex-sessions', '2026', '08'), { recursive: true });
+  // openclaw：空 agents 目录（模拟装了 OpenClaw 但无 agent 库，status 应为 ready 且 0 事件）
+  fs.mkdirSync(path.join(usageRoot, 'openclaw-agents'), { recursive: true });
 
   const nowMs = Date.now();
   const todayStart = new Date();

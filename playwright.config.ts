@@ -61,6 +61,7 @@ export default defineConfig({
         AIHOME_USAGE_CODEX_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'codex-sessions'),
         AIHOME_USAGE_OPENCODE_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'opencode.db'),
         AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
+        AIHOME_USAGE_OPENCLAW_DIR: path.join(e2eSyncRoot, '..', '.e2e-usage', 'openclaw-agents'),
         AIHOME_USAGE_CACHE: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cache.db'),
         AIHOME_WORKBENCH_DB: path.join(e2eSyncRoot, '..', '.e2e-workbench', 'workbench.db'),
         AIHOME_WORKBENCH_DEEPSEEK_BASE_URL: mockBalanceURL,
