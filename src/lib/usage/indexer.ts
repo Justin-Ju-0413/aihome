@@ -56,7 +56,9 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
         for (const e of events) {
           if (getPricingWithStatus(e.model, ccPricing).source === 'unknown') unknownModels.add(e.model);
         }
-        inserted += cache.insertEvents(events);
+        // openclaw rollup 行会被源反复改写（updated_at 变化触发重扫），dedupe 会
+        // 丢弃更新后的值 → 该源用全量替换语义；其余源保持增量 dedupe
+        inserted += cache.insertEvents(events, id === 'openclaw' ? { replaceSource: id } : undefined);
         cache.setCheckpoint(id, checkpoint);
         cache.setMeta(`last_index_${id}`, String(Date.now()));
         cache.setMeta(`last_index_${id}_error`, '');
@@ -112,6 +114,9 @@ export function triggerBackgroundIndex(): void {
   setImmediate(() => {
     try {
       runIndex();
+    } catch (error) {
+      // 后台失败不能成为 uncaught exception（否则进程崩溃）；记录后照常复位守卫
+      console.error('Background usage index failed:', error);
     } finally {
       backgroundRunning = false;
       if (backgroundQueued) {

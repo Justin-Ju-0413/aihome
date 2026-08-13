@@ -9,6 +9,7 @@ export const SOURCE_OPTIONS = [
   { id: 'codex', label: 'Codex' },
   { id: 'opencode', label: 'opencode' },
   { id: 'hermes', label: 'hermes' },
+  { id: 'openclaw', label: 'openclaw' },
 ];
 
 interface Props {
