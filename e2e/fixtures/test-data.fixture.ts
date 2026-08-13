@@ -3,9 +3,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
-const CONFIG_PATH = path.join(PROJECT_ROOT, '.aihome', 'config.json');
+// app 实际读取的配置目录：playwright webServer 设了 AIHOME_CONFIG_DIR（.e2e-sync/config），
+// 但该 env 只对 server 进程生效、测试 worker 看不到——fixture 直接管理同一个确定性路径，
+// 否则 paths 隔离（只扫 data/test-agents）失效，会扫到真实 data/sample-agents。
+// 手动起 server 复用时 .e2e-sync 不存在，回退 .aihome（app 此时读的就是它）。
+const E2E_CONFIG_DIR = path.join(PROJECT_ROOT, 'e2e', '.e2e-sync', 'config');
+const CONFIG_DIR = fs.existsSync(E2E_CONFIG_DIR) ? E2E_CONFIG_DIR : path.join(PROJECT_ROOT, '.aihome');
+const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const TEST_DATA_DIR = path.join(PROJECT_ROOT, 'data', 'test-agents');
-const BACKUP_CONFIG_PATH = path.join(PROJECT_ROOT, '.aihome', 'config.json.e2e-backup');
+const BACKUP_CONFIG_PATH = path.join(CONFIG_DIR, 'config.json.e2e-backup');
 
 // The app falls back to these defaults at runtime but never writes config.json
 // to disk, so the fixture materializes it when absent (e.g. on a fresh clone).
@@ -57,6 +63,7 @@ export class TestDataManager {
 export const test = base.extend<{ testData: TestDataManager }>({
   testData: async ({}, use) => {
     // SETUP: Ensure config exists on disk, back it up, and create test data directory
+    fs.mkdirSync(CONFIG_DIR, { recursive: true });
     if (!fs.existsSync(CONFIG_PATH)) {
       fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 2));
     }

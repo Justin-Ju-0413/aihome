@@ -15,6 +15,7 @@ interface EventsResponse {
   stats: { byDay: Array<{ day: string; cost: number; tokens: number; count: number }>; bySource: Array<{ source: string; cost: number; tokens: number; count: number }>; topModels: Array<{ model: string; cost: number; tokens: number; count: number }> };
   table: TableRow[];
   sourceStatus: Array<{ id: string; label: string; status: string; message?: string; eventCount?: number }>;
+  unknownPricingModels?: string[];
 }
 
 async function fetchEvents(source: string, range: UsageRange, dimension: string): Promise<EventsResponse> {
@@ -114,7 +115,7 @@ export default function UsagePage() {
           <div className="mb-6">
             <StatCharts stats={data.stats} />
           </div>
-          <UsageTable rows={data.table} />
+          <UsageTable rows={data.table} unknownPricingModels={data.unknownPricingModels ?? []} />
         </>
       ) : null}
     </main>

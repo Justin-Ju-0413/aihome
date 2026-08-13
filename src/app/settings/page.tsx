@@ -5,6 +5,7 @@ import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download } from 'lucide-reac
 import { useAppStore } from '@/stores/app-store';
 import { toast } from 'sonner';
 import { EndpointSettings } from '@/components/sync/EndpointSettings';
+import { WorkbenchBalanceSection } from '@/components/settings/WorkbenchBalanceSection';
 import type { WorkspaceConfig, AgentGroup } from '@/lib/types';
 
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
@@ -278,6 +279,9 @@ export default function SettingsPage() {
             </button>
           </div>
         </section>
+
+        {/* Workbench Balance */}
+        <WorkbenchBalanceSection />
 
         {/* About */}
         <section className="bg-white rounded-lg border border-card-border p-6">

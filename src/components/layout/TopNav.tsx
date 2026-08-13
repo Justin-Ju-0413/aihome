@@ -9,7 +9,10 @@ const navItems = [
   { href: '/graph', label: 'GRAPH', testId: 'nav-graph' },
   { href: '/agents', label: 'AGENTS', testId: 'nav-agents' },
   { href: '/usage', label: 'USAGE', testId: 'nav-usage' },
+  { href: '/workbench', label: 'WORKBENCH', testId: 'nav-workbench' },
   { href: '/sync', label: 'SYNC', testId: 'nav-sync' },
+  { href: '/skills', label: '注册表', testId: 'nav-skills' },
+  { href: '/console', label: 'CONSOLE', testId: 'nav-console' },
   { href: '/settings', label: 'SETTINGS', testId: 'nav-settings' },
 ];
 

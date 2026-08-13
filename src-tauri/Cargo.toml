@@ -1,0 +1,19 @@
+[package]
+name = "aihome"
+version = "0.3.0"
+description = "AIHome desktop"
+edition = "2021"
+
+[lib]
+name = "aihome_lib"
+crate-type = ["lib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+libc = "0.2"

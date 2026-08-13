@@ -46,4 +46,19 @@ describe('UsageCache', () => {
     cache.setMeta('last_scan', '123');
     expect(cache.getMeta('last_scan')).toBe('123');
   });
+  it('purges events older than retention window (local time boundaries)', () => {
+    // 本地时间构造：91 天前 = 过期；9 天前 = 保留
+    // （共享 cache 实例中还有更早用例插入的 1970 时间戳事件，同样会被清理，故用 >= 断言）
+    const now = Date.now();
+    const day = 24 * 3600_000;
+    cache.insertEvents([
+      ev('old-1', now - 91 * day),
+      ev('old-2', now - 100 * day),
+      ev('fresh-1', now - 9 * day),
+    ]);
+    expect(cache.purgeExpired(now)).toBeGreaterThanOrEqual(2);
+    expect(cache.countEvents('cc-switch')).toBe(1);
+    const rows = cache.queryEvents(['cc-switch'], now - 30 * day);
+    expect(rows.map((r) => r.rawId)).toEqual(['fresh-1']);
+  });
 });

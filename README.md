@@ -28,6 +28,7 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
 - **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths (out-of-workspace requests return HTTP 403).
 - **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
+- **Console** (`/console`) — the FileVision runtime merged in: file tree browser with live watching, Agent run console (start/stop Claude Code & Codex, step progress, logs, diffs & rollback), pipelines, one-click task dispatch with auto provider/model scheduling and fallback, Hermes sessions/skills/launch, dashboard stats and history timeline. Data lives in SQLite at `~/.aihome/filevision.db`; legacy `file-visualizer/data.db` is auto-migrated on first run.
 
 ## Tech stack / 技术栈
 
@@ -44,10 +45,10 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 
 ```bash
 npm ci
-npm run dev
+npm run dev -- -p 3011
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`.
+Open [http://localhost:3011](http://localhost:3011) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`. (Port 3011: 3000/3010 are commonly taken by other local projects; the Tauri shell uses 3010.)
 
 The sample workspace is a no-account, no-API-key demo. Use a throwaway clone when trying create, edit, or delete operations so your own workspace files are not affected.
 

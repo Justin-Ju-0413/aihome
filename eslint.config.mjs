@@ -13,6 +13,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     ".worktrees/**",
+    // Rust build artifacts are never linted (gitignored but present locally)
+    "src-tauri/target/**",
+    // Desktop standalone resources bundle (generated build output)
+    "standalone-resources/**",
   ]),
   // E2E tests are Playwright tests, not React components: the React Hooks
   // rules do not apply, and test code legitimately uses `any` for API
