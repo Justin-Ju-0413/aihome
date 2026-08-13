@@ -18,6 +18,19 @@
         "height": 800,
         "minWidth": 1024,
         "minHeight": 640
+      },
+      {
+        "label": "widget",
+        "title": "AIHome Widget",
+        "url": "http://127.0.0.1:3010/widget",
+        "width": 320,
+        "height": 480,
+        "resizable": false,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false
       }
     ],
     "security": {

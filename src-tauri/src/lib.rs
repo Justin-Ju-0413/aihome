@@ -1,9 +1,22 @@
 mod server;
 
 use std::time::Duration;
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
-use tauri::Manager;
+use tauri::{AppHandle, Manager};
+use tauri_plugin_autostart::ManagerExt;
+
+fn toggle_window(app: &AppHandle, label: &str) -> tauri::Result<()> {
+    if let Some(w) = app.get_webview_window(label) {
+        if w.is_visible()? {
+            w.hide()?;
+        } else {
+            w.show()?;
+            w.set_focus()?;
+        }
+    }
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -24,13 +37,43 @@ pub fn run() {
             server::wait_healthy(Duration::from_secs(30))
                 .map_err(|e| Box::<dyn std::error::Error>::from(e))?;
 
+            let show_main = MenuItem::with_id(app, "show_main", "显示主窗口", true, None::<&str>)?;
+            let toggle_widget = MenuItem::with_id(app, "toggle_widget", "悬浮窗", true, None::<&str>)?;
+            let auto_start = MenuItem::with_id(app, "autostart", "开机自启", true, None::<&str>)?;
+            let sep = PredefinedMenuItem::separator(app)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit])?;
+            let menu = Menu::with_items(app, &[&show_main, &toggle_widget, &auto_start, &sep, &quit])?;
+
+            let enabled = app.autolaunch().is_enabled().unwrap_or(false);
+            auto_start.set_text(if enabled { "开机自启 ✓" } else { "开机自启" })?;
+
+            // MenuEvent 只有 id 字段，菜单项文本更新需持有 MenuItem 克隆
+            let auto_start_item = auto_start.clone();
+
             let _tray = TrayIconBuilder::with_id("main-tray")
                 .menu(&menu)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => app.exit(0),
-                    _ => {}
+                .on_menu_event(move |app, event| {
+                    let _ = match event.id.as_ref() {
+                        "quit" => {
+                            app.exit(0);
+                            Ok(())
+                        }
+                        "show_main" => toggle_window(app, "main"),
+                        "toggle_widget" => toggle_window(app, "widget"),
+                        "autostart" => {
+                            let enabled = app.autolaunch().is_enabled().unwrap_or(false);
+                            let r = if enabled {
+                                app.autolaunch().disable()
+                            } else {
+                                app.autolaunch().enable()
+                            };
+                            if r.is_ok() {
+                                let _ = auto_start_item.set_text(if !enabled { "开机自启 ✓" } else { "开机自启" });
+                            }
+                            Ok(())
+                        }
+                        _ => Ok(()),
+                    };
                 })
                 .build(app)?;
             Ok(())
