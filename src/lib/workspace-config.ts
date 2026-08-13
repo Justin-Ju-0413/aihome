@@ -27,6 +27,16 @@ async function ensureConfigDir(): Promise<void> {
   }
 }
 
+/** config.json 是否已存在（首用引导判断：无配置 → 跳转 /onboarding） */
+export async function workspaceConfigExists(): Promise<boolean> {
+  try {
+    await access(CONFIG_FILE);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function getWorkspaceConfig(): Promise<WorkspaceConfig> {
   await ensureConfigDir();
   try {
