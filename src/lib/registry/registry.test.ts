@@ -54,6 +54,26 @@ describe('Registry', () => {
     expect(reg.getSyncState(id, 'claude-code')).toBeNull();
   });
 
+  it('disambiguates slug collisions instead of overwriting', () => {
+    const id1 = reg.addSkill({ name: 'My-Skill', description: 'one', source_dir: path.join(dir, 's1') });
+    const id2 = reg.addSkill({ name: 'MY SKILL', description: 'two', source_dir: path.join(dir, 's2') });
+    expect(id1).toBe('my-skill');
+    expect(id2).toBe('my-skill-2');
+    const skills = reg.listSkills();
+    expect(skills).toHaveLength(2);
+    expect(skills.find((s) => s.id === id2)?.name).toBe('MY SKILL');
+    expect(skills.find((s) => s.id === id1)?.description).toBe('one');
+  });
+
+  it('keeps reinstall idempotent for the same name', () => {
+    const id1 = reg.addSkill({ name: 'doc-writer', description: 'v1', source_dir: 'x' });
+    const id2 = reg.addSkill({ name: 'doc-writer', description: 'v2', source_dir: 'y' });
+    expect(id1).toBe('doc-writer');
+    expect(id2).toBe(id1);
+    expect(reg.listSkills()).toHaveLength(1);
+    expect(reg.listSkills()[0].description).toBe('v2');
+  });
+
   it('reopens existing db without migration errors', () => {
     reg.close();
     reg.open();

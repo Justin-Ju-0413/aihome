@@ -8,7 +8,7 @@ export function getRegistryDir(): string {
   return process.env.AIHOME_REGISTRY_DIR ?? path.join(os.homedir(), '.aihome');
 }
 
-function slugify(name: string): string {
+export function slugify(name: string): string {
   return name
     .trim()
     .toLowerCase()
@@ -65,10 +65,24 @@ export class Registry {
   }
 
   addSkill(skill: NewSkill): string {
-    const id = slugify(skill.name) || 'skill';
-    this.db!.prepare(
-      'INSERT OR REPLACE INTO skills (id, name, description, source_dir) VALUES (?, ?, ?, ?)'
-    ).run(id, skill.name, skill.description, skill.source_dir);
+    const base = slugify(skill.name) || 'skill';
+    // 幂等：同名重装 -> 更新记录并返回原 id，不重复创建
+    const sameName = this.db!.prepare('SELECT id FROM skills WHERE name = ?').get(skill.name) as { id: string } | undefined;
+    if (sameName) {
+      this.db!
+        .prepare('UPDATE skills SET name = ?, description = ?, source_dir = ? WHERE id = ?')
+        .run(skill.name, skill.description, skill.source_dir, sameName.id);
+      return sameName.id;
+    }
+    // 消歧：slug 被其他技能占用时追加 -2/-3...，绝不静默覆盖
+    let id = base;
+    let n = 2;
+    while (this.db!.prepare('SELECT id FROM skills WHERE id = ?').get(id)) {
+      id = base + '-' + n++;
+    }
+    this.db!
+      .prepare('INSERT INTO skills (id, name, description, source_dir) VALUES (?, ?, ?, ?)')
+      .run(id, skill.name, skill.description, skill.source_dir);
     return id;
   }
 

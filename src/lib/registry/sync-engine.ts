@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Registry } from './registry';
-import { getRegistryDir } from './registry';
+import { getRegistryDir, slugify } from './registry';
 import { isManagedLink } from './adapters';
 
 export function getSkillsDir(): string {
@@ -118,9 +118,19 @@ export function removeSkillFromPlatform(reg: Registry, skillId: string, platform
 }
 
 export function importSkill(reg: Registry, opts: { name: string; sourcePath: string }): { id: string } {
-  const dest = path.join(getSkillsDir(), opts.name.trim().toLowerCase().replace(/[^a-z0-9-_]+/g, '-').replace(/^-+|-+$/g, '') || 'skill');
+  const base = slugify(opts.name) || 'skill';
+  // 同名已存在 -> 幂等复用其 canonical 目录；slug 被其他技能/残留目录占用 -> 消歧后缀
+  const sameName = reg.listSkills().find((s) => s.name === opts.name);
+  let id = sameName ? sameName.id : base;
+  if (!sameName) {
+    let n = 2;
+    while (reg.listSkills().some((s) => s.id === id) || pathExists(path.join(getSkillsDir(), id))) {
+      id = base + '-' + n++;
+    }
+  }
+  const dest = path.join(getSkillsDir(), id);
   fs.mkdirSync(dest, { recursive: true });
   fs.cpSync(opts.sourcePath, dest, { recursive: true });
   reg.addSkill({ name: opts.name, description: '', source_dir: dest });
-  return { id: path.basename(dest) };
+  return { id };
 }

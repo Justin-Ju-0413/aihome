@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Registry } from './registry';
@@ -119,5 +119,38 @@ describe('importSkill', () => {
     // source_dir 已回写为规范副本
     const skill = reg.listSkills().find((s) => s.id === id)!;
     expect(skill.source_dir).toContain('skills');
+  });
+
+  it('disambiguates slug collision instead of overwriting an existing skill', () => {
+    // 先导入 My-Tool，再导入 MY TOOL —— slug 同为 my-tool，不得互相覆盖
+    const src1 = path.join(root, 'ext1');
+    mkdirSync(src1, { recursive: true });
+    writeFileSync(path.join(src1, 'SKILL.md'), '# My Tool\n\nbody one\n');
+    const { id: id1 } = importSkill(reg, { name: 'My-Tool', sourcePath: src1 });
+
+    const src2 = path.join(root, 'ext2');
+    mkdirSync(src2, { recursive: true });
+    writeFileSync(path.join(src2, 'SKILL.md'), '# MY TOOL\n\nbody two\n');
+    const { id: id2 } = importSkill(reg, { name: 'MY TOOL', sourcePath: src2 });
+
+    expect(id1).toBe('my-tool');
+    expect(id2).toBe('my-tool-2');
+    expect(reg.listSkills()).toHaveLength(2);
+    // 两个技能的数据都在，未被覆盖
+    const s1 = reg.listSkills().find((s) => s.id === id1)!;
+    const s2 = reg.listSkills().find((s) => s.id === id2)!;
+    expect(readFileSync(path.join(s1.source_dir, 'SKILL.md'), 'utf-8')).toContain('body one');
+    expect(readFileSync(path.join(s2.source_dir, 'SKILL.md'), 'utf-8')).toContain('body two');
+  });
+
+  it('reimporting the same name is idempotent', () => {
+    const src = path.join(root, 'ext3');
+    mkdirSync(src, { recursive: true });
+    writeFileSync(path.join(src, 'SKILL.md'), '# Doc Writer\n\nbody\n');
+    const { id: id1 } = importSkill(reg, { name: 'doc-writer', sourcePath: src });
+    const { id: id2 } = importSkill(reg, { name: 'doc-writer', sourcePath: src });
+    expect(id1).toBe('doc-writer');
+    expect(id2).toBe(id1);
+    expect(reg.listSkills()).toHaveLength(1);
   });
 });
