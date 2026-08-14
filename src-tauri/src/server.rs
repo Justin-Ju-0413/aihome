@@ -22,6 +22,12 @@ pub fn log(msg: &str) {
 }
 
 pub fn port_in_use() -> bool {
+    // 仅 TCP 可连不够：可能是别人的服务占着 3010。先校验是 AIHome 的 server
+    // （GET /api/health 成功）；TCP 可连但不是 AIHome 也算占用（拒绝启动，
+    // 避免双实例争抢或白屏）。
+    if health_check().is_ok() {
+        return true;
+    }
     TcpStream::connect(("127.0.0.1", PORT)).is_ok()
 }
 
