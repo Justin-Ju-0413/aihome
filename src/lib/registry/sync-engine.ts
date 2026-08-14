@@ -136,8 +136,9 @@ export function importSkill(reg: Registry, opts: { name: string; sourcePath: str
   }
   const dest = path.join(getSkillsDir(), id);
   fs.mkdirSync(dest, { recursive: true });
-  // 不跟随源内符号链接（followSymlinks: false）：防止把注册表外的内容拖进 canonical 目录
-  fs.cpSync(src, dest, { recursive: true, followSymlinks: false });
+  // cpSync 默认 dereference:false：源内符号链接作为链接原样复制，不把链接目标
+  // 的内容拖进 canonical 目录（防止注册表外文件被解引用带入）
+  fs.cpSync(src, dest, { recursive: true });
   reg.addSkill({ name: opts.name, description: '', source_dir: dest });
   return { id };
 }

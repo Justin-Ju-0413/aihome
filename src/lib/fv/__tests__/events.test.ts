@@ -46,4 +46,19 @@ describe('fv events', () => {
     expect(events.length).toBeLessThan(2500);
     expect(events[0].seq).toBeGreaterThan(500);
   });
+
+  it('signals gap when cursor falls behind the trimmed buffer', () => {
+    for (let i = 0; i < 2500; i++) emitEvent({ type: `g${i}` });
+    // 旧 cursor（0）对应的早期事件已被裁剪丢弃 → 必须返回 gap 信号
+    const { events, cursor, gap } = listEvents(0);
+    expect(events.length).toBeGreaterThan(0);
+    expect(gap).toBe(true);
+    // 从最新 cursor 继续拉取：无 gap
+    const next = listEvents(cursor);
+    expect(next.gap).toBeUndefined();
+    // 恰好从缓冲最老事件的前一条继续：无 gap（未丢失）
+    const oldest = events[0].seq;
+    const edge = listEvents(oldest - 1);
+    expect(edge.gap).toBeUndefined();
+  });
 });

@@ -36,8 +36,14 @@ export function onEvent(fn: (event: FvEvent) => void): () => void {
   return () => subscribers.delete(fn);
 }
 
-/** 返回 seq > cursor 的事件，供前端轮询 */
-export function listEvents(cursor: number): { events: FvEvent[]; cursor: number } {
+/**
+ * 返回 seq > cursor 的事件，供前端轮询。
+ * 当 cursor 落后于缓冲已裁剪的最早事件时返回 gap:true——调用方应重置状态
+ * （如全量重拉），否则中间事件被静默丢弃、前端无从感知。
+ */
+export function listEvents(cursor: number): { events: FvEvent[]; cursor: number; gap?: boolean } {
+  const oldestSeq = buffer.length > 0 ? buffer[0].seq : 0;
+  const gap = buffer.length > 0 && cursor < oldestSeq - 1;
   const events = buffer.filter((e) => e.seq > cursor);
-  return { events, cursor: events.length > 0 ? events[events.length - 1].seq : cursor };
+  return { events, cursor: events.length > 0 ? events[events.length - 1].seq : cursor, gap: gap || undefined };
 }
