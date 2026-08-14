@@ -9,7 +9,7 @@ export default function PlatformCard({ site, onEdit, onConfigKey }: {
   const refreshBalance = useWorkbenchStore((s) => s.refreshBalance);
   const initial = site.name.slice(0, 1).toUpperCase();
   return (
-    <div data-testid={`site-card-${site.id}`} className="flex flex-col gap-2 rounded-xl border border-card-border bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div data-testid={`site-card-${site.id}`} className="flex flex-col gap-2 glass-panel rounded-xl border border-card-border p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           {site.iconUrl

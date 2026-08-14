@@ -32,9 +32,9 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
     : 'bg-primary/10 text-primary';
 
   return (
-    <div data-testid="card-detail-modal" className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div data-testid="card-detail-modal" className="fixed inset-0 scrim flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div 
-        className="bg-white rounded-xl border border-card-border shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+        className="glass-panel rounded-xl border border-card-border shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

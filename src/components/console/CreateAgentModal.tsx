@@ -83,11 +83,11 @@ export function CreateAgentModal() {
     }
   };
 
-  const inputCls = 'w-full px-3 py-2 border border-card-border rounded-lg bg-white/80 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent';
+  const inputCls = 'w-full px-3 py-2 border border-card-border rounded-lg glass-input text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent';
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onClick={() => setCreateModalOpen(false)}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[88vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 scrim z-50 flex items-center justify-center p-6" onClick={() => setCreateModalOpen(false)}>
+      <div className="glass-modal rounded-xl shadow-xl w-full max-w-2xl max-h-[88vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-divider">
           <h3 className="font-heading font-semibold text-heading">创建 Agent</h3>
           <button onClick={() => setCreateModalOpen(false)} className="p-1 hover:bg-primary/10 rounded text-muted">

@@ -61,7 +61,7 @@ export function HistoryTab() {
         {groups.map((g) => (
           <div key={g.day}>
             <h4 className="text-xs font-medium text-muted mb-2">{g.day}</h4>
-            <div className="bg-white rounded-lg border border-card-border divide-y divide-divider">
+            <div className="glass-panel rounded-lg border border-card-border divide-y divide-divider">
               {g.items.map((item) => {
                 const meta = TYPE_META[String(item.type)] || { label: String(item.type), color: 'bg-muted/20 text-muted' };
                 return (

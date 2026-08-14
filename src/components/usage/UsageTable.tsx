@@ -22,7 +22,7 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
 
   if (rows.length === 0) {
     return (
-      <section data-testid="usage-table" className="rounded-lg border border-divider bg-white/80 p-8 text-center">
+      <section data-testid="usage-table" className="glass-panel rounded-lg border border-divider p-8 text-center">
         <p className="text-sm text-secondary">
           No usage data yet — click Rescan after using your AI tools.
         </p>
@@ -31,7 +31,7 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
   }
 
   return (
-    <section data-testid="usage-table" className="rounded-lg border border-divider bg-white/80 overflow-hidden">
+    <section data-testid="usage-table" className="glass-panel rounded-lg border border-divider overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs tracking-widest text-secondary border-b border-divider">

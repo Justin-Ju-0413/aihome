@@ -20,7 +20,7 @@ export function TopNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-divider px-6 py-3">
+    <nav className="sticky top-0 z-40 glass-nav border-b border-divider px-6 py-3">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         {/* Logo - Left */}
         <Link href="/" className="flex items-center gap-2">

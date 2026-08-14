@@ -41,7 +41,7 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        'bg-white rounded-lg border border-card-border p-4 cursor-grab active:cursor-grabbing',
+        'glass-panel rounded-lg border border-card-border p-4 cursor-grab active:cursor-grabbing',
         'hover:shadow-md transition-shadow',
         isDragging && 'opacity-50 shadow-lg'
       )}

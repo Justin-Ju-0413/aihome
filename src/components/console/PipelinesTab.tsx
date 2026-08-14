@@ -65,7 +65,7 @@ function PipelineCard({ pipeline }: { pipeline: FvPipeline }) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-card-border p-4">
+    <div className="glass-panel rounded-lg border border-card-border p-4">
       <div className="flex items-center gap-2 mb-2">
         <h3 className="font-heading font-semibold text-heading">{pipeline.name}</h3>
         <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', meta.cls)}>{meta.label}</span>
@@ -120,8 +120,8 @@ function CreatePipelineModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 scrim z-50 flex items-center justify-center p-6" onClick={onClose}>
+      <div className="glass-modal rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-divider">
           <h3 className="font-heading font-semibold text-heading">新建流水线</h3>
           <button onClick={onClose} className="p-1 hover:bg-primary/10 rounded text-muted"><X className="w-4 h-4" /></button>
@@ -131,23 +131,23 @@ function CreatePipelineModal({ onClose }: { onClose: () => void }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="流水线名称"
-            className="w-full px-3 py-2 border border-card-border rounded-lg bg-white/80 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-3 py-2 border border-card-border rounded-lg glass-input text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="描述（可选）"
-            className="w-full px-3 py-2 border border-card-border rounded-lg bg-white/80 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full px-3 py-2 border border-card-border rounded-lg glass-input text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <div className="space-y-2">
             {agents.map((a, i) => (
-              <div key={i} className="border border-card-border rounded-lg p-3 space-y-2 bg-white/60">
+              <div key={i} className="border border-card-border rounded-lg p-3 space-y-2 glass-panel">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted shrink-0">#{i + 1}</span>
                   <select
                     value={a.provider}
                     onChange={(e) => setAgents(agents.map((x, j) => (j === i ? { ...x, provider: e.target.value } : x)))}
-                    className="px-2 py-1 border border-card-border rounded text-xs text-text-body bg-white"
+                    className="px-2 py-1 border border-card-border rounded text-xs text-text-body glass-input"
                   >
                     <option value="claude">Claude</option>
                     <option value="codex">Codex</option>

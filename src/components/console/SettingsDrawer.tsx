@@ -58,7 +58,7 @@ function SettingControl({ setting }: { setting: FvSetting }) {
           <select
             value={setting.value}
             onChange={(e) => void save(e.target.value)}
-            className="px-2 py-1 border border-card-border rounded text-xs text-text-body bg-white"
+            className="px-2 py-1 border border-card-border rounded text-xs text-text-body glass-input"
           >
             {setting.options?.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
@@ -72,7 +72,7 @@ function SettingControl({ setting }: { setting: FvSetting }) {
             onKeyDown={(e) => {
               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
             }}
-            className="w-48 px-2 py-1 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-48 px-2 py-1 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent"
           />
         )}
         {setting.type === 'range' && (
@@ -139,9 +139,9 @@ export function SettingsDrawer() {
   const catSettings = settings.filter((s) => s.category === activeCat);
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setSettingsOpen(false)}>
+    <div className="fixed inset-0 scrim z-50" onClick={() => setSettingsOpen(false)}>
       <div
-        className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl flex flex-col"
+        className="absolute right-0 top-0 h-full w-full max-w-md glass-modal shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
         data-testid="settings-drawer"
       >

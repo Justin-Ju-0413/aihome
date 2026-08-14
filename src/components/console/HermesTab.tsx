@@ -29,7 +29,7 @@ function RunOutputPanel({ runId }: { runId: string }) {
   }, [runId]);
 
   return (
-    <div className="mt-3 border border-card-border rounded-lg overflow-hidden bg-white/70">
+    <div className="mt-3 border border-card-border rounded-lg overflow-hidden glass-panel">
       <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border-b border-card-border">
         <span className="text-xs font-medium text-heading">实时输出 · {runId.slice(0, 8)}</span>
         {done ? <span className="text-[10px] text-muted">已结束</span> : <Loader2 className="w-3 h-3 text-primary animate-spin" />}
@@ -125,7 +125,7 @@ export function HermesTab() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {statCards.map((c) => (
-          <div key={c.label} className="bg-white rounded-lg border border-card-border p-3">
+          <div key={c.label} className="glass-panel rounded-lg border border-card-border p-3">
             <p className="text-[10px] text-muted">{c.label}</p>
             <p className="font-heading font-semibold text-heading text-sm mt-1">{c.value}</p>
           </div>
@@ -141,7 +141,7 @@ export function HermesTab() {
               <button
                 key={String(s.id)}
                 onClick={() => void fvApi.hermesSessionDetail(String(s.id)).then(setDetail).catch(() => {})}
-                className="w-full text-left bg-white/70 border border-card-border rounded px-2.5 py-1.5 hover:bg-primary/5"
+                className="w-full text-left glass-panel border border-card-border rounded px-2.5 py-1.5 hover:bg-primary/5"
               >
                 <div className="flex items-center gap-2 text-xs text-text-body">
                   <span className="truncate">{String(s.title || s.model || s.id)}</span>
@@ -161,7 +161,7 @@ export function HermesTab() {
           <h4 className="text-xs font-medium text-muted mb-2">技能库</h4>
           <div className="grid grid-cols-2 gap-1.5 max-h-80 overflow-auto">
             {skills.slice(0, 24).map((sk) => (
-              <div key={String(sk.file)} className="bg-white/70 border border-card-border rounded p-2" title={String(sk.description || '')}>
+              <div key={String(sk.file)} className="glass-panel border border-card-border rounded p-2" title={String(sk.description || '')}>
                 <p className="text-xs text-heading truncate">{String(sk.name)}</p>
                 <p className="text-[10px] text-muted truncate">{String(sk.category)} · {String(sk.description || '').slice(0, 20)}</p>
               </div>
@@ -172,18 +172,18 @@ export function HermesTab() {
       </div>
 
       {/* 启动表单 */}
-      <div className="border border-card-border rounded-lg bg-white/70 p-4 space-y-3">
+      <div className="border border-card-border rounded-lg glass-panel p-4 space-y-3">
         <h4 className="text-xs font-medium text-muted">启动 Hermes 会话</h4>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={3}
           placeholder="指令..."
-          className="w-full px-3 py-2 border border-card-border rounded-lg bg-white/80 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-3 py-2 border border-card-border rounded-lg glass-input text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
         />
         <div className="flex gap-2">
-          <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="模型（可选）" className="flex-1 px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent" />
-          <input value={skill} onChange={(e) => setSkill(e.target.value)} placeholder="技能（可选）" className="flex-1 px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent" />
+          <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="模型（可选）" className="flex-1 px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent" />
+          <input value={skill} onChange={(e) => setSkill(e.target.value)} placeholder="技能（可选）" className="flex-1 px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent" />
           <button
             onClick={() => void launch()}
             disabled={launching}
@@ -202,8 +202,8 @@ export function HermesTab() {
 
       {/* 会话详情 */}
       {detail && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onClick={() => setDetail(null)}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 scrim z-50 flex items-center justify-center p-6" onClick={() => setDetail(null)}>
+          <div className="glass-modal rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-divider">
               <h3 className="font-heading font-semibold text-heading text-sm">会话详情</h3>
               <button onClick={() => setDetail(null)} className="p-1 hover:bg-primary/10 rounded text-muted"><X className="w-4 h-4" /></button>
@@ -215,7 +215,7 @@ export function HermesTab() {
               </div>
               <div className="space-y-2">
                 {(detail.messages as Array<Record<string, unknown>> | undefined)?.slice(-20).map((m) => (
-                  <div key={String(m.id)} className="border border-card-border rounded p-2 bg-white/60">
+                  <div key={String(m.id)} className="border border-card-border rounded p-2 glass-panel">
                     <div className="text-[10px] text-muted mb-1">{String(m.role)} {m.tool_name ? `· ${String(m.tool_name)}` : ''} · {String(m.time || '')}</div>
                     <div className="text-xs text-text-body whitespace-pre-wrap max-h-40 overflow-auto">{String(m.content || '')}</div>
                   </div>

@@ -35,7 +35,7 @@ export function KanbanColumn({ group, agents, onAddAgent, onSelectAgent }: Kanba
       {/* Cards Container */}
       <div
         ref={setNodeRef}
-        className={`flex-1 bg-white/50 backdrop-blur-sm rounded-lg p-3 space-y-3 min-h-[200px] transition-colors border border-card-border ${
+        className={`flex-1 glass-panel rounded-lg p-3 space-y-3 min-h-[200px] transition-colors border border-card-border ${
           isOver ? 'bg-primary/5 ring-2 ring-accent/30' : ''
         }`}
       >

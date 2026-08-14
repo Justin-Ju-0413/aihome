@@ -61,7 +61,7 @@ function StepsFlow({ steps }: { steps: FvAgent['steps'] }) {
               'text-[10px] px-1.5 py-0.5 rounded border',
               s.status === 'done' && 'border-emerald-300 bg-emerald-50 text-emerald-700',
               s.status === 'active' && 'border-primary bg-primary/10 text-primary',
-              s.status === 'pending' && 'border-card-border bg-white text-muted'
+              s.status === 'pending' && 'border-card-border glass-input text-muted'
             )}
           >
             {s.status === 'done' ? '✓' : s.status === 'active' ? '●' : '○'} {s.name}
@@ -102,8 +102,8 @@ function DiffModal({ agentId, onClose }: { agentId: string; onClose: () => void 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 scrim z-50 flex items-center justify-center p-6" onClick={onClose}>
+      <div className="glass-modal rounded-xl shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-divider">
           <h3 className="font-heading font-semibold text-heading">变更 Diff</h3>
           <button onClick={onClose} className="p-1 hover:bg-primary/10 rounded text-muted"><X className="w-4 h-4" /></button>
@@ -167,7 +167,7 @@ function AgentCard({ agent }: { agent: FvAgent }) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-card-border p-4 flex flex-col gap-3" data-testid="agent-card">
+    <div className="glass-panel rounded-lg border border-card-border p-4 flex flex-col gap-3" data-testid="agent-card">
       <div className="flex items-start gap-3">
         <span className="text-2xl">{PROVIDER_ICON[agent.provider] || '🤖'}</span>
         <div className="min-w-0 flex-1">
@@ -198,7 +198,7 @@ function AgentCard({ agent }: { agent: FvAgent }) {
       {(Object.values(stats).some((v) => v > 0)) && (
         <div className="flex gap-2 flex-wrap">
           {Object.entries(stats).filter(([, v]) => v > 0).map(([k, v]) => (
-            <span key={k} className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-card-border text-muted">
+            <span key={k} className="text-[10px] px-1.5 py-0.5 rounded glass-input border border-card-border text-muted">
               {OP_ICONS[k]?.icon} {OP_ICONS[k]?.label} {v}
             </span>
           ))}

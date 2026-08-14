@@ -38,9 +38,9 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl"
+        className="w-full max-w-md glass-modal rounded-xl p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         data-testid="key-dialog"
       >

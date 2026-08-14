@@ -25,7 +25,7 @@ export function DashboardTab() {
     <div className="p-6" data-testid="dashboard-tab">
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
         {cards.map((c) => (
-          <div key={c.label} className="bg-white rounded-lg border border-card-border p-4 flex items-center gap-3">
+          <div key={c.label} className="glass-panel rounded-lg border border-card-border p-4 flex items-center gap-3">
             <span className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <c.icon className="w-5 h-5" />
             </span>
@@ -38,7 +38,7 @@ export function DashboardTab() {
       </div>
 
       <h3 className="font-heading font-semibold text-heading mt-8 mb-3">最近 Agent</h3>
-      <div className="bg-white rounded-lg border border-card-border divide-y divide-divider">
+      <div className="glass-panel rounded-lg border border-card-border divide-y divide-divider">
         {agents.slice(0, 5).map((a) => (
           <div key={a.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
             <span className={a.status === 'running' ? 'text-emerald-500' : a.status === 'completed' ? 'text-primary' : a.status === 'error' ? 'text-rose-500' : 'text-muted'}>

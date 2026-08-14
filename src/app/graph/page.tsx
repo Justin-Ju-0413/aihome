@@ -22,7 +22,7 @@ export default function GraphPage() {
 
         {/* Info & Legend */}
         <div className="flex items-center justify-center gap-4 mt-6 flex-wrap">
-          <div className="flex items-center gap-2 text-xs text-muted bg-white/60 border border-card-border px-3 py-2 rounded-lg">
+          <div className="flex items-center gap-2 text-xs text-muted glass-panel border border-card-border px-3 py-2 rounded-lg">
             <Info className="w-4 h-4" />
             <span>Drag between nodes to create connections</span>
           </div>

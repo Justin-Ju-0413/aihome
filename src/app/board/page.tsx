@@ -76,7 +76,7 @@ export default function BoardPage() {
               data-testid="board-search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
+              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
             />
           </div>
 
@@ -85,7 +85,7 @@ export default function BoardPage() {
             data-testid="board-filter"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as 'all' | 'agent' | 'skill')}
-            className="px-3 py-2 border border-card-border rounded-lg bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
+            className="px-3 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
           >
             <option value="all">All Types</option>
             <option value="agent">Agents</option>
@@ -190,8 +190,8 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl border border-card-border shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 scrim flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="glass-panel rounded-xl border border-card-border shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
         <div className="p-6">
           <h2 className="font-heading text-xl font-bold text-heading mb-4">Create New Agent</h2>
 
@@ -229,7 +229,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g., code-assistant"
-                className="w-full px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
+                className="w-full px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
               />
             </div>
 
@@ -241,7 +241,7 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="What does this agent do?"
                 rows={3}
-                className="w-full px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
+                className="w-full px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
               />
             </div>
           </div>
