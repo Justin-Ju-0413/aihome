@@ -110,5 +110,5 @@ export const fvApi = {
   runOutput: (runId: string, cursor: number) =>
     fvFetch<{ lines: string[]; cursor: number }>(`/api/fv/runs/${runId}/output?cursor=${cursor}`),
 
-  events: (cursor: number) => fvFetch<{ events: FvEvent[]; cursor: number }>(`/api/fv/events?cursor=${cursor}`),
+  events: (cursor: number) => fvFetch<{ events: FvEvent[]; cursor: number; gap?: boolean }>(`/api/fv/events?cursor=${cursor}`),
 };

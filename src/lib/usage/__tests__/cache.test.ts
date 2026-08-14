@@ -42,6 +42,18 @@ describe('UsageCache', () => {
   it('filters by source', () => {
     expect(cache.countEvents('claude')).toBe(0);
   });
+  it('replaceSource mode replaces prior events for that source (openclaw rewrite)', () => {
+    const before = cache.countEvents('cc-switch');
+    cache.insertEvents([ev('x', 1000), ev('y', 2000)]);
+    expect(cache.countEvents('cc-switch')).toBe(before + 2);
+    // 同 key 重扫且值变化：ON CONFLICT DO NOTHING 会丢弃更新，replace 必须覆盖
+    const updated = { ...ev('x', 1000), inputTokens: 999 };
+    cache.insertEvents([updated], { replaceSource: 'cc-switch' });
+    // 全量替换后只留下本次扫描的事件（x 更新为新值，y 被删除）
+    expect(cache.countEvents('cc-switch')).toBe(1);
+    const rows = cache.queryEvents(['cc-switch'], 0).filter((r) => r.rawId === 'x');
+    expect(rows[0].inputTokens).toBe(999);
+  });
   it('meta round-trip', () => {
     cache.setMeta('last_scan', '123');
     expect(cache.getMeta('last_scan')).toBe('123');

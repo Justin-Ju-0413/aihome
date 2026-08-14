@@ -11,7 +11,8 @@ test.describe('Registry API flow', () => {
   });
 
   test('import → sync → list → delete cascade', async ({ request }) => {
-    const sample = path.join(__dirname, '..', '..', 'data', 'sample-agents', 'code-assistant');
+    // doc-writer 是含 SKILL.md 的技能目录（importSkill 要求技能源）
+    const sample = path.join(__dirname, '..', '..', 'data', 'sample-agents', 'doc-writer');
     const tmp = path.join(os.tmpdir(), 'aihome-e2e-import');
     fs.rmSync(tmp, { recursive: true, force: true });
     fs.cpSync(sample, tmp, { recursive: true });

@@ -4,12 +4,11 @@ import { runDoctor } from '@/lib/registry/doctor';
 import { assertWritable } from '@/lib/readonly';
 
 export async function POST() {
+  const reg = new Registry();
   try {
     await assertWritable();
-    const reg = new Registry();
     reg.open();
     const issues = runDoctor(reg, { fix: true });
-    reg.close();
     return NextResponse.json({ issues });
   } catch (error) {
     console.error('Registry doctor fix error:', error);
@@ -17,5 +16,7 @@ export async function POST() {
         { error: error instanceof Error ? error.message : 'Request failed' },
         { status: (error as { status?: number }).status ?? 500 }
       );
+  } finally {
+    reg.close();
   }
 }

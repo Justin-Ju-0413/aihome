@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync, readFileSync, lstatSync, readlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Registry } from './registry';
@@ -119,5 +119,68 @@ describe('importSkill', () => {
     // source_dir 已回写为规范副本
     const skill = reg.listSkills().find((s) => s.id === id)!;
     expect(skill.source_dir).toContain('skills');
+  });
+
+  it('disambiguates slug collision instead of overwriting an existing skill', () => {
+    // 先导入 My-Tool，再导入 MY TOOL —— slug 同为 my-tool，不得互相覆盖
+    const src1 = path.join(root, 'ext1');
+    mkdirSync(src1, { recursive: true });
+    writeFileSync(path.join(src1, 'SKILL.md'), '# My Tool\n\nbody one\n');
+    const { id: id1 } = importSkill(reg, { name: 'My-Tool', sourcePath: src1 });
+
+    const src2 = path.join(root, 'ext2');
+    mkdirSync(src2, { recursive: true });
+    writeFileSync(path.join(src2, 'SKILL.md'), '# MY TOOL\n\nbody two\n');
+    const { id: id2 } = importSkill(reg, { name: 'MY TOOL', sourcePath: src2 });
+
+    expect(id1).toBe('my-tool');
+    expect(id2).toBe('my-tool-2');
+    expect(reg.listSkills()).toHaveLength(2);
+    // 两个技能的数据都在，未被覆盖
+    const s1 = reg.listSkills().find((s) => s.id === id1)!;
+    const s2 = reg.listSkills().find((s) => s.id === id2)!;
+    expect(readFileSync(path.join(s1.source_dir, 'SKILL.md'), 'utf-8')).toContain('body one');
+    expect(readFileSync(path.join(s2.source_dir, 'SKILL.md'), 'utf-8')).toContain('body two');
+  });
+
+  it('reimporting the same name is idempotent', () => {
+    const src = path.join(root, 'ext3');
+    mkdirSync(src, { recursive: true });
+    writeFileSync(path.join(src, 'SKILL.md'), '# Doc Writer\n\nbody\n');
+    const { id: id1 } = importSkill(reg, { name: 'doc-writer', sourcePath: src });
+    const { id: id2 } = importSkill(reg, { name: 'doc-writer', sourcePath: src });
+    expect(id1).toBe('doc-writer');
+    expect(id2).toBe(id1);
+    expect(reg.listSkills()).toHaveLength(1);
+  });
+
+  it('rejects a missing source path', () => {
+    expect(() => importSkill(reg, { name: 'ghost', sourcePath: path.join(root, 'no-such-dir') })).toThrow();
+    expect(reg.listSkills()).toHaveLength(0);
+  });
+
+  it('rejects a source without SKILL.md (not a skill directory)', () => {
+    const src = path.join(root, 'not-a-skill');
+    mkdirSync(src, { recursive: true });
+    writeFileSync(path.join(src, 'random.txt'), 'hello');
+    expect(() => importSkill(reg, { name: 'not-a-skill', sourcePath: src })).toThrow();
+    expect(reg.listSkills()).toHaveLength(0);
+  });
+
+  it('does not follow symlinks inside the source (no sandbox bleed)', () => {
+    // 源内的符号链接应作为链接复制，而不是把链接目标内容拖进注册表
+    const outside = path.join(root, 'outside-secret');
+    mkdirSync(outside, { recursive: true });
+    writeFileSync(path.join(outside, 'secret.txt'), 's3cr3t');
+    const src = path.join(root, 'linked-skill');
+    mkdirSync(src, { recursive: true });
+    writeFileSync(path.join(src, 'SKILL.md'), '# Linked Skill\n\nbody\n');
+    symlinkSync(outside, path.join(src, 'leak-link'));
+
+    const { id } = importSkill(reg, { name: 'linked-skill', sourcePath: src });
+    const dest = path.join(getSkillsDir(), id);
+    // 链接以链接形式存在于注册表，且仍指向源外目录（复制未解引用/改写链接）
+    expect(lstatSync(path.join(dest, 'leak-link')).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(path.join(dest, 'leak-link')).endsWith('outside-secret')).toBe(true);
   });
 });

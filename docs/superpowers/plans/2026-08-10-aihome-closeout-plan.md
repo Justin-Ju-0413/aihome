@@ -21,7 +21,7 @@
 
 **Files:** 无（GitHub 远端操作 + skillhub 本地 README）
 
-- [ ] **Step 1: 向用户确认归档**
+- [x] **Step 1: 向用户确认归档**（2026-08-14 用户确认：两个仓库均归档）
 
 确认项：
 1. GitHub `Justin-Ju-0413/skillhub` → Archive（只读冻结）
@@ -29,7 +29,7 @@
 
 **等用户确认后才操作。**（gh CLI：`gh repo archive Justin-Ju-0413/skillhub`）
 
-- [ ] **Step 2: skillhub 本地 README 加归档标注**
+- [x] **Step 2: skillhub 本地 README 加归档标注**
 
 在 `~/Documents/05-项目代码/skillhub/README.md` 顶部加：
 ```markdown
@@ -41,7 +41,7 @@ ccswitch-usage-widget 的 `~/Documents/05-项目代码/ccswitch-usage-widget/REA
 > **归档**：用量可视化已并入 [AIHome](https://github.com/Justin-Ju-0413/aihome) usage dashboard；桌面悬浮窗由 AIHome 桌面版实现。本仓库只读保留。
 ```
 
-- [ ] **Step 3: 提交（两个独立仓库各自提交，不 push 需确认）**
+- [x] **Step 3: 提交（两个独立仓库各自提交；GitHub 已 archive 冻结，标注 commit 仅存本地，无法 push）**
 
 ```bash
 git -C ~/Documents/05-项目代码/skillhub add README.md
@@ -61,13 +61,13 @@ git -C ~/Documents/05-项目代码/ccswitch-usage-widget commit -m "docs: archiv
 - Modify: `CHANGELOG.md`
 - Modify: `README.md`（桌面版章节）
 
-- [ ] **Step 1: 版本号同步**
+- [x] **Step 1: 版本号同步**（perfection 0.1 已做）
 
 `package.json` `"version": "0.2.0"` → `"0.3.0"`
 `src-tauri/Cargo.toml` `version = "0.3.0"`（Task 已设）
 `src-tauri/tauri.conf.json` `"version": "0.3.0"`（Task 已设）
 
-- [ ] **Step 2: CHANGELOG 加条目**
+- [x] **Step 2: CHANGELOG 加条目**（perfection 0.1 已做）
 
 CHANGELOG.md 顶部加：
 ```markdown
@@ -83,7 +83,7 @@ CHANGELOG.md 顶部加：
 - 同步体系：git 四端同步（既有）与 symlink 注册表（新增）并存
 ```
 
-- [ ] **Step 3: README 加桌面版章节**
+- [x] **Step 3: README 加桌面版章节**
 
 在 Features 之后加：
 ```markdown
@@ -99,13 +99,13 @@ bash scripts/smoke-desktop.sh  # 打包 .dmg + 冒烟验证
 仅绑定 `127.0.0.1:3010`。
 ```
 
-- [ ] **Step 4: 截图**
+- [x] **Step 4: 截图**（perfection 4.3 已做）
 
 打开 `http://127.0.0.1:3100/skills` 与 `http://127.0.0.1:3100/widget`，截图保存：
 `docs/screenshots/registry.png`、`docs/screenshots/widget.png`
 （人工目检截图内容正确后提交）
 
-- [ ] **Step 5: 验证 + Commit**
+- [x] **Step 5: 验证 + Commit**（`npm test` / tsc / lint 全绿，closeout commit 见 git log）
 
 Run: `npm run lint`、`npx tsc --noEmit`、`npm test`、`PORT=3100 npx playwright test`
 Expected: 全绿
@@ -123,7 +123,7 @@ git commit -m "chore: v0.3.0 desktop release (docs + version bump)"
 - Modify: `docs/superpowers/specs/2026-08-10-aihome-desktop-design.md`（标注已落地）
 - Delete（确认后）: `src/app/api/usage/events 2/`、`src/app/api/usage/rescan 2/`、`src/app/api/usage/sources 2/`、`src/lib/usage/__tests__ 2/`、`src/lib/usage/sources 2/`（Aug 7 复制残留的空目录，git 不跟踪）
 
-- [ ] **Step 1: 确认删除空目录**
+- [x] **Step 1: 确认删除空目录**（复查已不存在）
 
 向用户确认后执行：
 ```bash
@@ -131,28 +131,28 @@ rmdir "src/app/api/usage/events 2" "src/app/api/usage/rescan 2" "src/app/api/usa
 ```
 （rmdir 只删空目录；若非空则列出内容再决定，不强制删）
 
-- [ ] **Step 2: spec 标注落地**
+- [x] **Step 2: spec 标注落地**
 
 在 `docs/superpowers/specs/2026-08-10-aihome-desktop-design.md` 顶部加：
 ```markdown
 > **状态：已实现（2026-08-10）**。实现计划：`docs/superpowers/plans/2026-08-10-aihome-desktop-shell-plan.md`（P0）、`-registry-plan*.md`（P1）、`-widget-plan.md`（P2）。M2（2026-08-05 sync 设计文档的桌面壳）已落地。
 ```
 
-- [ ] **Step 3: 2026-08-05 sync 设计文档标注**
+- [x] **Step 3: 2026-08-05 sync 设计文档标注**
 
 `docs/superpowers/specs/2026-08-05-aihome-skill-sync-merge-design.md` 的 M2 段落后加：
 ```markdown
 > **M2 已落地（2026-08-10）**：Tauri 2 桌面壳 + 注册表 + 悬浮窗，见 `2026-08-10-aihome-desktop-design.md`。
 ```
 
-- [ ] **Step 4: Windows 打包评估记录**
+- [x] **Step 4: Windows 打包评估记录**
 
 在 spec 的 P3 段落后追加：
 ```markdown
 **Windows 评估（2026-08-10）**：Tauri 支持 Windows bundle；next-server 进程树清理需用 `taskkill /T /F /PID`；junction 逻辑保留在 sync-engine（Node fs.symlink 在 Windows 下对目录默认创建 junction，无需额外代码）。暂不在本机验证，交付 macOS .dmg。
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**（`docs: closeout — spec marks + README desktop + handoff notes`）
 
 ```bash
 git add docs/superpowers/specs/

@@ -3,8 +3,8 @@ import { Registry } from '@/lib/registry/registry';
 import { ensurePlatformsRegistered } from '@/lib/registry/adapters';
 
 export async function GET() {
+  const reg = new Registry();
   try {
-    const reg = new Registry();
     reg.open();
     ensurePlatformsRegistered(reg);
     const skills = reg.listSkills();
@@ -17,10 +17,11 @@ export async function GET() {
         status: reg.getSyncState(s.id, p.name)?.status ?? 'none',
       })),
     }));
-    reg.close();
     return NextResponse.json({ skills: enriched, platforms });
   } catch (error) {
     console.error('Registry skills error:', error);
     return NextResponse.json({ error: 'Failed to load registry' }, { status: 500 });
+  } finally {
+    reg.close();
   }
 }

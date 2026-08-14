@@ -35,7 +35,12 @@ pub fn run() {
                 .map_err(|e| Box::<dyn std::error::Error>::from(format!("create data dir: {e}")))?;
             server::start_next_server(&exe_dir, &data_dir)?;
             server::wait_healthy(Duration::from_secs(30))
-                .map_err(|e| Box::<dyn std::error::Error>::from(e))?;
+                .map_err(|e| {
+                    // 启动失败路径：先清理已 spawn 的 next-server，否则残留进程
+                    // 继续占住 3010，下一次启动会直接 "Port already in use"
+                    server::stop_next_server();
+                    Box::<dyn std::error::Error>::from(e)
+                })?;
 
             let show_main = MenuItem::with_id(app, "show_main", "显示主窗口", true, None::<&str>)?;
             let toggle_widget = MenuItem::with_id(app, "toggle_widget", "悬浮窗", true, None::<&str>)?;

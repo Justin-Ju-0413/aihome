@@ -41,11 +41,15 @@ export class UsageCache {
   static open(cachePath: string): UsageCache {
     fs.mkdirSync(path.dirname(cachePath), { recursive: true });
     const db = new DatabaseSync(cachePath);
+    // WAL + busy_timeout：多进程/多连接同时访问时写冲突变为等待而非立即
+    // 'database is locked'（后台重索引与手动 rescan 分属不同连接）
+    db.exec('PRAGMA journal_mode = WAL');
+    db.exec('PRAGMA busy_timeout = 5000');
     db.exec(SCHEMA);
     return new UsageCache(db);
   }
 
-  insertEvents(events: ScannedEvent[]): number {
+  insertEvents(events: ScannedEvent[], opts?: { replaceSource?: string }): number {
     if (events.length === 0) return 0;
     const stmt = this.db.prepare(
       `INSERT INTO events (raw_id, source, provider, model, input_tokens, output_tokens,
@@ -56,6 +60,11 @@ export class UsageCache {
     let inserted = 0;
     this.db.exec('BEGIN');
     try {
+      if (opts?.replaceSource) {
+        // 全量替换语义（openclaw rollup 行会被源反复改写，dedupe 会丢弃更新）：
+        // 先删该源旧事件，再插入本次扫描的全部事件
+        this.db.prepare('DELETE FROM events WHERE source = ?').run(opts.replaceSource);
+      }
       for (const e of events) {
         const r = stmt.run(e.rawId, e.source, e.provider, e.model, e.inputTokens, e.outputTokens,
           e.cacheReadTokens, e.cacheWriteTokens, e.costUsd,

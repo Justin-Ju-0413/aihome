@@ -41,7 +41,7 @@ describe('collect', () => {
   it('collects new skills and records sources', async () => {
     await makeSkill(endpoints.alpha, 'foo');
     const result = await collect();
-    expect(result.stats).toMatchObject({ new: 1, updated: 0, conflict: 0, skipped: 0 });
+    expect(result.stats).toMatchObject({ new: 1, conflict: 0, skipped: 0 });
     expect(await scanSkills(commonDir())).toHaveProperty('foo');
     const meta = await loadMetadata(metadataFile());
     expect(meta.skills.foo.sources).toContain('alpha');

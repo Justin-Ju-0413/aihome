@@ -44,7 +44,12 @@ export default function ConsolePage() {
   useEffect(() => {
     const timer = setInterval(async () => {
       try {
-        const { events, cursor } = await fvApi.events(cursorRef.current);
+        const { events, cursor, gap } = await fvApi.events(cursorRef.current);
+        if (gap) {
+          // 事件缓冲已裁剪、cursor 落后：中间事件已丢失，重置 cursor 从缓冲起点
+          // 重放（applyEvent 是触发刷新语义，重复应用安全）
+          cursorRef.current = 0;
+        }
         if (events.length > 0) {
           cursorRef.current = cursor;
           for (const e of events) store.applyEvent(e.type);

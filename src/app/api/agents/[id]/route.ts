@@ -4,7 +4,7 @@ import { dirname } from 'path';
 import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
-import { isExistingPathWithinWorkspace } from '@/lib/path-security';
+import { isExistingPathWithinWorkspace, isWorkspaceRootPath } from '@/lib/path-security';
 import { assertWritable } from '@/lib/readonly';
 
 async function getAuthorizedAgentPath(id: string): Promise<string | null> {
@@ -87,7 +87,14 @@ export async function DELETE(
     const filePath = await getAuthorizedAgentPath(id);
     if (!filePath) return NextResponse.json({ error: 'Path is outside the configured workspace' }, { status: 403 });
     const dirPath = dirname(filePath);
-    
+
+    // 保护：AGENTS.md 若位于 workspace 根目录，dirname 就是根本身——拒绝，
+    // 否则递归 rm 会删掉整个配置数据目录
+    const config = await getWorkspaceConfig();
+    if (isWorkspaceRootPath(dirPath, config.paths)) {
+      return NextResponse.json({ error: 'Refusing to delete a workspace root' }, { status: 400 });
+    }
+
     // Delete the entire agent directory
     await rm(dirPath, { recursive: true, force: true });
     

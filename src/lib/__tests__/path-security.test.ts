@@ -6,6 +6,8 @@ import {
   isPathWithinWorkspace,
   isExistingPathWithinWorkspace,
   isNewPathWithinWorkspace,
+  isWritablePathWithinWorkspace,
+  isWorkspaceRootPath,
 } from '../path-security';
 
 let root: string;
@@ -98,3 +100,48 @@ describe('isNewPathWithinWorkspace (parent resolution)', () => {
     expect(await isNewPathWithinWorkspace(path.join(link, 'new.md'), [root])).toBe(false);
   });
 });
+describe('isWorkspaceRootPath', () => {
+  it('detects the root itself', () => {
+    expect(isWorkspaceRootPath(root, [root])).toBe(true);
+  });
+  it('detects a root reachable via .. traversal', () => {
+    expect(isWorkspaceRootPath(path.join(root, 'a', '..'), [root])).toBe(true);
+  });
+  it('rejects nested dirs and other roots', () => {
+    expect(isWorkspaceRootPath(path.join(root, 'inner'), [root])).toBe(false);
+    const other = path.join(dir, 'other-root');
+    fs.mkdirSync(other, { recursive: true });
+    expect(isWorkspaceRootPath(other, [root])).toBe(false);
+    expect(isWorkspaceRootPath(other, [root, other])).toBe(true);
+  });
+});
+
+describe('isWritablePathWithinWorkspace (PUT authorization combo)', () => {
+  it('rejects an existing symlink escaping the root (combo bypass)', async () => {
+    const outside = path.join(dir, 'outside.txt');
+    fs.writeFileSync(outside, 'secret');
+    const link = path.join(root, 'writable-link.md');
+    fs.symlinkSync(outside, link);
+    // 旧组合逻辑 isExisting||isNew 会放行 → 越界写；新函数必须拒绝
+    expect(isPathWithinWorkspace(link, [root])).toBe(true); // 词法在内
+    expect(await isNewPathWithinWorkspace(link, [root])).toBe(true); // 旧组合的放行路径
+    expect(await isWritablePathWithinWorkspace(link, [root])).toBe(false); // 必须拒绝
+  });
+  it('accepts a real existing file inside root', async () => {
+    const f = path.join(root, 'writable-ok.md');
+    fs.writeFileSync(f, 'x');
+    expect(await isWritablePathWithinWorkspace(f, [root])).toBe(true);
+  });
+  it('accepts a new file under an existing in-root parent', async () => {
+    expect(await isWritablePathWithinWorkspace(path.join(root, 'inner', 'brand-new.md'), [root])).toBe(true);
+  });
+  it('rejects a new file whose parent symlink escapes', async () => {
+    const link = path.join(root, 'writable-escape');
+    fs.symlinkSync(dir, link);
+    expect(await isWritablePathWithinWorkspace(path.join(link, 'new.md'), [root])).toBe(false);
+  });
+  it('rejects a missing path outside the root', async () => {
+    expect(await isWritablePathWithinWorkspace(path.join(dir, 'ghost', 'x.md'), [root])).toBe(false);
+  });
+});
+

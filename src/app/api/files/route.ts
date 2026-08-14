@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile } from 'fs/promises';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
-import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/path-security';
+import { isExistingPathWithinWorkspace, isWritablePathWithinWorkspace } from '@/lib/path-security';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,8 +47,9 @@ export async function PUT(request: NextRequest) {
     }
 
     const config = await getWorkspaceConfig();
-    const isAllowed = await isExistingPathWithinWorkspace(path, config.paths)
-      || await isNewPathWithinWorkspace(path, config.paths);
+    // 已存在路径（含符号链接）必须 realpath 后仍在 workspace 内；仅真正的新
+    // 路径允许按父目录判定，避免符号链接跟随逃逸（旧 existing||new 组合绕过）
+    const isAllowed = await isWritablePathWithinWorkspace(path, config.paths);
     if (!isAllowed) {
       return NextResponse.json(
         { error: 'Path is outside the configured workspace' },

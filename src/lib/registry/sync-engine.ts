@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Registry } from './registry';
-import { getRegistryDir } from './registry';
+import { getRegistryDir, slugify } from './registry';
 import { isManagedLink } from './adapters';
 
 export function getSkillsDir(): string {
@@ -118,9 +118,27 @@ export function removeSkillFromPlatform(reg: Registry, skillId: string, platform
 }
 
 export function importSkill(reg: Registry, opts: { name: string; sourcePath: string }): { id: string } {
-  const dest = path.join(getSkillsDir(), opts.name.trim().toLowerCase().replace(/[^a-z0-9-_]+/g, '-').replace(/^-+|-+$/g, '') || 'skill');
+  // 路径收敛：源必须存在且是技能目录（含 SKILL.md），否则拒绝，避免任意路径导入
+  const src = path.resolve(opts.sourcePath);
+  if (!pathExists(src)) throw new Error('Source path does not exist: ' + src);
+  if (!pathExists(path.join(src, 'SKILL.md'))) {
+    throw new Error('Source is not a skill directory (missing SKILL.md): ' + src);
+  }
+  const base = slugify(opts.name) || 'skill';
+  // 同名已存在 -> 幂等复用其 canonical 目录；slug 被其他技能/残留目录占用 -> 消歧后缀
+  const sameName = reg.listSkills().find((s) => s.name === opts.name);
+  let id = sameName ? sameName.id : base;
+  if (!sameName) {
+    let n = 2;
+    while (reg.listSkills().some((s) => s.id === id) || pathExists(path.join(getSkillsDir(), id))) {
+      id = base + '-' + n++;
+    }
+  }
+  const dest = path.join(getSkillsDir(), id);
   fs.mkdirSync(dest, { recursive: true });
-  fs.cpSync(opts.sourcePath, dest, { recursive: true });
+  // cpSync 默认 dereference:false：源内符号链接作为链接原样复制，不把链接目标
+  // 的内容拖进 canonical 目录（防止注册表外文件被解引用带入）
+  fs.cpSync(src, dest, { recursive: true });
   reg.addSkill({ name: opts.name, description: '', source_dir: dest });
-  return { id: path.basename(dest) };
+  return { id };
 }
