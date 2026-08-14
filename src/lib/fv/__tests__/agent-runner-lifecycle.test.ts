@@ -73,4 +73,22 @@ describe('stopAgent vs close race', () => {
     proc.emit('error', new Error('ENOENT'));
     expect(stmts.getAgent(id)?.status).toBe('error');
   });
+
+  it('rejects a second start of the same agent while running (no orphan)', () => {
+    const proc = fakeProc();
+    vi.mocked(spawn).mockReturnValue(proc as never);
+
+    const id = createAgent({ name: 'dup', provider: 'codex', prompt: 'hi' });
+    const pid1 = startAgent(id);
+    expect(pid1).toBe(4242);
+    expect(vi.mocked(spawn)).toHaveBeenCalledTimes(1);
+
+    // 运行中再次启动必须被拒绝，且不产生第二个 spawn
+    expect(() => startAgent(id)).toThrow();
+    expect(vi.mocked(spawn)).toHaveBeenCalledTimes(1);
+
+    // 进程结束后可再次启动
+    proc.emit('close', 0);
+    expect(stmts.getAgent(id)?.status).toBe('completed');
+  });
 });

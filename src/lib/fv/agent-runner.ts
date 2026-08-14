@@ -80,6 +80,10 @@ export function createAgent(input: {
 export function startAgent(agentId: string): number {
   const agent = stmts.getAgent(agentId) as AgentRow | undefined;
   if (!agent) throw new Error(`Agent ${agentId} not found`);
+  // 并发保护：同一 agent 已在运行时不重复 spawn（否则前一个进程失去引用成孤儿）
+  if (activeProcesses.has(agentId)) {
+    throw new Error(`Agent ${agentId} is already running`);
+  }
 
   stmts.updateAgentStatus({
     id: agentId, status: 'running', progress: 0, currentStep: 0, finishedAt: null, tokenUsage: 0,
