@@ -118,6 +118,12 @@ export function removeSkillFromPlatform(reg: Registry, skillId: string, platform
 }
 
 export function importSkill(reg: Registry, opts: { name: string; sourcePath: string }): { id: string } {
+  // 路径收敛：源必须存在且是技能目录（含 SKILL.md），否则拒绝，避免任意路径导入
+  const src = path.resolve(opts.sourcePath);
+  if (!pathExists(src)) throw new Error('Source path does not exist: ' + src);
+  if (!pathExists(path.join(src, 'SKILL.md'))) {
+    throw new Error('Source is not a skill directory (missing SKILL.md): ' + src);
+  }
   const base = slugify(opts.name) || 'skill';
   // 同名已存在 -> 幂等复用其 canonical 目录；slug 被其他技能/残留目录占用 -> 消歧后缀
   const sameName = reg.listSkills().find((s) => s.name === opts.name);
@@ -130,7 +136,8 @@ export function importSkill(reg: Registry, opts: { name: string; sourcePath: str
   }
   const dest = path.join(getSkillsDir(), id);
   fs.mkdirSync(dest, { recursive: true });
-  fs.cpSync(opts.sourcePath, dest, { recursive: true });
+  // 不跟随源内符号链接（followSymlinks: false）：防止把注册表外的内容拖进 canonical 目录
+  fs.cpSync(src, dest, { recursive: true, followSymlinks: false });
   reg.addSkill({ name: opts.name, description: '', source_dir: dest });
   return { id };
 }

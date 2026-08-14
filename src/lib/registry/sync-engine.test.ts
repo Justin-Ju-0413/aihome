@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, existsSync, realpathSync, symlinkSync, readFileSync, lstatSync, readlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Registry } from './registry';
@@ -152,5 +152,35 @@ describe('importSkill', () => {
     expect(id1).toBe('doc-writer');
     expect(id2).toBe(id1);
     expect(reg.listSkills()).toHaveLength(1);
+  });
+
+  it('rejects a missing source path', () => {
+    expect(() => importSkill(reg, { name: 'ghost', sourcePath: path.join(root, 'no-such-dir') })).toThrow();
+    expect(reg.listSkills()).toHaveLength(0);
+  });
+
+  it('rejects a source without SKILL.md (not a skill directory)', () => {
+    const src = path.join(root, 'not-a-skill');
+    mkdirSync(src, { recursive: true });
+    writeFileSync(path.join(src, 'random.txt'), 'hello');
+    expect(() => importSkill(reg, { name: 'not-a-skill', sourcePath: src })).toThrow();
+    expect(reg.listSkills()).toHaveLength(0);
+  });
+
+  it('does not follow symlinks inside the source (no sandbox bleed)', () => {
+    // 源内的符号链接应作为链接复制，而不是把链接目标内容拖进注册表
+    const outside = path.join(root, 'outside-secret');
+    mkdirSync(outside, { recursive: true });
+    writeFileSync(path.join(outside, 'secret.txt'), 's3cr3t');
+    const src = path.join(root, 'linked-skill');
+    mkdirSync(src, { recursive: true });
+    writeFileSync(path.join(src, 'SKILL.md'), '# Linked Skill\n\nbody\n');
+    symlinkSync(outside, path.join(src, 'leak-link'));
+
+    const { id } = importSkill(reg, { name: 'linked-skill', sourcePath: src });
+    const dest = path.join(getSkillsDir(), id);
+    // 链接以链接形式存在于注册表，且仍指向源外目录（复制未解引用/改写链接）
+    expect(lstatSync(path.join(dest, 'leak-link')).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(path.join(dest, 'leak-link')).endsWith('outside-secret')).toBe(true);
   });
 });
