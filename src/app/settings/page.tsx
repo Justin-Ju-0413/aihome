@@ -144,14 +144,14 @@ export default function SettingsPage() {
           <Link
             href="/health"
             data-testid="settings-health-link"
-            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border bg-white/80"
+            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border glass-input"
           >
             <HeartPulse className="w-4 h-4" />
             健康检查
           </Link>
           <button
             onClick={handleExport}
-            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border bg-white/80"
+            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border glass-input"
           >
             <Download className="w-4 h-4" />
             Export
@@ -176,7 +176,7 @@ export default function SettingsPage() {
 
       <div className="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
         {/* Workspace Info */}
-        <section className="bg-white rounded-lg border border-card-border p-6">
+        <section className="glass-panel rounded-lg border border-card-border p-6">
           <h2 className="font-heading text-lg font-semibold text-heading mb-4">Workspace</h2>
           <div>
             <label className="block text-sm font-medium text-text-body mb-2">Name</label>
@@ -184,13 +184,13 @@ export default function SettingsPage() {
               type="text"
               value={config.name}
               onChange={(e) => setConfig({ ...config, name: e.target.value })}
-              className="w-full max-w-md px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
+              className="w-full max-w-md px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
             />
           </div>
         </section>
 
         {/* Scan Paths */}
-        <section className="bg-white rounded-lg border border-card-border p-6">
+        <section className="glass-panel rounded-lg border border-card-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading text-lg font-semibold text-heading">Scan Paths</h2>
             <button
@@ -225,13 +225,13 @@ export default function SettingsPage() {
               value={newPath}
               onChange={(e) => setNewPath(e.target.value)}
               placeholder="/path/to/agents"
-              className="flex-1 px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm text-text-body placeholder:text-muted"
+              className="flex-1 px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm text-text-body placeholder:text-muted"
               onKeyDown={(e) => e.key === 'Enter' && handleAddPath()}
             />
             <button
               onClick={handleAddPath}
               data-testid="settings-add-path-btn"
-              className="px-4 py-2 bg-white/80 text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
+              className="px-4 py-2 glass-input text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -240,7 +240,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Groups */}
-        <section className="bg-white rounded-lg border border-card-border p-6">
+        <section className="glass-panel rounded-lg border border-card-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading text-lg font-semibold text-heading">Groups</h2>
           </div>
@@ -269,7 +269,7 @@ export default function SettingsPage() {
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               placeholder="Group name"
-              className="flex-1 px-4 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
+              className="flex-1 px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
               onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
             />
             <div className="flex gap-1">
@@ -287,7 +287,7 @@ export default function SettingsPage() {
             <button
               onClick={handleAddGroup}
               data-testid="settings-add-group-btn"
-              className="px-4 py-2 bg-white/80 text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
+              className="px-4 py-2 glass-input text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -299,7 +299,7 @@ export default function SettingsPage() {
         <WorkbenchBalanceSection />
 
         {/* About */}
-        <section className="bg-white rounded-lg border border-card-border p-6">
+        <section className="glass-panel rounded-lg border border-card-border p-6">
           <h2 className="font-heading text-lg font-semibold text-heading mb-4">About</h2>
           <div className="text-sm text-muted space-y-1">
             <p>AIHome - AI Agent Visual Manager</p>

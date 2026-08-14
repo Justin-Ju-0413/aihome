@@ -16,7 +16,7 @@ export function ConflictsList({ conflicts }: { conflicts: SyncConflict[] }) {
       <h2 className="font-heading text-xl font-semibold mb-2">冲突（{conflicts.length}）</h2>
       <div className="border border-divider rounded-lg overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left">
+          <thead className="bg-(--color-card-bg) text-left">
             <tr>
               <th className="px-4 py-2">技能</th>
               <th className="px-4 py-2">版本</th>

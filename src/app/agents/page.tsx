@@ -80,7 +80,7 @@ export default function AgentsPage() {
               placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
+              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
             />
           </div>
           <label className="flex items-center gap-1.5 text-sm text-text-body cursor-pointer select-none">
@@ -93,7 +93,7 @@ export default function AgentsPage() {
             />
             全文
           </label>
-          <div className="flex border border-card-border rounded-lg bg-white/80">
+          <div className="flex border border-card-border rounded-lg glass-input">
             <button
               onClick={() => setViewMode('grid')}
               className={cn('p-2', viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted')}
@@ -124,7 +124,7 @@ export default function AgentsPage() {
               <Link
                 key={agent.id}
                 href={`/agents/${agent.id}`}
-                className="bg-white rounded-lg border border-card-border p-5 hover:shadow-md transition-shadow"
+                className="glass-panel rounded-lg border border-card-border p-5 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <span className={cn(
@@ -146,7 +146,7 @@ export default function AgentsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-card-border overflow-hidden">
+          <div className="glass-panel rounded-lg border border-card-border overflow-hidden">
             <table className="w-full">
               <thead className="bg-primary/5 border-b border-card-border">
                 <tr>

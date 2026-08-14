@@ -6,6 +6,20 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
+#[cfg(target_os = "macos")]
+use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+
+/** 液态玻璃窗口层:macOS 下给透明窗口叠加系统毛玻璃(vibrancy),跟随亮/暗外观 */
+fn apply_window_glass(app: &AppHandle) {
+    #[cfg(target_os = "macos")]
+    for label in ["main", "widget"] {
+        if let Some(w) = app.get_webview_window(label) {
+            // UnderWindowBackground:material 自动跟随系统浅色/深色,与页面 prefers-color-scheme 同步
+            let _ = apply_vibrancy(&w, NSVisualEffectMaterial::UnderWindowBackground, None, Some(12.0));
+        }
+    }
+}
+
 fn toggle_window(app: &AppHandle, label: &str) -> tauri::Result<()> {
     if let Some(w) = app.get_webview_window(label) {
         if w.is_visible()? {
@@ -29,6 +43,7 @@ pub fn run() {
             None,
         ))
         .setup(|app| {
+            apply_window_glass(app.handle());
             let exe_dir = app.path().resource_dir().expect("resource dir");
             let data_dir = app.path().app_data_dir().expect("app data dir");
             std::fs::create_dir_all(&data_dir)

@@ -101,7 +101,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-divider px-6 py-4">
+      <header className="glass-nav border-b border-divider px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => router.back()} className="p-2 hover:bg-primary/10 rounded-lg">
@@ -162,7 +162,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           <div className="p-6 space-y-6">
             {/* Frontmatter Editor (for SKILL.md) */}
             {agent.type === 'skill' && Object.keys(frontmatter).length > 0 && (
-              <div className="bg-white rounded-lg border border-card-border p-6">
+              <div className="glass-panel rounded-lg border border-card-border p-6">
                 <h2 className="font-heading text-lg font-semibold text-heading mb-4">Metadata (Frontmatter)</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {Object.entries(frontmatter).map(([key, value]) => (
@@ -173,7 +173,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                           type="text"
                           value={value}
                           onChange={(e) => setFrontmatter({ ...frontmatter, [key]: e.target.value })}
-                          className="w-full px-3 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
+                          className="w-full px-3 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
                         />
                       ) : (
                         <textarea
@@ -184,7 +184,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                             } catch {}
                           }}
                           rows={3}
-                          className="w-full px-3 py-2 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm text-text-body"
+                          className="w-full px-3 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent font-mono text-sm text-text-body"
                         />
                       )}
                     </div>
@@ -194,7 +194,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             )}
 
             {/* Markdown Editor */}
-            <div className="bg-white rounded-lg border border-card-border overflow-hidden">
+            <div className="glass-panel rounded-lg border border-card-border overflow-hidden">
               <div className="px-4 py-3 border-b border-card-border bg-primary/5">
                 <h2 className="text-sm font-medium text-text-body">Content</h2>
               </div>
@@ -212,7 +212,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
         {activeTab === 'files' && (
           <div className="p-6">
-            <div className="bg-white rounded-lg border border-card-border p-6">
+            <div className="glass-panel rounded-lg border border-card-border p-6">
               <h2 className="font-heading text-lg font-semibold text-heading mb-4 flex items-center gap-2">
                 <FolderOpen className="w-5 h-5" />
                 Files in {agent.dirPath.split('/').pop()}
@@ -235,7 +235,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
         {activeTab === 'preview' && (
           <div className="p-6">
-            <div className="bg-white rounded-lg border border-card-border p-6">
+            <div className="glass-panel rounded-lg border border-card-border p-6">
               <div data-color-mode="light" className="prose max-w-none">
                 <MDEditor.Markdown source={markdownBody} />
               </div>

@@ -11,7 +11,7 @@ export function StatCharts({ stats }: { stats: Stats }) {
   const totalCost = Math.max(1e-9, stats.bySource.reduce((s, x) => s + x.cost, 0));
   return (
     <div data-testid="usage-stats" className="grid md:grid-cols-3 gap-4">
-      <div className="rounded-lg border border-divider bg-white/80 p-4">
+      <div className="glass-panel rounded-lg border border-divider p-4">
         <h3 className="text-sm font-semibold text-primary mb-2">Daily Spend</h3>
         {stats.byDay.length === 0 ? (
           <p className="text-xs text-secondary">No data</p>
@@ -28,7 +28,7 @@ export function StatCharts({ stats }: { stats: Stats }) {
           </div>
         )}
       </div>
-      <div className="rounded-lg border border-divider bg-white/80 p-4">
+      <div className="glass-panel rounded-lg border border-divider p-4">
         <h3 className="text-sm font-semibold text-primary mb-2">By Source</h3>
         {stats.bySource.length === 0 ? (
           <p className="text-xs text-secondary">No data</p>
@@ -49,7 +49,7 @@ export function StatCharts({ stats }: { stats: Stats }) {
           })
         )}
       </div>
-      <div className="rounded-lg border border-divider bg-white/80 p-4">
+      <div className="glass-panel rounded-lg border border-divider p-4">
         <h3 className="text-sm font-semibold text-primary mb-2">Top Models</h3>
         {stats.topModels.length === 0 ? (
           <p className="text-xs text-secondary">No data</p>

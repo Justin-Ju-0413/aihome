@@ -6,6 +6,7 @@ import { convert, getTaskTypes } from './prompt-converter';
 import { selectProvider, selectModel, getProviderProfiles, getFallbackChain } from './scheduler';
 import { getValues } from './settings';
 import * as processRegistry from './process-registry';
+import type { RegistryEntry } from './process-registry';
 import { emitEvent, onEvent } from './events';
 
 /** 一键匹配编排（原 agent-orchestrator.js 移植，ws 广播改为事件总线 + 输出缓冲轮询） */
@@ -20,6 +21,9 @@ export interface LaunchOptions {
   steps?: string[];
   name?: string;
   pipelineId?: string | null;
+  /** 内部续跑字段：fallback 时由 handleFallback 传入（API 路由不暴露） */
+  runId?: string;
+  fallbackChain?: string[];
 }
 
 export interface LaunchResult {
@@ -53,6 +57,33 @@ onEvent((e) => {
   if (e.type === 'agent:output') {
     const runId = agentToRun.get(String(e.agentId ?? ''));
     if (runId && typeof e.data === 'string') appendOutput(runId, e.data);
+    return;
+  }
+  // agent 生命周期收尾：失败触发回退，成功/停止/链尽则清理并广播 unified:completed
+  if (e.type === 'agent:complete' || e.type === 'agent:error') {
+    const agentId = String(e.agentId ?? '');
+    const runId = agentToRun.get(agentId);
+    if (!runId) return;
+    const entry = processRegistry.get(runId);
+    // metadata.agentId 不匹配 ⇒ 该事件属于已被回退取代的旧 agent，晚到事件直接忽略
+    if (!entry || entry.metadata?.agentId !== agentId) return;
+
+    const status = e.type === 'agent:error' ? 'error' : String(e.status ?? 'error');
+    if (status === 'stopped') {
+      processRegistry.unregister(runId);
+      agentToRun.delete(agentId);
+      emitEvent({ type: 'unified:completed', runId, provider: entry.provider, status: 'stopped', exitCode: -1 });
+      return;
+    }
+
+    processRegistry.updateStatus(runId, status, status === 'error' ? -1 : 0);
+    if (status === 'error' && handleFallback(entry, entry.fallbackChain)) {
+      agentToRun.delete(agentId);
+      return;
+    }
+    processRegistry.unregister(runId);
+    agentToRun.delete(agentId);
+    emitEvent({ type: 'unified:completed', runId, provider: entry.provider, status, exitCode: status === 'error' ? -1 : 0 });
   }
 });
 
@@ -93,8 +124,10 @@ export function launch(options: LaunchOptions): LaunchResult {
   const effectiveModel = options.model || selectModel(options.task, resolvedProvider);
   const defaultDir = vals['workspace.default_dir'] || process.cwd();
   const effectiveCwd = options.cwd || defaultDir;
-  const fallbackChain = getFallbackChain(resolvedProvider);
-  const runId = randomUUID();
+  // fallback 续跑时继承原链单向消费；首次启动按 provider 重建链
+  const fallbackChain = options.fallbackChain ?? getFallbackChain(resolvedProvider);
+  // fallback 续跑复用同一 runId：输出缓冲与前端轮询连续，不被回退打断
+  const runId = options.runId ?? randomUUID();
 
   const launchInfo: LaunchResult = {
     runId,
@@ -160,7 +193,7 @@ function launchClaudeCodex(info: LaunchResult, opts: { steps?: string[]; name?: 
     target: info.target,
     skill: info.skill,
     fallbackChain: info.fallbackChain,
-    metadata: { agentId },
+    metadata: { agentId, name: opts.name ?? null, steps: opts.steps ?? [], pipelineId: opts.pipelineId ?? null },
   });
 
   agentRunner.startAgent(agentId);
@@ -212,16 +245,25 @@ function launchHermes(info: LaunchResult): LaunchResult {
     emitEvent({ type: 'unified:error', runId: info.runId, provider: 'hermes', data });
   });
   proc.onClose((code) => {
+    // fallback 复用 runId 后闭包里的 info.provider 已过期，以 registry 当前条目为准
+    const entry = processRegistry.get(info.runId);
+    const provider = entry?.provider ?? info.provider;
     const status = code === 0 ? 'completed' : 'error';
     processRegistry.updateStatus(info.runId, status, code ?? undefined);
 
-    if (status === 'error' && info.fallbackChain.length > 1) {
-      handleFallback(info);
+    if (status === 'error') {
+      const chain = entry?.fallbackChain ?? info.fallbackChain;
+      if (entry && handleFallback(entry, chain)) {
+        // 已回退：新 provider 以同一 runId 接管，由新 run 广播后续事件
+      } else {
+        processRegistry.unregister(info.runId);
+        emitEvent({ type: 'unified:completed', runId: info.runId, provider, status, exitCode: code });
+      }
     } else {
       processRegistry.unregister(info.runId);
+      emitEvent({ type: 'unified:completed', runId: info.runId, provider, status, exitCode: code });
     }
 
-    emitEvent({ type: 'unified:completed', runId: info.runId, provider: 'hermes', status, exitCode: code });
     stmts.insertHistory({
       type: 'agent',
       title: `${info.taskIcon} ${info.taskLabel} ${status === 'completed' ? '完成' : '出错'}`,
@@ -236,25 +278,45 @@ function launchHermes(info: LaunchResult): LaunchResult {
   return result;
 }
 
-function handleFallback(info: LaunchResult): void {
-  const nextProvider = info.fallbackChain[info.fallbackChain.indexOf(info.provider) + 1];
-  if (!nextProvider) {
-    processRegistry.unregister(info.runId);
-    return;
-  }
+/**
+ * 链消费：返回 provider 在链中的下一个回退目标；链尾/不在链中返回 null（终止）。
+ * 链单向推进，杜绝 claude↔codex 互指造成的无限循环。
+ */
+export function nextFallbackProvider(chain: string[], provider: string): string | null {
+  const idx = chain.indexOf(provider);
+  if (idx === -1 || idx + 1 >= chain.length) return null;
+  return chain[idx + 1];
+}
 
-  emitEvent({ type: 'unified:fallback', runId: info.runId, fromProvider: info.provider, toProvider: nextProvider });
+/**
+ * 失败回退：沿原链单向推进并复用同一 runId 重启任务。
+ * 返回 true 表示已触发回退；false 表示链已尽，调用方负责清理并广播 unified:completed。
+ */
+function handleFallback(entry: RegistryEntry, chain: string[]): boolean {
+  const nextProvider = nextFallbackProvider(chain, entry.provider);
+  if (!nextProvider) return false;
 
-  const newModel = selectModel(info.task, nextProvider);
+  // 移除旧条目；新 provider 以同一 runId 重新注册，输出缓冲与前端轮询连续
+  processRegistry.unregister(entry.id);
+  emitEvent({ type: 'unified:fallback', runId: entry.id, fromProvider: entry.provider, toProvider: nextProvider });
 
-  launch({
-    task: info.task,
+  const newModel = selectModel(entry.task, nextProvider);
+
+  const relaunched = launch({
+    task: entry.task,
     provider: nextProvider,
     model: newModel,
-    target: info.target,
-    cwd: info.cwd,
-    skill: info.skill,
+    target: entry.target,
+    cwd: entry.cwd,
+    skill: entry.skill,
+    name: entry.metadata?.name as string | undefined,
+    steps: entry.metadata?.steps as string[] | undefined,
+    pipelineId: entry.metadata?.pipelineId as string | null | undefined,
+    runId: entry.id,
+    fallbackChain: chain,
   });
+  // 重启被拒（如并发上限）或成功：都算“尝试过回退”，链终止收尾交给调用方
+  return !relaunched.error;
 }
 
 export function abort(runId: string): boolean {

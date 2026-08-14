@@ -58,7 +58,7 @@ export function WorkbenchBalanceSection() {
   }
 
   return (
-    <section className="bg-white rounded-lg border border-card-border p-6">
+    <section className="glass-panel rounded-lg border border-card-border p-6">
       <h2 className="font-heading text-lg font-semibold text-heading mb-4">Workbench Balance</h2>
       <p className="text-sm text-muted mb-4">Auto-refresh balance queries for configured platform keys (see the Workbench page)</p>
 
@@ -89,7 +89,7 @@ export function WorkbenchBalanceSection() {
               setIntervalMin(v);
               if (v > 0) void saveSettings({ refreshIntervalMin: v });
             }}
-            className="w-24 px-2 py-1 border border-card-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
+            className="w-24 px-2 py-1 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
           />
         </label>
       </div>

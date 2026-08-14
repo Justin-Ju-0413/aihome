@@ -21,7 +21,7 @@ export function OverviewCards({ totals }: Props) {
   return (
     <section data-testid="usage-overview" className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       {cards.map((c) => (
-        <div key={c.label} data-testid={c.testId} className="rounded-lg border border-divider bg-white/80 p-4">
+        <div key={c.label} data-testid={c.testId} className="glass-panel rounded-lg border border-divider p-4">
           <p className="text-xs font-medium tracking-widest text-secondary">{c.label}</p>
           <p className="font-heading text-xl font-bold text-primary mt-1">{c.value}</p>
         </div>

@@ -99,7 +99,7 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
   };
 
   return (
-    <div className="border-l border-divider bg-white/60 flex flex-col min-h-0">
+    <div className="border-l border-divider glass-panel flex flex-col min-h-0">
       <div className="flex items-center justify-between px-4 py-2 border-b border-divider">
         <span className="text-sm font-medium text-heading truncate" title={filePath}>
           {filePath.split('/').pop()}
@@ -111,7 +111,7 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
       <div className="flex-1 overflow-auto p-4 space-y-4">
         <div>
           <h4 className="text-xs font-medium text-muted mb-1">预览</h4>
-          <pre className="text-xs text-text-body bg-white border border-card-border rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">
+          <pre className="text-xs text-text-body glass-input border border-card-border rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">
             {content?.content ? content.content.split('\n').slice(0, 25).join('\n') : (content?.error || '加载中...')}
           </pre>
           <p className="text-[10px] text-muted mt-1">{filePath}</p>
@@ -188,7 +188,7 @@ export function FileTab() {
   return (
     <div className="h-full grid grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr_360px]" data-testid="file-tab">
       {/* 文件树 */}
-      <aside className="border-r border-divider bg-white/40 overflow-auto p-2">
+      <aside className="border-r border-divider glass-sidebar overflow-auto p-2">
         <div className="flex items-center justify-between px-2 py-1 mb-1">
           <span className="text-xs font-medium text-muted">文件树</span>
           <button
@@ -213,7 +213,7 @@ export function FileTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索文件..."
-            className="pl-3 pr-3 py-1.5 border border-card-border rounded-lg w-64 bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
+            className="pl-3 pr-3 py-1.5 border border-card-border rounded-lg w-64 glass-input focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
             data-testid="file-search"
           />
           <span className="text-xs text-muted ml-auto">{filtered.length} 个文件</span>

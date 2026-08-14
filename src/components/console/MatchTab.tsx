@@ -58,7 +58,7 @@ function RunOutputPanel({ runId, onAbort }: { runId: string; onAbort: () => void
   }, [lines]);
 
   return (
-    <div className="mt-4 border border-card-border rounded-lg overflow-hidden bg-white/70">
+    <div className="mt-4 border border-card-border rounded-lg overflow-hidden glass-panel">
       <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border-b border-card-border">
         <span className="text-xs font-medium text-heading">实时输出 · {runId.slice(0, 8)}</span>
         <button onClick={onAbort} className="inline-flex items-center gap-1 px-2 py-1 rounded bg-rose-50 text-rose-600 text-xs hover:bg-rose-100">
@@ -170,21 +170,21 @@ export function MatchTab() {
         onChange={(e) => setTask(e.target.value)}
         rows={4}
         placeholder="用自然语言描述任务，例如：审查 src/utils.ts 的代码质量并给出修复建议"
-        className="w-full px-3 py-2 border border-card-border rounded-lg bg-white/80 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
+        className="w-full px-3 py-2 border border-card-border rounded-lg glass-input text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
         data-testid="match-task"
       />
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-        <select value={provider} onChange={(e) => setProvider(e.target.value)} className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white">
+        <select value={provider} onChange={(e) => setProvider(e.target.value)} className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input">
           <option value="">自动调度</option>
           <option value="claude">Claude</option>
           <option value="codex">Codex</option>
           <option value="hermes">Hermes</option>
         </select>
-        <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="模型" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent" />
-        <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="目标文件/目录" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent" />
-        <input value={skill} onChange={(e) => setSkill(e.target.value)} placeholder="技能 (Hermes)" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent" />
-        <input value={cwd} onChange={(e) => setCwd(e.target.value)} placeholder="工作目录" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent" />
+        <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="模型" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent" />
+        <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="目标文件/目录" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent" />
+        <input value={skill} onChange={(e) => setSkill(e.target.value)} placeholder="技能 (Hermes)" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent" />
+        <input value={cwd} onChange={(e) => setCwd(e.target.value)} placeholder="工作目录" className="px-2 py-1.5 border border-card-border rounded text-xs text-text-body glass-input focus:outline-none focus:ring-2 focus:ring-accent" />
       </div>
 
       <div className="flex gap-2">
@@ -208,7 +208,7 @@ export function MatchTab() {
 
       {/* 调度分析结果 */}
       {explain && explainOpen && (
-        <div className="border border-card-border rounded-lg bg-white/70 p-4 space-y-3" data-testid="match-explain">
+        <div className="border border-card-border rounded-lg glass-panel p-4 space-y-3" data-testid="match-explain">
           <div className="flex items-center gap-2">
             <h4 className="font-heading font-semibold text-heading text-sm">调度分析</h4>
             <span className="text-xs text-muted">{explain.taskType} · {explain.taskSize}</span>
@@ -218,7 +218,7 @@ export function MatchTab() {
             <div className="space-y-1">
               <p className="text-xs text-muted">检测到复合任务，将拆分为 {composite.parts.length} 步：</p>
               {composite.parts.map((p, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-text-body bg-white border border-card-border rounded px-2 py-1">
+                <div key={i} className="flex items-center gap-2 text-xs text-text-body glass-input border border-card-border rounded px-2 py-1">
                   <span>{p.taskIcon}</span>
                   <span className="truncate">{p.task}</span>
                   <span className="ml-auto text-primary shrink-0">{p.provider}{p.model ? '/' + p.model : ''}</span>
@@ -233,7 +233,7 @@ export function MatchTab() {
           </div>
           <div className="grid grid-cols-3 gap-2">
             {explain.allScores.map((s) => (
-              <div key={s.provider} className="border border-card-border rounded p-2 text-center bg-white/60">
+              <div key={s.provider} className="border border-card-border rounded p-2 text-center glass-panel">
                 <p className="text-xs font-medium text-heading">{s.name}</p>
                 <p className="text-[10px] text-muted">×{s.modifier}{s.historyBias ? ` · 历史 ${(s.historyBias * 100).toFixed(0)}%` : ''}</p>
               </div>
@@ -251,7 +251,7 @@ export function MatchTab() {
           <h4 className="text-xs font-medium text-muted mb-2">Agent 能力对比</h4>
           <div className="space-y-2">
             {providerEntries.map(([p, prof]) => (
-              <div key={p} className={cn('border rounded-lg p-3 bg-white/70', selProvider === p ? 'border-primary/40' : 'border-card-border')}>
+              <div key={p} className={cn('border rounded-lg p-3 glass-panel', selProvider === p ? 'border-primary/40' : 'border-card-border')}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-heading">{String(prof.name)}</span>
                   <span className="text-[10px] text-muted">v{String(prof.version)}</span>
@@ -270,7 +270,7 @@ export function MatchTab() {
           <h4 className="text-xs font-medium text-muted mb-2">匹配历史</h4>
           <div className="space-y-1.5">
             {matchHistory.slice(0, 8).map((h) => (
-              <div key={Number(h.id)} className="flex items-center gap-2 text-xs text-text-body bg-white/70 border border-card-border rounded px-2 py-1.5">
+              <div key={Number(h.id)} className="flex items-center gap-2 text-xs text-text-body glass-panel border border-card-border rounded px-2 py-1.5">
                 <span className="truncate">{String(h.title)}</span>
                 <span className="text-muted text-[10px] ml-auto shrink-0">{String(h.created_at)}</span>
               </div>

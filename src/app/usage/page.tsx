@@ -99,7 +99,7 @@ export default function UsagePage() {
             ))}
           </div>
           <OverviewCards totals={data.totals} />
-          <div data-testid="usage-kline" className="rounded-lg border border-divider bg-white/80 p-4 mb-6">
+          <div data-testid="usage-kline" className="glass-panel rounded-lg border border-divider p-4 mb-6">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-heading text-lg font-bold text-primary">K-line</h2>
               <button
