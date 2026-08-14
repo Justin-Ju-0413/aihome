@@ -17,6 +17,12 @@ export function isPathWithinWorkspace(
   });
 }
 
+/** 路径是否恰为某个 workspace 根目录（用于拒绝"删 agent 目录"误删整个工作区根） */
+export function isWorkspaceRootPath(targetPath: string, rootPaths: string[]): boolean {
+  const resolved = resolve(targetPath);
+  return rootPaths.some((root) => resolve(root) === resolved);
+}
+
 async function existingWorkspaceRoots(rootPaths: string[]): Promise<string[]> {
   const roots = await Promise.all(rootPaths.map((root) => realpath(root).catch(() => null)));
   return roots.filter((root): root is string => root !== null);

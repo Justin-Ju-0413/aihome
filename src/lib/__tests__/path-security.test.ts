@@ -7,6 +7,7 @@ import {
   isExistingPathWithinWorkspace,
   isNewPathWithinWorkspace,
   isWritablePathWithinWorkspace,
+  isWorkspaceRootPath,
 } from '../path-security';
 
 let root: string;
@@ -99,6 +100,22 @@ describe('isNewPathWithinWorkspace (parent resolution)', () => {
     expect(await isNewPathWithinWorkspace(path.join(link, 'new.md'), [root])).toBe(false);
   });
 });
+describe('isWorkspaceRootPath', () => {
+  it('detects the root itself', () => {
+    expect(isWorkspaceRootPath(root, [root])).toBe(true);
+  });
+  it('detects a root reachable via .. traversal', () => {
+    expect(isWorkspaceRootPath(path.join(root, 'a', '..'), [root])).toBe(true);
+  });
+  it('rejects nested dirs and other roots', () => {
+    expect(isWorkspaceRootPath(path.join(root, 'inner'), [root])).toBe(false);
+    const other = path.join(dir, 'other-root');
+    fs.mkdirSync(other, { recursive: true });
+    expect(isWorkspaceRootPath(other, [root])).toBe(false);
+    expect(isWorkspaceRootPath(other, [root, other])).toBe(true);
+  });
+});
+
 describe('isWritablePathWithinWorkspace (PUT authorization combo)', () => {
   it('rejects an existing symlink escaping the root (combo bypass)', async () => {
     const outside = path.join(dir, 'outside.txt');
