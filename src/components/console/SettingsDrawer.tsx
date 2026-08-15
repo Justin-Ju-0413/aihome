@@ -6,11 +6,13 @@ import { toast } from 'sonner';
 import { useConsoleStore } from '@/stores/console-store';
 import { fvApi } from '@/lib/fv/api';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 import type { FvSetting } from '@/lib/fv/types';
 
 function SettingControl({ setting }: { setting: FvSetting }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useI18n();
 
   const save = async (value: string) => {
     setSaving(true);
@@ -18,7 +20,7 @@ function SettingControl({ setting }: { setting: FvSetting }) {
     try {
       await fvApi.saveSetting(setting.key, value);
       void useConsoleStore.getState().loadSettings();
-      toast.success('已保存', { duration: 1200 });
+      toast.success(t('console.saved'), { duration: 1200 });
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -32,7 +34,7 @@ function SettingControl({ setting }: { setting: FvSetting }) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-text-body">{setting.label}</span>
           <span className="text-[10px] text-muted">{setting.key}</span>
-          {saving && <span className="text-[10px] text-muted">保存中...</span>}
+          {saving && <span className="text-[10px] text-muted">{t('console.saving')}</span>}
         </div>
         {setting.desc && <p className="text-xs text-muted mt-0.5">{setting.desc}</p>}
         {error && <p className="text-xs text-rose-500 mt-0.5">{error}</p>}
@@ -98,13 +100,14 @@ export function SettingsDrawer() {
   const categories = useConsoleStore((s) => s.settingsCategories);
   const setSettingsOpen = useConsoleStore((s) => s.setSettingsOpen);
   const [activeCat, setActiveCat] = useState('appearance');
+  const { t } = useI18n();
 
   const reset = async () => {
-    if (!confirm('确定恢复所有设置为默认值？')) return;
+    if (!confirm(t('console.resetConfirm'))) return;
     try {
       await fvApi.resetSettings();
       void useConsoleStore.getState().loadSettings();
-      toast.success('已恢复默认');
+      toast.success(t('console.restoredDefault'));
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -129,7 +132,7 @@ export function SettingsDrawer() {
     try {
       const data = JSON.parse(await file.text());
       const result = await fvApi.importSettings(data);
-      toast.success(`导入完成：${result.imported} 项，跳过 ${result.skipped} 项`);
+      toast.success(t('console.importDone', { imported: result.imported, skipped: result.skipped }));
       void useConsoleStore.getState().loadSettings();
     } catch (err) {
       toast.error((err as Error).message);
@@ -146,7 +149,7 @@ export function SettingsDrawer() {
         data-testid="settings-drawer"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-divider">
-          <h3 className="font-heading font-semibold text-heading">运行时设置</h3>
+          <h3 className="font-heading font-semibold text-heading">{t('console.settingsTitle')}</h3>
           <button onClick={() => setSettingsOpen(false)} className="p-1 hover:bg-primary/10 rounded text-muted">
             <X className="w-4 h-4" />
           </button>
@@ -169,15 +172,15 @@ export function SettingsDrawer() {
 
         <div className="flex-1 overflow-auto divide-y divide-divider">
           {catSettings.map((s) => <SettingControl key={s.key} setting={s} />)}
-          {catSettings.length === 0 && <p className="text-xs text-muted p-4">无设置项</p>}
+          {catSettings.length === 0 && <p className="text-xs text-muted p-4">{t('console.noSettings')}</p>}
         </div>
 
         <div className="px-4 py-3 border-t border-divider flex gap-2">
           <button onClick={() => void doExport()} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-card-border text-xs text-text-body hover:bg-primary/5">
-            <Download className="w-3 h-3" /> 导出
+            <Download className="w-3 h-3" /> {t('common.export')}
           </button>
           <label className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-card-border text-xs text-text-body hover:bg-primary/5 cursor-pointer">
-            <Upload className="w-3 h-3" /> 导入
+            <Upload className="w-3 h-3" /> {t('common.import')}
             <input
               type="file"
               accept="application/json"
@@ -190,7 +193,7 @@ export function SettingsDrawer() {
             />
           </label>
           <button onClick={() => void reset()} className="ml-auto inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-rose-600 hover:bg-rose-50">
-            <RotateCcw className="w-3 h-3" /> 恢复默认
+            <RotateCcw className="w-3 h-3" /> {t('common.restoreDefault')}
           </button>
         </div>
       </div>

@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { RefreshCw, KeyRound, RotateCcw, Trash2 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 /**
  * Workbench 余额设置区块（并入 AIHome /settings）。
  * 自动刷新定时器、全部刷新、清除全部 key、恢复内置清单。
  */
 export function WorkbenchBalanceSection() {
+  const { t } = useI18n();
   const [auto, setAuto] = useState(false);
   const [intervalMin, setIntervalMin] = useState(30);
   const [busy, setBusy] = useState(false);
@@ -20,7 +22,7 @@ export function WorkbenchBalanceSection() {
         setAuto(settings.autoRefreshEnabled);
         setIntervalMin(settings.refreshIntervalMin);
       })
-      .catch(() => setMsg('加载设置失败'));
+      .catch(() => setMsg(t('settings.balance.loadFailed')));
   }, []);
 
   async function saveSettings(patch: { autoRefreshEnabled?: boolean; refreshIntervalMin?: number }) {
@@ -29,7 +31,7 @@ export function WorkbenchBalanceSection() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     });
-    setMsg('已保存');
+    setMsg(t('common.saved'));
     setTimeout(() => setMsg(''), 2000);
   }
 
@@ -38,29 +40,29 @@ export function WorkbenchBalanceSection() {
     try {
       const r = await fetch('/api/workbench/balance/refresh-all', { method: 'POST' });
       const { summary } = await r.json();
-      setMsg(`已刷新 ${summary.checked} 个 key，成功 ${summary.ok}`);
+      setMsg(t('settings.balance.refreshed', { checked: summary.checked, ok: summary.ok }));
     } finally {
       setBusy(false);
     }
   }
 
   async function clearKeys() {
-    if (!confirm('确定清除全部 API key？此操作不可撤销。')) return;
+    if (!confirm(t('settings.balance.clearConfirm'))) return;
     const r = await fetch('/api/workbench/keys/clear-all', { method: 'POST' });
     const { cleared } = await r.json();
-    setMsg(`已清除 ${cleared} 个 key`);
+    setMsg(t('settings.balance.cleared', { n: cleared }));
   }
 
   async function restoreBuiltins() {
     const r = await fetch('/api/workbench/sites/restore-builtins', { method: 'POST' });
     const { added } = await r.json();
-    setMsg(`已恢复 ${added} 个内置平台`);
+    setMsg(t('settings.balance.restored', { n: added }));
   }
 
   return (
     <section className="glass-panel rounded-lg border border-card-border p-6">
-      <h2 className="font-heading text-lg font-semibold text-heading mb-4">Workbench Balance</h2>
-      <p className="text-sm text-muted mb-4">Auto-refresh balance queries for configured platform keys (see the Workbench page)</p>
+      <h2 className="font-heading text-lg font-semibold text-heading mb-4">{t('settings.balance.title')}</h2>
+      <p className="text-sm text-muted mb-4">{t('settings.balance.description')}</p>
 
       <div className="space-y-3">
         <label className="flex items-center gap-2 text-sm text-text-body">
@@ -74,10 +76,10 @@ export function WorkbenchBalanceSection() {
             }}
             className="accent-primary"
           />
-          自动刷新余额
+          {t('settings.balance.autoRefresh')}
         </label>
         <label className="flex items-center gap-2 text-sm text-text-body">
-          间隔（分钟）
+          {t('settings.balance.intervalMin')}
           <input
             data-testid="settings-interval"
             type="number"
@@ -102,7 +104,7 @@ export function WorkbenchBalanceSection() {
           className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />
-          全部刷新
+          {t('settings.balance.refreshAll')}
         </button>
         <button
           data-testid="btn-restore-builtins"
@@ -110,7 +112,7 @@ export function WorkbenchBalanceSection() {
           className="px-3 py-1.5 text-sm text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
         >
           <RotateCcw className="w-4 h-4" />
-          恢复内置清单
+          {t('settings.balance.restoreBuiltins')}
         </button>
         <button
           data-testid="btn-clear-keys"
@@ -118,14 +120,14 @@ export function WorkbenchBalanceSection() {
           className="px-3 py-1.5 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 flex items-center gap-2"
         >
           <Trash2 className="w-4 h-4" />
-          清除全部 key
+          {t('settings.balance.clearKeys')}
         </button>
       </div>
 
       {msg && <p data-testid="settings-msg" className="mt-3 text-sm text-text-body">{msg}</p>}
       <p className="mt-4 text-xs text-muted flex items-center gap-1">
         <KeyRound className="w-3 h-3" />
-        Keys are stored locally in ~/.aihome/workbench.db; queries run server-side.
+        {t('settings.balance.storageNote')}
       </p>
     </section>
   );

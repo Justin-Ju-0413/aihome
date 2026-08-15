@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FolderOpen, ScanSearch, Save, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useI18n } from '@/lib/i18n';
 
 type PreviewResult = {
   count: number;
@@ -13,6 +14,7 @@ type PreviewResult = {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [step, setStep] = useState(1);
   const [pathsText, setPathsText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -28,7 +30,7 @@ export default function OnboardingPage() {
   async function handlePreview() {
     const paths = parsePaths();
     if (paths.length === 0) {
-      toast.error('请至少输入一个目录路径');
+      toast.error(t('onboarding.noPathsError'));
       return;
     }
     setBusy(true);
@@ -58,11 +60,11 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paths }),
       });
-      if (!res.ok) throw new Error('保存失败');
-      toast.success('工作区已保存');
+      if (!res.ok) throw new Error(t('onboarding.saveFailed'));
+      toast.success(t('onboarding.saveSuccess'));
       router.push('/board');
     } catch {
-      toast.error('保存失败');
+      toast.error(t('onboarding.saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -70,11 +72,11 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <h1 className="mb-2 text-2xl font-bold">欢迎使用 AIHome</h1>
-      <p className="mb-6 text-sm text-gray-500">首次使用：选择存放 agent 定义（AGENTS.md / SKILL.md）的目录。</p>
+      <h1 className="mb-2 text-2xl font-bold">{t('onboarding.welcome')}</h1>
+      <p className="mb-6 text-sm text-gray-500">{t('onboarding.intro')}</p>
 
       <ol className="mb-6 flex items-center gap-2 text-sm">
-        {['选择目录', '预览扫描', '保存'].map((label, i) => (
+        {[t('onboarding.stepChooseDir'), t('onboarding.stepPreview'), t('onboarding.stepSave')].map((label, i) => (
           <li key={label} className="flex items-center gap-2">
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -91,7 +93,7 @@ export default function OnboardingPage() {
 
       {step === 1 && (
         <div className="space-y-4">
-          <label className="block text-sm font-medium">工作区目录（每行一个绝对路径）</label>
+          <label className="block text-sm font-medium">{t('onboarding.workspaceDirLabel')}</label>
           <textarea
             value={pathsText}
             onChange={(e) => setPathsText(e.target.value)}
@@ -106,7 +108,7 @@ export default function OnboardingPage() {
               disabled={parsePaths().length === 0}
               className="rounded bg-primary px-4 py-2 text-sm text-white disabled:opacity-50 flex items-center gap-1"
             >
-              下一步 <ChevronRight className="w-4 h-4" />
+              {t('common.next')} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -126,7 +128,7 @@ export default function OnboardingPage() {
               onClick={() => setStep(1)}
               className="rounded border px-4 py-2 text-sm flex items-center gap-1"
             >
-              <ChevronLeft className="w-4 h-4" /> 返回
+              <ChevronLeft className="w-4 h-4" /> {t('common.back')}
             </button>
             <button
               onClick={handlePreview}
@@ -134,7 +136,7 @@ export default function OnboardingPage() {
               data-testid="onboarding-preview"
               className="rounded bg-primary px-4 py-2 text-sm text-white disabled:opacity-50 flex items-center gap-1"
             >
-              <ScanSearch className="w-4 h-4" /> 预览扫描
+              <ScanSearch className="w-4 h-4" /> {t('onboarding.stepPreview')}
             </button>
           </div>
         </div>
@@ -144,7 +146,7 @@ export default function OnboardingPage() {
         <div className="space-y-4">
           <div className="rounded border border-card-border p-4 text-sm">
             <p className="font-medium" data-testid="onboarding-count">
-              发现 {preview.count} 个 agent/skill
+              {t('onboarding.foundCount', { n: preview.count })}
             </p>
             {preview.agents.length > 0 && (
               <ul className="mt-2 max-h-40 overflow-auto space-y-0.5 text-xs text-gray-500">
@@ -168,7 +170,7 @@ export default function OnboardingPage() {
               onClick={() => setStep(2)}
               className="rounded border px-4 py-2 text-sm flex items-center gap-1"
             >
-              <ChevronLeft className="w-4 h-4" /> 返回
+              <ChevronLeft className="w-4 h-4" /> {t('common.back')}
             </button>
             <button
               onClick={handleSave}
@@ -176,7 +178,7 @@ export default function OnboardingPage() {
               data-testid="onboarding-save"
               className="rounded bg-primary px-4 py-2 text-sm text-white disabled:opacity-50 flex items-center gap-1"
             >
-              <Save className="w-4 h-4" /> 保存工作区
+              <Save className="w-4 h-4" /> {t('common.saveWorkspace')}
             </button>
           </div>
         </div>

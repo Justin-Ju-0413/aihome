@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/lib/i18n';
+
 type Skill = {
   id: string;
   name: string;
@@ -8,8 +10,9 @@ type Skill = {
 };
 
 export function SkillRow({ skill }: { skill: Skill }) {
+  const { t } = useI18n();
   async function handleDelete() {
-    if (!window.confirm(`删除 ${skill.name}？将移除其在所有启用平台上的链接（不删除平台目录内容）。`)) return;
+    if (!window.confirm(t('registry.deleteConfirm', { name: skill.name }))) return;
     await fetch(`/api/registry/skills/${skill.id}`, { method: 'DELETE' });
     window.location.reload();
   }
@@ -32,13 +35,13 @@ export function SkillRow({ skill }: { skill: Skill }) {
                     : 'rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500'
               }
             >
-              {p.name}: {p.status === 'none' ? '未同步' : p.status}
+              {p.name}: {p.status === 'none' ? t('registry.notSynced') : p.status}
             </span>
           ))}
         </div>
       </div>
       <button onClick={handleDelete} className="text-sm text-red-500" data-testid={`delete-${skill.id}`}>
-        删除
+        {t('common.delete')}
       </button>
     </li>
   );

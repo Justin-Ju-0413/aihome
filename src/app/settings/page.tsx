@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Save, Plus, Trash2, FolderOpen, RefreshCw, Download, HeartPulse } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
 import { toast } from 'sonner';
+import { useI18n } from '@/lib/i18n';
 import { EndpointSettings } from '@/components/sync/EndpointSettings';
 import { WorkbenchBalanceSection } from '@/components/settings/WorkbenchBalanceSection';
 import type { WorkspaceConfig, AgentGroup } from '@/lib/types';
@@ -12,6 +13,7 @@ import type { WorkspaceConfig, AgentGroup } from '@/lib/types';
 const DEFAULT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const { setGroups } = useAppStore();
   const [config, setConfig] = useState<WorkspaceConfig | null>(null);
   const [newPath, setNewPath] = useState('');
@@ -26,7 +28,7 @@ export default function SettingsPage() {
       const data = await res.json();
       setConfig(data);
     } catch {
-      toast.error('Failed to load config');
+      toast.error(t('settings.page.loadFailed'));
     }
   }, []);
 
@@ -45,12 +47,12 @@ export default function SettingsPage() {
         body: JSON.stringify(config)
       });
       if (res.ok) {
-        toast.success('Settings saved');
+        toast.success(t('common.saved'));
       } else {
-        toast.error('Failed to save');
+        toast.error(t('common.saveFailed'));
       }
     } catch {
-      toast.error('Failed to save');
+      toast.error(t('common.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -103,12 +105,12 @@ export default function SettingsPage() {
     try {
       const res = await fetch('/api/scan', { method: 'POST' });
       const data = await res.json();
-      toast.success(`Found ${data.agents.length} agents`);
+      toast.success(t('settings.page.scanFound', { count: data.agents.length }));
       if (data.errors.length > 0) {
         data.errors.forEach((err: string) => toast.error(err));
       }
     } catch {
-      toast.error('Scan failed');
+      toast.error(t('settings.page.scanFailed'));
     } finally {
       setIsScanning(false);
     }
@@ -128,7 +130,7 @@ export default function SettingsPage() {
   if (!config) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted">Loading...</div>
+        <div className="animate-pulse text-muted">{t('common.loading')}</div>
       </div>
     );
   }
@@ -136,9 +138,9 @@ export default function SettingsPage() {
   return (
     <div className="h-full flex flex-col">
       <header className="px-6 py-8 text-center">
-        <h1 className="font-heading text-3xl font-bold text-heading">Settings</h1>
+        <h1 className="font-heading text-3xl font-bold text-heading">{t('settings.page.title')}</h1>
         <div className="w-16 h-px bg-divider mx-auto mt-3" />
-        <p className="text-sm text-muted mt-2">Configure workspace and preferences</p>
+        <p className="text-sm text-muted mt-2">{t('settings.page.subtitle')}</p>
 
         <div className="flex items-center justify-center gap-3 mt-6">
           <Link
@@ -147,29 +149,29 @@ export default function SettingsPage() {
             className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border glass-input"
           >
             <HeartPulse className="w-4 h-4" />
-            健康检查
+            {t('common.healthCheck')}
           </Link>
           <button
             onClick={handleExport}
             className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg flex items-center gap-2 border border-card-border glass-input"
           >
             <Download className="w-4 h-4" />
-            Export
+            {t('common.export')}
           </button>
           <button
             onClick={handleSaveConfig}
             disabled={isSaving || config?.readonly === true}
             data-testid="settings-save-btn"
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
-            title={config?.readonly === true ? '只读演示模式：写操作已禁用' : undefined}
+            title={config?.readonly === true ? t('settings.page.readonlyTitle') : undefined}
           >
             <Save className="w-4 h-4" />
-            {config?.readonly === true ? '只读模式' : isSaving ? 'Saving...' : 'Save'}
+            {config?.readonly === true ? t('settings.page.readonlyMode') : isSaving ? t('common.saving') : t('common.save')}
           </button>
         </div>
         {config?.readonly === true && (
           <p className="mt-2 text-xs text-amber-600" data-testid="readonly-banner">
-            只读演示模式：工作区写操作已禁用（AIHOME_READONLY 或 config.readonly）
+            {t('settings.page.readonlyBanner')}
           </p>
         )}
       </header>
@@ -177,9 +179,9 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
         {/* Workspace Info */}
         <section className="glass-panel rounded-lg border border-card-border p-6">
-          <h2 className="font-heading text-lg font-semibold text-heading mb-4">Workspace</h2>
+          <h2 className="font-heading text-lg font-semibold text-heading mb-4">{t('common.workspace')}</h2>
           <div>
-            <label className="block text-sm font-medium text-text-body mb-2">Name</label>
+            <label className="block text-sm font-medium text-text-body mb-2">{t('common.name')}</label>
             <input
               type="text"
               value={config.name}
@@ -192,17 +194,18 @@ export default function SettingsPage() {
         {/* Scan Paths */}
         <section className="glass-panel rounded-lg border border-card-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-lg font-semibold text-heading">Scan Paths</h2>
+            <h2 className="font-heading text-lg font-semibold text-heading">{t('settings.page.scanPaths')}</h2>
             <button
               onClick={handleRescan}
               disabled={isScanning}
+              data-testid="settings-rescan-btn"
               className="px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
-              Rescan
+              {t('common.refresh')}
             </button>
           </div>
-          <p className="text-sm text-muted mb-4">Directories to scan for Agent and Skill definitions</p>
+          <p className="text-sm text-muted mb-4">{t('settings.page.scanPathsDesc')}</p>
 
           <div className="space-y-2 mb-4">
             {config.paths.map((path, index) => (
@@ -234,7 +237,7 @@ export default function SettingsPage() {
               className="px-4 py-2 glass-input text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add
+              {t('common.add')}
             </button>
           </div>
         </section>
@@ -242,9 +245,9 @@ export default function SettingsPage() {
         {/* Groups */}
         <section className="glass-panel rounded-lg border border-card-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-lg font-semibold text-heading">Groups</h2>
+            <h2 className="font-heading text-lg font-semibold text-heading">{t('settings.page.groups')}</h2>
           </div>
-          <p className="text-sm text-muted mb-4">Organize agents into groups on the kanban board</p>
+          <p className="text-sm text-muted mb-4">{t('settings.page.groupsDesc')}</p>
 
           <div className="space-y-2 mb-4">
             {config.groups.map((group) => (
@@ -268,7 +271,7 @@ export default function SettingsPage() {
               type="text"
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="Group name"
+              placeholder={t('settings.page.groupNamePlaceholder')}
               className="flex-1 px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
               onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
             />
@@ -290,7 +293,7 @@ export default function SettingsPage() {
               className="px-4 py-2 glass-input text-text-body border border-card-border rounded-lg hover:bg-primary/10 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add
+              {t('common.add')}
             </button>
           </div>
         </section>
@@ -300,11 +303,11 @@ export default function SettingsPage() {
 
         {/* About */}
         <section className="glass-panel rounded-lg border border-card-border p-6">
-          <h2 className="font-heading text-lg font-semibold text-heading mb-4">About</h2>
+          <h2 className="font-heading text-lg font-semibold text-heading mb-4">{t('settings.page.about')}</h2>
           <div className="text-sm text-muted space-y-1">
-            <p>AIHome - AI Agent Visual Manager</p>
-            <p>Version 1.0.0</p>
-            <p>Built with Next.js, React, and TailwindCSS</p>
+            <p>{t('settings.page.aboutTagline')}</p>
+            <p>{t('settings.page.aboutVersion', { version: '1.0.0' })}</p>
+            <p>{t('settings.page.aboutBuiltWith')}</p>
           </div>
         </section>
 

@@ -6,6 +6,7 @@ import { Bot, Sparkles, FileText, FolderOpen, MoreVertical } from 'lucide-react'
 import { useState } from 'react';
 import type { AgentNode } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 interface AgentCardProps {
   agent: AgentNode;
@@ -13,6 +14,7 @@ interface AgentCardProps {
 }
 
 export function AgentCard({ agent, onSelect }: AgentCardProps) {
+  const { t } = useI18n();
   const [showMenu, setShowMenu] = useState(false);
   
   const {
@@ -78,7 +80,7 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
 
       {/* Description */}
       <p className="text-sm text-text-body line-clamp-2 mb-3">
-        {agent.description || 'No description'}
+        {agent.description || t('board.agent.noDescription')}
       </p>
 
       {/* Footer */}
@@ -86,7 +88,7 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
         {agent.associatedFiles.total > 0 && (
           <span className="flex items-center gap-1">
             <FileText className="w-3 h-3" />
-            {agent.associatedFiles.total} files
+            {t('board.agent.filesCount', { count: agent.associatedFiles.total })}
           </span>
         )}
         <span className="flex items-center gap-1">

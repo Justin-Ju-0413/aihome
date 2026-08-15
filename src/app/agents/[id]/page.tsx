@@ -6,10 +6,12 @@ import { ArrowLeft, Save, Trash2, FileText, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import MDEditor from '@uiw/react-md-editor';
 import type { AgentNode } from '@/lib/types';
+import { useI18n } from '@/lib/i18n';
 
 export default function AgentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { t } = useI18n();
   const [agent, setAgent] = useState<AgentNode | null>(null);
   const [frontmatter, setFrontmatter] = useState<Record<string, unknown>>({});
   const [markdownBody, setMarkdownBody] = useState('');
@@ -36,10 +38,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         // For now, just set empty
       }
     } catch {
-      toast.error('Failed to load agent');
+      toast.error(t('agents.detail.loadFailed'));
       router.push('/agents');
     }
-  }, [id, router, setAgent, setFrontmatter, setMarkdownBody]);
+  }, [id, router, setAgent, setFrontmatter, setMarkdownBody, t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch agent detail on mount / id change
@@ -63,33 +65,33 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       });
 
       if (res.ok) {
-        toast.success('Saved successfully');
+        toast.success(t('agents.detail.saved'));
       } else {
-        toast.error('Failed to save');
+        toast.error(t('agents.detail.saveFailed'));
       }
     } catch {
-      toast.error('Failed to save');
+      toast.error(t('agents.detail.saveFailed'));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!agent || !confirm(`Delete "${agent.name}"? This cannot be undone.`)) return;
+    if (!agent || !window.confirm(t('board.card.confirmDelete', { name: agent.name }))) return;
 
     try {
       await fetch(`/api/agents/${id}`, { method: 'DELETE' });
-      toast.success('Agent deleted');
+      toast.success(t('board.card.deleted'));
       router.push('/agents');
     } catch {
-      toast.error('Failed to delete');
+      toast.error(t('agents.detail.deleteFailed'));
     }
   };
 
   if (!agent) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-pulse text-muted">Loading...</div>
+        <div className="animate-pulse text-muted">{t('common.loading')}</div>
       </div>
     );
   }
@@ -125,7 +127,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
-              Delete
+              {t('common.delete')}
             </button>
             <button
               onClick={handleSave}
@@ -134,23 +136,23 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 mt-4">
-          {['edit', 'files', 'preview'].map(tab => (
+          {(['edit', 'files', 'preview'] as const).map(tab => (
             <button
               key={tab}
               data-testid={`tab-${tab}`}
-              onClick={() => setActiveTab(tab as 'edit' | 'files' | 'preview')}
+              onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab ? 'bg-primary/10 text-primary' : 'text-muted hover:bg-primary/5'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {t(tabLabels[tab] as 'agents.detail.tabEdit' | 'agents.detail.tabFiles' | 'agents.detail.tabPreview')}
             </button>
           ))}
         </div>
@@ -163,7 +165,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             {/* Frontmatter Editor (for SKILL.md) */}
             {agent.type === 'skill' && Object.keys(frontmatter).length > 0 && (
               <div className="glass-panel rounded-lg border border-card-border p-6">
-                <h2 className="font-heading text-lg font-semibold text-heading mb-4">Metadata (Frontmatter)</h2>
+                <h2 className="font-heading text-lg font-semibold text-heading mb-4">{t('agents.detail.metadataFrontmatter')}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   {Object.entries(frontmatter).map(([key, value]) => (
                     <div key={key}>
@@ -196,7 +198,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             {/* Markdown Editor */}
             <div className="glass-panel rounded-lg border border-card-border overflow-hidden">
               <div className="px-4 py-3 border-b border-card-border bg-primary/5">
-                <h2 className="text-sm font-medium text-text-body">Content</h2>
+                <h2 className="text-sm font-medium text-text-body">{t('agents.detail.content')}</h2>
               </div>
               <div data-color-mode="light">
                 <MDEditor
@@ -215,19 +217,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <div className="glass-panel rounded-lg border border-card-border p-6">
               <h2 className="font-heading text-lg font-semibold text-heading mb-4 flex items-center gap-2">
                 <FolderOpen className="w-5 h-5" />
-                Files in {agent.dirPath.split('/').pop()}
+                {t('agents.detail.filesIn', { name: agent.dirPath.split('/').pop() || '' })}
               </h2>
               <div className="space-y-2">
                 <FileRow name="AGENTS.md" isMain />
                 {agent.type === 'skill' && <FileRow name="SKILL.md" isMain />}
               </div>
               <div className="mt-4 text-sm text-muted space-y-1">
-                <p>Directory: {agent.dirPath}</p>
-                <p>Associated files: {agent.associatedFiles.total}</p>
-                {agent.associatedFiles.scripts > 0 && <p>Scripts: {agent.associatedFiles.scripts}</p>}
-                {agent.associatedFiles.references > 0 && <p>References: {agent.associatedFiles.references}</p>}
-                {agent.associatedFiles.assets > 0 && <p>Assets: {agent.associatedFiles.assets}</p>}
-                {agent.associatedFiles.rules > 0 && <p>Rules: {agent.associatedFiles.rules}</p>}
+                <p>{t('agents.detail.directory', { path: agent.dirPath })}</p>
+                <p>{t('agents.detail.associatedFiles', { count: agent.associatedFiles.total })}</p>
+                {agent.associatedFiles.scripts > 0 && <p>{t('agents.detail.scriptsCount', { count: agent.associatedFiles.scripts })}</p>}
+                {agent.associatedFiles.references > 0 && <p>{t('agents.detail.referencesCount', { count: agent.associatedFiles.references })}</p>}
+                {agent.associatedFiles.assets > 0 && <p>{t('agents.detail.assetsCount', { count: agent.associatedFiles.assets })}</p>}
+                {agent.associatedFiles.rules > 0 && <p>{t('agents.detail.rulesCount', { count: agent.associatedFiles.rules })}</p>}
               </div>
             </div>
           </div>
@@ -247,12 +249,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   );
 }
 
+const tabLabels: Record<'edit' | 'files' | 'preview', string> = {
+  edit: 'agents.detail.tabEdit',
+  files: 'agents.detail.tabFiles',
+  preview: 'agents.detail.tabPreview',
+};
+
 function FileRow({ name, isMain }: { name: string; isMain?: boolean }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center gap-3 px-3 py-2 hover:bg-primary/5 rounded-lg">
       <FileText className={`w-4 h-4 ${isMain ? 'text-primary' : 'text-muted'}`} />
       <span className="text-sm text-text-body">{name}</span>
-      {isMain && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Main</span>}
+      {isMain && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{t('agents.detail.main')}</span>}
     </div>
   );
 }

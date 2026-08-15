@@ -1,26 +1,28 @@
 'use client';
 
 import type { SyncConflict } from '@/lib/sync/engine';
+import { useI18n } from '@/lib/i18n';
 
 export function ConflictsList({ conflicts }: { conflicts: SyncConflict[] }) {
+  const { t } = useI18n();
   if (conflicts.length === 0) {
     return (
       <section>
-        <h2 className="font-heading text-xl font-semibold mb-2">冲突</h2>
-        <p className="text-sm text-secondary">无冲突</p>
+        <h2 className="font-heading text-xl font-semibold mb-2">{t('sync.conflict.title')}</h2>
+        <p className="text-sm text-secondary">{t('sync.conflict.none')}</p>
       </section>
     );
   }
   return (
     <section>
-      <h2 className="font-heading text-xl font-semibold mb-2">冲突（{conflicts.length}）</h2>
+      <h2 className="font-heading text-xl font-semibold mb-2">{t('sync.conflict.titleWithCount', { count: conflicts.length })}</h2>
       <div className="border border-divider rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-(--color-card-bg) text-left">
             <tr>
-              <th className="px-4 py-2">技能</th>
-              <th className="px-4 py-2">版本</th>
-              <th className="px-4 py-2">来源端</th>
+              <th className="px-4 py-2">{t('common.skill')}</th>
+              <th className="px-4 py-2">{t('common.version')}</th>
+              <th className="px-4 py-2">{t('sync.conflict.sourceEndpoint')}</th>
             </tr>
           </thead>
           <tbody>

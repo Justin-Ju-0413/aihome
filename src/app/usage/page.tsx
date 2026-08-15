@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useI18n } from '@/lib/i18n';
 import { OverviewCards } from '@/components/usage/OverviewCards';
 import { UsageFilters } from '@/components/usage/UsageFilters';
 import { KLineChart } from '@/components/usage/KLineChart';
@@ -18,14 +19,15 @@ interface EventsResponse {
   unknownPricingModels?: string[];
 }
 
-async function fetchEvents(source: string, range: UsageRange, dimension: string): Promise<EventsResponse> {
+async function fetchEvents(source: string, range: UsageRange, dimension: string, loadFailedMsg: string): Promise<EventsResponse> {
   const res = await fetch(`/api/usage/events?source=${source}&range=${range}&dimension=${dimension}`);
   const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? 'load failed');
+  if (!res.ok) throw new Error(json.error ?? loadFailedMsg);
   return json;
 }
 
 export default function UsagePage() {
+  const { t } = useI18n();
   const [source, setSource] = useState('all');
   const [range, setRange] = useState<UsageRange>('24h');
   const [dimension, setDimension] = useState<'cost' | 'tokens'>('cost');
@@ -35,39 +37,39 @@ export default function UsagePage() {
 
   const load = useCallback(async () => {
     try {
-      const json = await fetchEvents(source, range, dimension);
+      const json = await fetchEvents(source, range, dimension, t('usage.loadFailed'));
       setData(json);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to load usage data');
+      toast.error(err instanceof Error ? err.message : t('usage.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [source, range, dimension]);
+  }, [source, range, dimension, t]);
 
   useEffect(() => {
-    fetchEvents(source, range, dimension)
+    fetchEvents(source, range, dimension, t('usage.loadFailed'))
       .then(setData)
-      .catch((err) => toast.error(err instanceof Error ? err.message : 'Failed to load usage data'))
+      .catch((err) => toast.error(err instanceof Error ? err.message : t('usage.loadFailed')))
       .finally(() => setLoading(false));
-  }, [source, range, dimension]);
+  }, [source, range, dimension, t]);
 
   const rescan = useCallback(async () => {
     setRescanning(true);
     try {
       const res = await fetch('/api/usage/rescan', { method: 'POST', body: JSON.stringify({}) });
-      if (!res.ok) throw new Error('rescan failed');
-      toast.success('Usage data refreshed');
+      if (!res.ok) throw new Error(t('usage.rescanFailed'));
+      toast.success(t('usage.refreshed'));
       await load();
     } catch {
-      toast.error('Rescan failed');
+      toast.error(t('usage.rescanFailed'));
     } finally {
       setRescanning(false);
     }
-  }, [load]);
+  }, [load, t]);
 
   return (
     <main data-testid="usage-page" className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="font-heading text-3xl font-bold text-primary mb-6">Usage</h1>
+      <h1 className="font-heading text-3xl font-bold text-primary mb-6">{t('usage.pageTitle')}</h1>
       <UsageFilters
         source={source}
         range={range}
@@ -77,7 +79,7 @@ export default function UsagePage() {
         rescanning={rescanning}
       />
       {loading ? (
-        <p className="text-sm text-secondary">Loading usage data…</p>
+        <p className="text-sm text-secondary">{t('usage.loading')}</p>
       ) : data ? (
         <>
           <div data-testid="usage-source-status" className="flex flex-wrap gap-2 mb-4">
@@ -101,13 +103,13 @@ export default function UsagePage() {
           <OverviewCards totals={data.totals} />
           <div data-testid="usage-kline" className="glass-panel rounded-lg border border-divider p-4 mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-heading text-lg font-bold text-primary">K-line</h2>
+              <h2 className="font-heading text-lg font-bold text-primary">{t('usage.kline')}</h2>
               <button
                 data-testid="usage-dimension"
                 onClick={() => setDimension((d) => (d === 'cost' ? 'tokens' : 'cost'))}
                 className="text-xs text-secondary hover:text-primary"
               >
-                {dimension === 'cost' ? 'Amount' : 'Tokens'}
+                {dimension === 'cost' ? t('usage.amount') : t('usage.tokens')}
               </button>
             </div>
             <KLineChart buckets={data.kline} dimension={dimension} />
