@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { changePercent, spendTier } from '@/lib/widget/kline';
 import type { Candle } from '@/lib/widget/kline';
 import { KLine } from './KLine';
@@ -10,6 +11,7 @@ type KlineBucket = { start: number; open: number; high: number; low: number; clo
 type UsageResponse = { kline?: KlineBucket[]; totals?: { today: number } };
 
 export function WidgetApp() {
+  const { t } = useI18n();
   const [candles, setCandles] = useState<Candle[]>([]);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState(false);
@@ -43,7 +45,7 @@ export function WidgetApp() {
   if (error) {
     return (
       <div className="p-2 text-[10px] text-gray-400" data-testid="widget-error">
-        AIHome 服务不可用——请打开主窗口
+        {t('widget.serviceUnavailable')}
       </div>
     );
   }
@@ -51,7 +53,7 @@ export function WidgetApp() {
   return (
     <div className="p-2 text-[10px] leading-tight">
       <div className="flex items-baseline justify-between">
-        <span className="font-semibold">AI 花费</span>
+        <span className="font-semibold">{t('widget.title')}</span>
         <span
           data-testid="widget-total"
           className={tier === 'green' ? 'text-green-600' : tier === 'yellow' ? 'text-amber-500' : 'text-red-500'}

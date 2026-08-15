@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react';
 import type { AgentNode, AgentGroup } from '@/lib/types';
 import { AgentCard } from './AgentCard';
+import { useI18n } from '@/lib/i18n';
 
 interface KanbanColumnProps {
   group: AgentGroup;
@@ -14,6 +15,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ group, agents, onAddAgent, onSelectAgent }: KanbanColumnProps) {
+  const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: group.id });
 
   return (
@@ -55,7 +57,7 @@ export function KanbanColumn({ group, agents, onAddAgent, onSelectAgent }: Kanba
           className="w-full py-3 border-2 border-dashed border-card-border rounded-lg text-muted hover:text-primary hover:border-primary transition-colors flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Add Agent
+          {t('board.column.addAgent')}
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import type { TableRow } from '@/lib/usage/aggregate';
 
 function costColor(v: number): string {
@@ -10,6 +11,7 @@ function costColor(v: number): string {
 }
 
 export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow[]; unknownPricingModels?: string[] }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (source: string) => {
     setExpanded((prev) => {
@@ -24,7 +26,7 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
     return (
       <section data-testid="usage-table" className="glass-panel rounded-lg border border-divider p-8 text-center">
         <p className="text-sm text-secondary">
-          No usage data yet — click Rescan after using your AI tools.
+          {t('usage.emptyText')}
         </p>
       </section>
     );
@@ -35,11 +37,11 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs tracking-widest text-secondary border-b border-divider">
-            <th className="px-4 py-3">Agent</th>
-            <th className="px-4 py-3 text-right">24h Tokens</th>
-            <th className="px-4 py-3 text-right">24h Cost</th>
-            <th className="px-4 py-3 text-right">Month Tokens</th>
-            <th className="px-4 py-3 text-right">Month Cost</th>
+            <th className="px-4 py-3">{t('usage.tableAgent')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.table24hTokens')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.table24hCost')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.tableMonthTokens')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.tableMonthCost')}</th>
           </tr>
         </thead>
         <tbody>
@@ -63,7 +65,7 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
                         {m.model}
                         {unknownPricingModels.includes(m.model) && (
                           <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700" data-testid="unknown-pricing-badge">
-                            未知定价
+                            {t('usage.unknownPricing')}
                           </span>
                         )}
                       </td>

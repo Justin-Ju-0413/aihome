@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import type { SiteView } from '@/stores/workbench-store';
 import PlatformCard from '@/components/platform-card';
@@ -7,9 +8,11 @@ import SearchFilter from '@/components/search-filter';
 import KeyDialog from '@/components/key-dialog';
 import SiteFormDialog from '@/components/site-form-dialog';
 
+// 分类值（存储规范值，用于过滤/分组；展示文案经 categoryLabel 本地化）
 const CATEGORIES = ['全部', '对话', 'API平台', '图像', '代码', '知识库', '搜索', '其他'];
 
 export default function Home() {
+  const { t } = useI18n();
   const sites = useWorkbenchStore((s) => s.sites);
   const loaded = useWorkbenchStore((s) => s.loaded);
   const search = useWorkbenchStore((s) => s.search);
@@ -20,6 +23,19 @@ export default function Home() {
   const [editing, setEditing] = useState<SiteView | null>(null);
   const [keyFor, setKeyFor] = useState<SiteView | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+
+  const categoryLabel = (c: string): string => {
+    switch (c) {
+      case '全部': return t('workbench.catAll');
+      case '对话': return t('workbench.catChat');
+      case 'API平台': return t('workbench.catApi');
+      case '图像': return t('workbench.catImage');
+      case '代码': return t('workbench.catCode');
+      case '知识库': return t('workbench.catKnowledge');
+      case '搜索': return t('workbench.catSearch');
+      default: return t('workbench.catOther');
+    }
+  };
 
   useEffect(() => { void load(); }, [load]);
 
@@ -45,15 +61,15 @@ export default function Home() {
     <main className="mx-auto max-w-6xl px-6 py-8">
       <header className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-heading">Workbench</h1>
-        <button onClick={() => setShowAdd(true)} data-testid="add-site" className="rounded-lg bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">+ 添加平台</button>
+        <button onClick={() => setShowAdd(true)} data-testid="add-site" className="rounded-lg bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">+ {t('workbench.addPlatform')}</button>
       </header>
       <SearchFilter search={search} setSearch={setSearch} category={category} setCategory={setCategory} categories={CATEGORIES} />
-      {!loaded && <p className="mt-8 text-center text-body">加载中…</p>}
-      {loaded && groups.length === 0 && <p className="mt-8 text-center text-body">没有匹配的平台</p>}
+      {!loaded && <p className="mt-8 text-center text-body">{t('workbench.loading')}</p>}
+      {loaded && groups.length === 0 && <p className="mt-8 text-center text-body">{t('workbench.noMatch')}</p>}
       <div className="mt-6 space-y-8">
         {groups.map(([cat, items]) => (
           <section key={cat} data-testid={`group-${cat}`}>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-body">{cat}</h2>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-body">{categoryLabel(cat)}</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {items.map((s) => <PlatformCard key={s.id} site={s} onEdit={setEditing} onConfigKey={setKeyFor} />)}
             </div>

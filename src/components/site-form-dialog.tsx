@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import type { SiteView } from '@/stores/workbench-store';
 
 const CATEGORIES = ['对话', 'API平台', '图像', '代码', '知识库', '搜索', '其他'];
 
 export default function SiteFormDialog({ site, onClose }: { site: SiteView | null; onClose: () => void }) {
+  const { t } = useI18n();
   const saveSite = useWorkbenchStore((s) => s.saveSite);
   const removeSite = useWorkbenchStore((s) => s.removeSite);
   const [name, setName] = useState(site?.name ?? '');
@@ -15,10 +17,22 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
   const [notes, setNotes] = useState(site?.notes ?? '');
   const [error, setError] = useState('');
 
+  const categoryLabel = (c: string): string => {
+    switch (c) {
+      case '对话': return t('workbench.catChat');
+      case 'API平台': return t('workbench.catApi');
+      case '图像': return t('workbench.catImage');
+      case '代码': return t('workbench.catCode');
+      case '知识库': return t('workbench.catKnowledge');
+      case '搜索': return t('workbench.catSearch');
+      default: return t('workbench.catOther');
+    }
+  };
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !url.trim()) {
-      setError('名称和网址必填');
+      setError(t('workbench.nameUrlRequired'));
       return;
     }
     try {
@@ -32,7 +46,7 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
       });
       onClose();
     } catch {
-      setError('保存失败');
+      setError(t('common.saveFailed'));
     }
   }
 
@@ -49,10 +63,10 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
         onClick={(e) => e.stopPropagation()}
         data-testid="site-form-dialog"
       >
-        <h2 className="mb-3 text-lg font-semibold">{site ? '编辑平台' : '添加平台'}</h2>
+        <h2 className="mb-3 text-lg font-semibold">{site ? t('workbench.editPlatform') : t('workbench.addPlatform')}</h2>
         <form onSubmit={(e) => void handleSave(e)} className="space-y-3">
           <label className="block text-sm">
-            名称
+            {t('common.name')}
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -60,7 +74,7 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
             />
           </label>
           <label className="block text-sm">
-            网址
+            {t('common.url')}
             <input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -69,17 +83,17 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
             />
           </label>
           <label className="block text-sm">
-            分类
+            {t('common.category')}
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="mt-1 w-full rounded-md border border-card-border px-2 py-1.5 text-sm"
             >
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map((c) => <option key={c} value={c}>{categoryLabel(c)}</option>)}
             </select>
           </label>
           <label className="block text-sm">
-            标签（逗号分隔）
+            {t('workbench.tagsLabel')}
             <input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
@@ -87,7 +101,7 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
             />
           </label>
           <label className="block text-sm">
-            备注
+            {t('common.notes')}
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -100,13 +114,13 @@ export default function SiteFormDialog({ site, onClose }: { site: SiteView | nul
             <div className="flex gap-2">
               {site && (
                 <button type="button" onClick={() => void handleDelete()} className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">
-                  删除
+                  {t('common.delete')}
                 </button>
               )}
             </div>
             <div className="flex gap-2">
-              <button type="button" onClick={onClose} className="rounded-md border border-card-border px-3 py-1.5 text-sm hover:bg-primary/5">取消</button>
-              <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">保存</button>
+              <button type="button" onClick={onClose} className="rounded-md border border-card-border px-3 py-1.5 text-sm hover:bg-primary/5">{t('common.cancel')}</button>
+              <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">{t('common.save')}</button>
             </div>
           </div>
         </form>

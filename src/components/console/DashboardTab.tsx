@@ -2,22 +2,24 @@
 
 import { Bot, CheckCircle2, AlertCircle, Loader2, TrendingUp, Clock, Coins, FileText, GitBranch } from 'lucide-react';
 import { useConsoleStore } from '@/stores/console-store';
+import { useI18n } from '@/lib/i18n';
 
 export function DashboardTab() {
   const stats = useConsoleStore((s) => s.stats);
   const agents = useConsoleStore((s) => s.agents);
+  const { t } = useI18n();
 
   const cards = stats
     ? [
-        { label: '总 Agent', value: stats.totalAgents, icon: Bot },
-        { label: '已完成', value: stats.completed, icon: CheckCircle2 },
-        { label: '运行中', value: stats.running, icon: Loader2 },
-        { label: '出错', value: stats.errored, icon: AlertCircle },
-        { label: '成功率', value: stats.successRate, icon: TrendingUp },
-        { label: '平均耗时', value: stats.avgDurationMs > 0 ? `${(stats.avgDurationMs / 1000).toFixed(1)}s` : '—', icon: Clock },
-        { label: '总 Token', value: stats.totalTokens, icon: Coins },
-        { label: '模板数', value: stats.templates, icon: FileText },
-        { label: '流水线', value: stats.pipelines, icon: GitBranch },
+        { label: t('console.totalAgents'), value: stats.totalAgents, icon: Bot },
+        { label: t('console.status.completed'), value: stats.completed, icon: CheckCircle2 },
+        { label: t('console.status.running'), value: stats.running, icon: Loader2 },
+        { label: t('console.status.error'), value: stats.errored, icon: AlertCircle },
+        { label: t('console.successRate'), value: stats.successRate, icon: TrendingUp },
+        { label: t('console.avgDuration'), value: stats.avgDurationMs > 0 ? `${(stats.avgDurationMs / 1000).toFixed(1)}s` : '—', icon: Clock },
+        { label: t('console.totalTokens'), value: stats.totalTokens, icon: Coins },
+        { label: t('console.totalTemplates'), value: stats.templates, icon: FileText },
+        { label: t('console.totalPipelines'), value: stats.pipelines, icon: GitBranch },
       ]
     : [];
 
@@ -37,7 +39,7 @@ export function DashboardTab() {
         ))}
       </div>
 
-      <h3 className="font-heading font-semibold text-heading mt-8 mb-3">最近 Agent</h3>
+      <h3 className="font-heading font-semibold text-heading mt-8 mb-3">{t('console.recentAgents')}</h3>
       <div className="glass-panel rounded-lg border border-card-border divide-y divide-divider">
         {agents.slice(0, 5).map((a) => (
           <div key={a.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
@@ -50,7 +52,7 @@ export function DashboardTab() {
           </div>
         ))}
         {agents.length === 0 && (
-          <div className="px-4 py-8 text-center text-muted text-sm">暂无 Agent</div>
+          <div className="px-4 py-8 text-center text-muted text-sm">{t('console.noAgents')}</div>
         )}
       </div>
     </div>

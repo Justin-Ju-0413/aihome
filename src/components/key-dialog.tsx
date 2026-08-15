@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import type { SiteView } from '@/stores/workbench-store';
 import type { KeyView } from '@/lib/workbench/types';
@@ -7,6 +8,7 @@ import type { KeyView } from '@/lib/workbench/types';
 const PROVIDERS = ['deepseek', 'openai', 'openrouter', 'none'];
 
 export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: () => void }) {
+  const { t } = useI18n();
   const saveKey = useWorkbenchStore((s) => s.saveKey);
   const deleteKey = useWorkbenchStore((s) => s.deleteKey);
   const setCurrentKey = useWorkbenchStore((s) => s.setCurrentKey);
@@ -26,14 +28,14 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!key.trim()) {
-      setError('key 不能为空');
+      setError(t('key.errorEmpty'));
       return;
     }
     try {
-      await saveKey(site.id, { label: label.trim() || '主 key', provider, key: key.trim() });
+      await saveKey(site.id, { label: label.trim() || t('key.defaultLabel'), provider, key: key.trim() });
       onClose();
     } catch {
-      setError('保存失败');
+      setError(t('common.saveFailed'));
     }
   }
 
@@ -44,7 +46,7 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
         onClick={(e) => e.stopPropagation()}
         data-testid="key-dialog"
       >
-        <h2 className="mb-3 text-lg font-semibold">配置 key — {site.name}</h2>
+        <h2 className="mb-3 text-lg font-semibold">{t('key.title', { name: site.name })}</h2>
 
         {keys.length > 0 && (
           <div className="mb-4 space-y-1.5">
@@ -53,16 +55,16 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
                 <div className="min-w-0 text-xs">
                   <span className="font-medium">{k.label}</span>{' '}
                   <span className="text-body">{k.masked}</span>
-                  {k.isCurrent && <span className="ml-1 text-green-600">当前</span>}
+                  {k.isCurrent && <span className="ml-1 text-green-600">{t('common.current')}</span>}
                 </div>
                 <div className="flex shrink-0 gap-1">
                   {!k.isCurrent && (
                     <button onClick={() => void setCurrentKey(site.id, k.id)} className="rounded border border-card-border px-1.5 py-0.5 text-xs hover:bg-primary/5">
-                      设为当前
+                      {t('common.setCurrent')}
                     </button>
                   )}
                   <button onClick={() => void deleteKey(k.id)} className="rounded border border-red-100 px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-50">
-                    删除
+                    {t('common.delete')}
                   </button>
                 </div>
               </div>
@@ -76,7 +78,7 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              placeholder="主 key"
+              placeholder={t('key.defaultLabel')}
               className="mt-1 w-full rounded-md border border-card-border px-2 py-1.5 text-sm"
             />
           </label>
@@ -101,8 +103,8 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
           </label>
           {error && <p className="text-xs text-red-600">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className="rounded-md border border-card-border px-3 py-1.5 text-sm hover:bg-primary/5">取消</button>
-            <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">保存</button>
+            <button type="button" onClick={onClose} className="rounded-md border border-card-border px-3 py-1.5 text-sm hover:bg-primary/5">{t('common.cancel')}</button>
+            <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">{t('common.save')}</button>
           </div>
         </form>
       </div>

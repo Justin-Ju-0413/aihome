@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { useConsoleStore } from '@/stores/console-store';
 import { fvApi } from '@/lib/fv/api';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
+import type { DictKey } from '@/lib/i18n';
 import type { ConsoleTab } from '@/lib/fv/types';
 import { FileTab } from '@/components/console/FileTab';
 import { AgentTab } from '@/components/console/AgentTab';
@@ -17,19 +19,20 @@ import { HistoryTab } from '@/components/console/HistoryTab';
 import { SettingsDrawer } from '@/components/console/SettingsDrawer';
 import { CreateAgentModal } from '@/components/console/CreateAgentModal';
 
-const TABS: Array<{ id: ConsoleTab; label: string; icon: typeof Bot }> = [
-  { id: 'files', label: '文件', icon: FolderTree },
-  { id: 'agents', label: 'Agent', icon: Bot },
-  { id: 'pipelines', label: '流水线', icon: GitBranch },
-  { id: 'dashboard', label: '看板', icon: LayoutDashboard },
-  { id: 'hermes', label: 'Hermes', icon: Sparkles },
-  { id: 'match', label: '匹配', icon: Wand2 },
-  { id: 'history', label: '历史', icon: History },
+const TABS: Array<{ id: ConsoleTab; labelKey: DictKey; icon: typeof Bot }> = [
+  { id: 'files', labelKey: 'tab.files', icon: FolderTree },
+  { id: 'agents', labelKey: 'common.agent', icon: Bot },
+  { id: 'pipelines', labelKey: 'tab.pipelines', icon: GitBranch },
+  { id: 'dashboard', labelKey: 'tab.dashboard', icon: LayoutDashboard },
+  { id: 'hermes', labelKey: 'console.hermes', icon: Sparkles },
+  { id: 'match', labelKey: 'tab.match', icon: Wand2 },
+  { id: 'history', labelKey: 'tab.history', icon: History },
 ];
 
 export default function ConsolePage() {
   const store = useConsoleStore();
   const cursorRef = useRef(0);
+  const { t } = useI18n();
 
   // 首次挂载：全量拉数据
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function ConsolePage() {
       store.loadStats(),
       store.loadHistory(),
     ]);
-    toast.success('已刷新');
+    toast.success(t('console.refreshed'));
   };
 
   return (
@@ -106,7 +109,7 @@ export default function ConsolePage() {
           <h1 className="font-heading text-3xl font-bold text-heading">Console</h1>
           <div className="w-16 h-px bg-divider mt-2" />
           <p className="text-sm text-muted mt-2">
-            FileVision 运行时控制台：文件可视化 + Agent 编排 + 一键匹配
+            {t('console.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -117,12 +120,12 @@ export default function ConsolePage() {
             )}
           >
             <span className={cn('w-2 h-2 rounded-full', runningCount > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-primary/40')} />
-            {runningCount > 0 ? `${runningCount} 运行中` : pendingCount > 0 ? `${pendingCount} 待启动` : '空闲'}
+            {runningCount > 0 ? t('console.agentsRunning', { count: runningCount }) : pendingCount > 0 ? t('console.agentsPending', { count: pendingCount }) : t('console.idle')}
           </span>
           <button
             onClick={() => void refreshAll()}
             className="p-2 hover:bg-primary/10 rounded-lg text-text-body"
-            title="刷新"
+            title={t('common.refresh')}
             data-testid="console-refresh"
           >
             <RefreshCw className="w-5 h-5" />
@@ -132,7 +135,7 @@ export default function ConsolePage() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90"
             data-testid="console-create-agent"
           >
-            <Plus className="w-4 h-4" /> 新 Agent
+            <Plus className="w-4 h-4" /> {t('console.newAgent')}
           </button>
           <button
             onClick={() => {
@@ -140,7 +143,7 @@ export default function ConsolePage() {
               store.setSettingsOpen(true);
             }}
             className="p-2 hover:bg-primary/10 rounded-lg text-text-body"
-            title="设置"
+            title={t('nav.settings')}
             data-testid="console-settings"
           >
             <Settings className="w-5 h-5" />
@@ -149,7 +152,7 @@ export default function ConsolePage() {
       </header>
 
       <nav className="px-6 flex gap-1 border-b border-divider" data-testid="console-tabs">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {TABS.map(({ id, labelKey, icon: Icon }) => (
           <button
             key={id}
             onClick={() => store.setActiveTab(id)}
@@ -162,7 +165,7 @@ export default function ConsolePage() {
             data-testid={`console-tab-${id}`}
           >
             <Icon className="w-4 h-4" />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </nav>

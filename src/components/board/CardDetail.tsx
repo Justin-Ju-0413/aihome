@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, Bot, Sparkles, FileText, FolderOpen, Trash2, Edit } from 'lucide-react';
 import type { AgentNode } from '@/lib/types';
 import { format } from 'date-fns';
+import { useI18n } from '@/lib/i18n';
 
 interface CardDetailProps {
   agent: AgentNode | null;
@@ -13,6 +14,7 @@ interface CardDetailProps {
 }
 
 export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps) {
+  const { t } = useI18n();
   const [content, setContent] = useState<string>('');
 
   useEffect(() => {
@@ -65,8 +67,8 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
         <div className="p-6 overflow-y-auto max-h-[50vh]">
           {/* Description */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-muted mb-2">Description</h3>
-            <p className="text-text-body">{agent.description || 'No description provided'}</p>
+            <h3 className="text-sm font-medium text-muted mb-2">{t('common.description')}</h3>
+            <p className="text-text-body">{agent.description || t('board.agent.noDescriptionProvided')}</p>
           </div>
 
           {/* Stats */}
@@ -74,19 +76,19 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
             <div className="bg-primary/5 rounded-lg p-4 border border-card-border">
               <div className="flex items-center gap-2 text-muted mb-1">
                 <FileText className="w-4 h-4" />
-                <span className="text-sm">Associated Files</span>
+                <span className="text-sm">{t('board.detail.associatedFiles')}</span>
               </div>
               <p className="text-2xl font-bold text-heading">{agent.associatedFiles.total}</p>
               <div className="text-xs text-muted mt-1">
-                {agent.associatedFiles.scripts > 0 && <span>{agent.associatedFiles.scripts} scripts</span>}
-                {agent.associatedFiles.references > 0 && <span>, {agent.associatedFiles.references} refs</span>}
-                {agent.associatedFiles.assets > 0 && <span>, {agent.associatedFiles.assets} assets</span>}
+                {agent.associatedFiles.scripts > 0 && <span>{t('board.detail.scriptsCount', { count: agent.associatedFiles.scripts })}</span>}
+                {agent.associatedFiles.references > 0 && <span>{t('board.detail.refsCount', { count: agent.associatedFiles.references })}</span>}
+                {agent.associatedFiles.assets > 0 && <span>{t('board.detail.assetsCount', { count: agent.associatedFiles.assets })}</span>}
               </div>
             </div>
             <div className="bg-primary/5 rounded-lg p-4 border border-card-border">
               <div className="flex items-center gap-2 text-muted mb-1">
                 <FolderOpen className="w-4 h-4" />
-                <span className="text-sm">Directory</span>
+                <span className="text-sm">{t('board.detail.directory')}</span>
               </div>
               <p className="text-sm font-mono text-text-body truncate">{agent.dirPath.split('/').pop()}</p>
               <p className="text-xs text-muted mt-1 truncate">{agent.dirPath}</p>
@@ -96,7 +98,7 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
           {/* Metadata */}
           {agent.metadata && Object.keys(agent.metadata).length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-muted mb-2">Metadata</h3>
+              <h3 className="text-sm font-medium text-muted mb-2">{t('board.detail.metadata')}</h3>
               <div className="bg-primary/5 rounded-lg p-4 space-y-2 border border-card-border">
                 {Object.entries(agent.metadata).map(([key, value]) => (
                   <div key={key} className="flex justify-between text-sm">
@@ -110,7 +112,7 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
 
           {/* Content Preview */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-muted mb-2">Content Preview</h3>
+            <h3 className="text-sm font-medium text-muted mb-2">{t('board.detail.contentPreview')}</h3>
             <pre className="bg-[#F8FAFD] border border-[#D6E2F0] text-primary rounded-lg p-4 text-xs overflow-x-auto max-h-48 font-mono">
               {content.slice(0, 1000)}{content.length > 1000 ? '\n...' : ''}
             </pre>
@@ -118,9 +120,9 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
 
           {/* File Info */}
           <div className="text-xs text-muted space-y-1">
-            <p>File: {agent.filePath}</p>
-            <p>Created: {format(new Date(agent.createdAt), 'PPP pp')}</p>
-            <p>Updated: {format(new Date(agent.updatedAt), 'PPP pp')}</p>
+            <p>{t('board.detail.file', { path: agent.filePath })}</p>
+            <p>{t('board.detail.created', { date: format(new Date(agent.createdAt), 'PPP pp') })}</p>
+            <p>{t('board.detail.updated', { date: format(new Date(agent.updatedAt), 'PPP pp') })}</p>
           </div>
         </div>
 
@@ -131,14 +133,14 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
             className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
-            Delete
+            {t('common.delete')}
           </button>
           <button
             onClick={() => onEdit(agent)}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2"
           >
             <Edit className="w-4 h-4" />
-            Edit
+            {t('common.edit')}
           </button>
         </div>
       </div>

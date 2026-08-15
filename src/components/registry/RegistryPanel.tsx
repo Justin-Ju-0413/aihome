@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { SkillRow } from './SkillRow';
+import { useI18n } from '@/lib/i18n';
 
 type Skill = {
   id: string;
@@ -12,6 +13,7 @@ type Skill = {
 type DoctorIssue = { skill: string; platform: string; type: string; detail: string; fixed?: boolean };
 
 export function RegistryPanel() {
+  const { t } = useI18n();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [issues, setIssues] = useState<DoctorIssue[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -65,9 +67,9 @@ export function RegistryPanel() {
   }
 
   async function handleImport() {
-    const name = window.prompt('技能名称（生成注册表 id）');
+    const name = window.prompt(t('registry.importNamePrompt'));
     if (!name) return;
-    const sourcePath = window.prompt('源目录绝对路径（含 SKILL.md 的目录）');
+    const sourcePath = window.prompt(t('registry.importSourcePrompt'));
     if (!sourcePath) return;
     try {
       await fetch('/api/registry/import', {
@@ -86,19 +88,19 @@ export function RegistryPanel() {
       {error && <div className="text-sm text-red-500">{error}</div>}
       <div className="flex flex-wrap gap-2">
         <button onClick={() => runSync()} disabled={busy} data-testid="registry-sync" className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50">
-          同步全部
+          {t('common.syncAll')}
         </button>
         <button onClick={() => runSync(true)} disabled={busy} data-testid="registry-sync-dryrun" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
-          试运行
+          {t('common.dryRun')}
         </button>
         <button onClick={() => runDoctor(false)} disabled={busy} data-testid="registry-doctor" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
-          健康检查
+          {t('common.healthCheck')}
         </button>
         <button onClick={() => runDoctor(true)} disabled={busy} data-testid="registry-doctor-fix" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
-          修复
+          {t('common.fix')}
         </button>
         <button onClick={handleImport} disabled={busy} data-testid="registry-import" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
-          导入
+          {t('common.import')}
         </button>
       </div>
 
@@ -107,7 +109,7 @@ export function RegistryPanel() {
           {issues.map((i, idx) => (
             <li key={idx}>
               [{i.type}] {i.skill}/{i.platform} — {i.detail}
-              {i.fixed ? ' ✓ 已修复' : ''}
+              {i.fixed ? t('registry.fixed') : ''}
             </li>
           ))}
         </ul>
@@ -117,7 +119,7 @@ export function RegistryPanel() {
         {skills.map((s) => (
           <SkillRow key={s.id} skill={s} />
         ))}
-        {skills.length === 0 && <li className="text-sm text-gray-400">注册表为空——点「导入」从平台目录导入技能</li>}
+        {skills.length === 0 && <li className="text-sm text-gray-400">{t('registry.empty')}</li>}
       </ul>
     </div>
   );

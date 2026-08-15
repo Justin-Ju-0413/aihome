@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useConsoleStore } from '@/stores/console-store';
 import { fvApi } from '@/lib/fv/api';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 import type { FvFileNode } from '@/lib/fv/types';
 
 function extClass(ext?: string): string {
@@ -27,6 +28,7 @@ function TreeItem({ node, depth, expanded, toggle, onSelect }: {
   const isFolder = node.type === 'folder';
   const isExpanded = expanded.has(node.path);
   const selected = useConsoleStore((s) => s.selectedFile);
+  const { t } = useI18n();
 
   return (
     <div>
@@ -51,7 +53,7 @@ function TreeItem({ node, depth, expanded, toggle, onSelect }: {
         )}
         <span className="truncate text-text-body">{node.name}</span>
         {!isFolder && node.opsCount ? (
-          <span className="ml-auto text-[10px] text-muted shrink-0">{node.opsCount}次</span>
+          <span className="ml-auto text-[10px] text-muted shrink-0">{t('console.opsCount', { count: node.opsCount })}</span>
         ) : null}
       </button>
       {isFolder && isExpanded && node.children?.map((c) => (
@@ -75,11 +77,12 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
   const [content, setContent] = useState<{ content: string | null; error?: string } | null>(null);
   const [diffs, setDiffs] = useState<Array<Record<string, unknown>>>([]);
   const agents = useConsoleStore((s) => s.agents);
+  const { t } = useI18n();
 
   useEffect(() => {
-    void fvApi.fileContent(filePath).then(setContent).catch(() => setContent({ content: null, error: '读取失败' }));
+    void fvApi.fileContent(filePath).then(setContent).catch(() => setContent({ content: null, error: t('console.readFailed') }));
     void fvApi.diffsByFile(filePath).then(setDiffs).catch(() => setDiffs([]));
-  }, [filePath]);
+  }, [filePath, t]);
 
   const relatedAgents = useMemo(
     () => agents.filter((a) => a.target.split(',').map((t) => t.trim()).filter(Boolean).includes(filePath)),
@@ -90,7 +93,7 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
     try {
       const { ok } = await fvApi.rollback(String(diff.file_path));
       if (ok) {
-        toast.success(`已回滚 ${diff.file_path}`);
+        toast.success(t('console.rolledBack', { path: String(diff.file_path) }));
         void useConsoleStore.getState().loadTree();
       }
     } catch (err) {
@@ -110,15 +113,15 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
       </div>
       <div className="flex-1 overflow-auto p-4 space-y-4">
         <div>
-          <h4 className="text-xs font-medium text-muted mb-1">预览</h4>
+          <h4 className="text-xs font-medium text-muted mb-1">{t('console.preview')}</h4>
           <pre className="text-xs text-text-body glass-input border border-card-border rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">
-            {content?.content ? content.content.split('\n').slice(0, 25).join('\n') : (content?.error || '加载中...')}
+            {content?.content ? content.content.split('\n').slice(0, 25).join('\n') : (content?.error || t('common.loading'))}
           </pre>
           <p className="text-[10px] text-muted mt-1">{filePath}</p>
         </div>
         {relatedAgents.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-muted mb-1">关联 Agent</h4>
+            <h4 className="text-xs font-medium text-muted mb-1">{t('console.relatedAgents')}</h4>
             <div className="space-y-1">
               {relatedAgents.map((a) => (
                 <div key={a.id} className="flex items-center gap-2 text-xs text-text-body">
@@ -132,7 +135,7 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
         )}
         {diffs.length > 0 && (
           <div>
-            <h4 className="text-xs font-medium text-muted mb-1">变更记录</h4>
+            <h4 className="text-xs font-medium text-muted mb-1">{t('console.changeLog')}</h4>
             <div className="space-y-2">
               {diffs.slice(0, 3).map((d) => (
                 <div key={Number(d.id)} className="border border-card-border rounded-lg overflow-hidden">
@@ -142,7 +145,7 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
                       onClick={() => void handleRollback(d)}
                       className="inline-flex items-center gap-1 text-primary hover:text-accent"
                     >
-                      <RotateCcw className="w-3 h-3" /> 回滚
+                      <RotateCcw className="w-3 h-3" /> {t('console.rollback')}
                     </button>
                   </div>
                   <pre className="text-[10px] p-2 overflow-auto max-h-40">
@@ -169,6 +172,7 @@ export function FileTab() {
   const setSelectedFile = useConsoleStore((s) => s.setSelectedFile);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const { t } = useI18n();
 
   const toggle = useCallback((path: string) => {
     setExpanded((prev) => {
@@ -190,19 +194,19 @@ export function FileTab() {
       {/* 文件树 */}
       <aside className="border-r border-divider glass-sidebar overflow-auto p-2">
         <div className="flex items-center justify-between px-2 py-1 mb-1">
-          <span className="text-xs font-medium text-muted">文件树</span>
+          <span className="text-xs font-medium text-muted">{t('console.fileTree')}</span>
           <button
             onClick={() => setExpanded(new Set())}
             className="text-[10px] text-secondary hover:text-primary"
           >
-            全部折叠
+            {t('console.collapseAll')}
           </button>
         </div>
         <p className="px-2 pb-1 text-[10px] text-muted truncate" title={treeRoot}>{treeRoot}</p>
         {tree?.map((n) => (
           <TreeItem key={n.path} node={n} depth={0} expanded={expanded} toggle={toggle} onSelect={setSelectedFile} />
         ))}
-        {!tree && <p className="text-xs text-muted p-2">加载中...</p>}
+        {!tree && <p className="text-xs text-muted p-2">{t('common.loading')}</p>}
       </aside>
 
       {/* 文件网格 */}
@@ -212,20 +216,20 @@ export function FileTab() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索文件..."
+            placeholder={t('console.searchFiles')}
             className="pl-3 pr-3 py-1.5 border border-card-border rounded-lg w-64 glass-input focus:outline-none focus:ring-2 focus:ring-accent text-sm text-text-body placeholder:text-muted"
             data-testid="file-search"
           />
-          <span className="text-xs text-muted ml-auto">{filtered.length} 个文件</span>
+          <span className="text-xs text-muted ml-auto">{t('console.fileCount', { count: filtered.length })}</span>
         </div>
         <div className="flex-1 overflow-auto">
           <table className="w-full text-sm">
             <thead className="bg-primary/5 border-b border-card-border sticky top-0">
               <tr>
-                <th className="text-left px-4 py-2 text-xs font-medium text-muted">名称</th>
-                <th className="text-left px-4 py-2 text-xs font-medium text-muted w-20">大小</th>
-                <th className="text-left px-4 py-2 text-xs font-medium text-muted w-28">修改时间</th>
-                <th className="text-left px-4 py-2 text-xs font-medium text-muted w-16">操作</th>
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted">{t('common.name')}</th>
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted w-20">{t('console.size')}</th>
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted w-28">{t('console.modified')}</th>
+                <th className="text-left px-4 py-2 text-xs font-medium text-muted w-16">{t('console.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-divider">
@@ -246,7 +250,7 @@ export function FileTab() {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-muted text-sm">无文件</td></tr>
+                <tr><td colSpan={4} className="px-4 py-8 text-center text-muted text-sm">{t('console.noFiles')}</td></tr>
               )}
             </tbody>
           </table>

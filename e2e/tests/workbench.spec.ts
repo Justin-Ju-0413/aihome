@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { forceZh } from '../helpers/zh-lang';
 
 test.describe('workbench', () => {
   // 测试共享同一 dev server + DB，每个用例前清空 keys 保证隔离
   test.beforeEach(async ({ page }) => {
+    await forceZh(page);
     await page.request.post('/api/workbench/keys/clear-all');
   });
 

@@ -32,7 +32,7 @@ test.describe('Agents List Page', () => {
     await page.waitForTimeout(1000);
 
     // Click the list view button (second button in the view toggle group)
-    const viewToggle = page.locator('.flex.border');
+    const viewToggle = page.locator('[data-testid="agents-view-toggle"]');
     await viewToggle.locator('button').nth(1).click();
 
     // List view shows a table
@@ -45,7 +45,7 @@ test.describe('Agents List Page', () => {
     await page.waitForTimeout(1000);
 
     // Switch to list view first
-    const viewToggle = page.locator('.flex.border');
+    const viewToggle = page.locator('[data-testid="agents-view-toggle"]');
     await viewToggle.locator('button').nth(1).click();
     await expect(page.locator('table')).toBeVisible();
 
@@ -121,7 +121,7 @@ test.describe('Agents List Page', () => {
     await page.waitForTimeout(1000);
 
     // Switch to list view
-    const viewToggle = page.locator('.flex.border');
+    const viewToggle = page.locator('[data-testid="agents-view-toggle"]');
     await viewToggle.locator('button').nth(1).click();
     await expect(page.locator('table')).toBeVisible();
 
