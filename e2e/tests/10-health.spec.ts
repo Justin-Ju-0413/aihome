@@ -1,8 +1,13 @@
 import { test, expect } from '../fixtures/test-data.fixture';
+import { forceZh } from '../helpers/zh-lang';
 import * as fs from 'fs';
 import * as path from 'path';
 
 test.describe('Health Panel', () => {
+  test.beforeEach(async ({ page }) => {
+    await forceZh(page);
+  });
+
   test('reports nothing for healthy workspace', async ({ page }) => {
     await page.goto('/health');
     await expect(page.getByTestId('health-ok')).toBeVisible({ timeout: 15000 });

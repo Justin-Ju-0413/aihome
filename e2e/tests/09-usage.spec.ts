@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { forceZh } from '../helpers/zh-lang';
 import * as fs from 'fs';
 import * as path from 'path';
 import { selectors } from '../helpers/selectors';
@@ -7,6 +8,10 @@ import { selectors } from '../helpers/selectors';
 const USAGE_CACHE_DB = path.join(__dirname, '..', '.e2e-usage', 'cache.db');
 
 test.describe('Usage Aggregator', () => {
+  test.beforeEach(async ({ page }) => {
+    await forceZh(page);
+  });
+
   test('isolation guard: dev server must use .e2e-usage fixture paths', async ({ request }) => {
     const res = await request.get('/api/usage/sources');
     expect(res.ok()).toBeTruthy();

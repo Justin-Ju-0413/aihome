@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { forceZh } from '../helpers/zh-lang';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -8,6 +9,10 @@ const CONFIG_PATH = path.join(__dirname, '..', '.e2e-sync', 'config', 'config.js
 const SAMPLE_DIR = path.resolve(__dirname, '..', '..', 'data', 'sample-agents');
 
 test.describe('Onboarding', () => {
+  test.beforeEach(async ({ page }) => {
+    await forceZh(page);
+  });
+
   test.beforeAll(() => {
     fs.rmSync(CONFIG_PATH, { force: true });
   });
