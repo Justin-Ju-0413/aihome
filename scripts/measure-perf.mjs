@@ -40,7 +40,7 @@ function median(arr) {
   return s[Math.floor(s.length / 2)];
 }
 
-async function measurePage(page, url) {
+async function measurePage(page) {
   return await page.evaluate(async () => {
     const nav = performance.getEntriesByType('navigation')[0];
     const resources = performance.getEntriesByType('resource');
@@ -57,6 +57,7 @@ async function measurePage(page, url) {
       route: new URL(location.href).pathname,
       fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null,
       lcp: lcpEntry?.startTime ?? null,
+      cls,
       dcl: nav ? Math.round(nav.domContentLoadedEventEnd) : null,
       load: nav ? Math.round(nav.loadEventEnd) : null,
       transferBytes: Math.round(
@@ -92,7 +93,7 @@ async function main() {
         await withTimeout(page.goto(base + route, { waitUntil: 'domcontentloaded' }), 15000, `goto ${route}`);
         // 等 LCP/CLS 稳定
         await page.waitForTimeout(1500);
-        samples.push(await measurePage(page, route));
+        samples.push(await measurePage(page));
         console.error('ok');
       } catch (e) {
         samples.push({ route, error: String(e).slice(0, 200) });

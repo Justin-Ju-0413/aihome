@@ -23,7 +23,7 @@ export function WorkbenchBalanceSection() {
         setIntervalMin(settings.refreshIntervalMin);
       })
       .catch(() => setMsg(t('settings.balance.loadFailed')));
-  }, []);
+  }, [t]);
 
   async function saveSettings(patch: { autoRefreshEnabled?: boolean; refreshIntervalMin?: number }) {
     await fetch('/api/workbench/settings', {

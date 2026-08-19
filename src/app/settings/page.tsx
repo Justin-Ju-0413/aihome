@@ -30,7 +30,7 @@ export default function SettingsPage() {
     } catch {
       toast.error(t('settings.page.loadFailed'));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch workspace config on mount

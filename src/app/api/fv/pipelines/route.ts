@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureFvInit } from '@/lib/fv/init';
 import * as agentRunner from '@/lib/fv/agent-runner';
 import { stmts } from '@/lib/fv/db';
+import { readJsonBody, jsonError, handleRouteError } from '@/lib/api-response';
 
 export async function GET() {
   ensureFvInit();
@@ -22,17 +23,16 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   ensureFvInit();
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ name?: string; description?: string; agents?: unknown }>(request);
     const { name, description, agents } = body;
     if (!agents || !Array.isArray(agents) || agents.length === 0) {
-      return NextResponse.json({ error: 'agents required' }, { status: 400 });
+      return jsonError('agents required', 400, 'AGENTS_REQUIRED');
     }
-    if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
+    if (!name) return jsonError('name required', 400, 'NAME_REQUIRED');
     const id = agentRunner.createPipeline({ name, description, agents });
     const pipeline = agentRunner.getPipeline(id);
     return NextResponse.json({ id, pipeline });
   } catch (err) {
-    console.error('Failed to create pipeline:', err);
-    return NextResponse.json({ error: 'Failed to create pipeline' }, { status: 500 });
+    return handleRouteError(err, 'Failed to create pipeline');
   }
 }

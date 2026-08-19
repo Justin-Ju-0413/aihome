@@ -12,14 +12,12 @@ import {
 
 let root: string;
 let dir: string;
-let innerDir: string;
 
 beforeAll(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'path-sec-'));
   root = path.join(dir, 'workspace');
   fs.mkdirSync(root);
   fs.mkdirSync(path.join(root, 'inner'));
-  innerDir = path.join(root, 'inner');
 });
 
 afterAll(() => {

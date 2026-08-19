@@ -86,7 +86,7 @@ describe('recoverStaleAgents', () => {
   it('marks db agents still running/pending as error when not in registry', () => {
     // 模拟崩溃残留：库里有两个 running agent，注册表里只有其中一个
     const alive = createAgent({ name: 'alive', provider: 'claude' });
-    const stale = createAgent({ name: 'stale', provider: 'codex' });
+    createAgent({ name: 'stale', provider: 'codex' });
     register(alive, { type: 'agent', provider: 'claude' });
 
     const recovered = recoverStaleAgents();

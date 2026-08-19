@@ -42,7 +42,6 @@ export default function AgentsPage() {
     }
     const q = search.trim();
     if (!q) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 清空搜索恢复全量
       setFullTextResults(null);
       return;
     }
@@ -50,7 +49,6 @@ export default function AgentsPage() {
       try {
         const res = await fetch(`/api/agents?q=${encodeURIComponent(q)}&full=1`);
         const data = await res.json();
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- 全文搜索 debounce 结果回填
         setFullTextResults(data);
       } catch {
         setFullTextResults(null);
