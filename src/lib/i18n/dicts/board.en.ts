@@ -84,6 +84,8 @@ export const boardEn = {
 
   // graph 页面
   'graph.page.loading': 'Loading graph...',
+  'graph.page.loadFailed': 'Failed to load graph',
+  'graph.page.saveRelationFailed': 'Failed to save relation',
   'graph.page.title': 'Agent Graph',
   'graph.page.subtitle': 'Visualize agent relationships and dependencies',
   'graph.page.dragHint': 'Drag between nodes to create connections',

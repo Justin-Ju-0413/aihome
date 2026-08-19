@@ -45,7 +45,7 @@ export default function SyncPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="font-heading text-3xl font-bold text-primary mb-6">Skill Sync</h1>
+      <h1 className="font-heading text-3xl font-bold text-primary mb-6">{t('sync.title')}</h1>
       {loading ? (
         <p className="text-sm text-secondary">{t('common.loading')}</p>
       ) : state ? (

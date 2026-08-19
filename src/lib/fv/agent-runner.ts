@@ -111,7 +111,11 @@ export function startAgent(agentId: string): number {
 
   const cmd = agent.provider === 'claude'
     ? (vals['connection.claude_path'] || 'claude')
-    : (vals['connection.codex_path'] || 'codex');
+    : agent.provider === 'zcode'
+      ? (vals['connection.zcode_path'] || 'zcode')
+      : agent.provider === 'dsh'
+        ? (vals['connection.dsh_path'] || 'dsh')
+        : (vals['connection.codex_path'] || 'codex');
   const args = buildArgs(agent);
 
   const proc = spawn(cmd, args, {
@@ -256,12 +260,25 @@ function buildArgs(agent: AgentRow): string[] {
     if (agent.prompt) args.push(agent.prompt);
     if (agent.target) args.push('--add-dir', agent.target);
     return args;
-  } else {
-    const args = ['exec'];
+  }
+  if (agent.provider === 'zcode') {
+    // ZCode CLI 兼容 Claude Code 风格参数；实际路径可在设置中覆盖。
+    const args = ['-p', '--verbose', '--output-format', 'stream-json'];
     if (agent.prompt) args.push(agent.prompt);
-    args.push('--skip-git-repo-check', '--full-auto');
+    if (agent.target) args.push('--add-dir', agent.target);
     return args;
   }
+  if (agent.provider === 'dsh') {
+    // DSH 当前以通用 run 子命令启动，路径/参数可在后续按真实 CLI 调整。
+    const args = ['run'];
+    if (agent.prompt) args.push(agent.prompt);
+    if (agent.target) args.push('--target', agent.target);
+    return args;
+  }
+  const args = ['exec'];
+  if (agent.prompt) args.push(agent.prompt);
+  args.push('--skip-git-repo-check', '--full-auto');
+  return args;
 }
 
 function detectStepProgress(

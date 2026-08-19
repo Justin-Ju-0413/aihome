@@ -64,6 +64,31 @@ describe('stopAgent vs close race', () => {
     expect(stmts.getAgent(id)?.status).toBe('completed');
   });
 
+  it('spawns zcode and dsh providers with configured commands', () => {
+    const proc = fakeProc();
+    vi.mocked(spawn).mockReturnValue(proc as never);
+
+    const zid = createAgent({ name: 'z', provider: 'zcode', prompt: 'hello' });
+    startAgent(zid);
+    expect(vi.mocked(spawn)).toHaveBeenLastCalledWith(
+      'zcode',
+      expect.arrayContaining(['-p', 'hello']),
+      expect.anything()
+    );
+    proc.emit('close', 0);
+    expect(stmts.getAgent(zid)?.status).toBe('completed');
+
+    const did = createAgent({ name: 'd', provider: 'dsh', prompt: 'world' });
+    startAgent(did);
+    expect(vi.mocked(spawn)).toHaveBeenLastCalledWith(
+      'dsh',
+      expect.arrayContaining(['run', 'world']),
+      expect.anything()
+    );
+    proc.emit('close', 0);
+    expect(stmts.getAgent(did)?.status).toBe('completed');
+  });
+
   it('spawn error path marks error when not stopped', () => {
     const proc = fakeProc();
     vi.mocked(spawn).mockReturnValue(proc as never);

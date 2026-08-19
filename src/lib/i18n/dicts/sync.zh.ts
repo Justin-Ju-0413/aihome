@@ -3,6 +3,7 @@ import type { syncEn } from './sync.en';
 /** sync 模块文案（中文）— 键必须与英文基准完全一致（tsc 强制） */
 export const syncZh: Record<keyof typeof syncEn, string> = {
   // sync 页面 / 状态
+  'sync.title': '技能同步',
   'sync.statusLoadError': '加载同步状态失败',
   'sync.migrated': '已从 ~/skill-sync 迁移 {n} 个技能到 ~/.aihome/repo（旧目录保留，可手动删除）',
   'sync.centerRepo': '中心仓库',
@@ -33,6 +34,7 @@ export const syncZh: Record<keyof typeof syncEn, string> = {
   'sync.endpoint.pathPlaceholder': '端路径（如 ~/.claude/skills）',
 
   // onboarding
+  'onboarding.kicker': '开始搭建',
   'onboarding.welcome': '欢迎使用 AIHome',
   'onboarding.intro': '首次使用：选择存放 agent 定义（AGENTS.md / SKILL.md）的目录。',
   'onboarding.stepChooseDir': '选择目录',

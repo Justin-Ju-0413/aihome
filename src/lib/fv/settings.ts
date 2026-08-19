@@ -26,7 +26,7 @@ export const DEFAULTS: Record<string, SettingDef> = {
   'appearance.default_tab': { value: 'files', category: 'appearance', type: 'select', options: ['files', 'agents', 'pipelines', 'dashboard', 'hermes', 'match', 'history'], label: '默认标签页', desc: '启动时显示的标签页' },
 
   // ===== Agent (agent) =====
-  'agent.default_provider': { value: 'claude', category: 'agent', type: 'select', options: ['claude', 'codex', 'hermes'], label: '默认 Provider', desc: '创建 Agent 时默认选择的 AI 提供者' },
+  'agent.default_provider': { value: 'claude', category: 'agent', type: 'select', options: ['claude', 'codex', 'hermes', 'zcode', 'dsh'], label: '默认 Provider', desc: '创建 Agent 时默认选择的 AI 提供者' },
   'agent.auto_start': { value: 'true', category: 'agent', type: 'toggle', label: '自动启动', desc: '创建 Agent 后自动开始执行' },
   'agent.max_concurrent': { value: '3', category: 'agent', type: 'range', min: 1, max: 10, label: '最大并发数', desc: '同时运行的最大 Agent 数量', validate: 'range' },
   'agent.snapshot_on_start': { value: 'true', category: 'agent', type: 'toggle', label: '启动时快照', desc: 'Agent 启动前自动对目标文件创建快照' },
@@ -55,6 +55,8 @@ export const DEFAULTS: Record<string, SettingDef> = {
   'connection.ws_reconnect_interval': { value: '3000', category: 'connection', type: 'range', min: 500, max: 30000, label: 'WS重连间隔(ms)', desc: 'WebSocket 断开后重连间隔', validate: 'range' },
   'connection.claude_path': { value: 'claude', category: 'connection', type: 'text', label: 'Claude CLI 路径', desc: 'Claude Code 可执行文件路径', validate: 'path' },
   'connection.codex_path': { value: 'codex', category: 'connection', type: 'text', label: 'Codex CLI 路径', desc: 'OpenAI Codex CLI 可执行文件路径', validate: 'path' },
+  'connection.zcode_path': { value: 'zcode', category: 'connection', type: 'text', label: 'ZCode CLI 路径', desc: 'ZCode CLI 可执行文件路径（也可填 /Applications/ZCode.app/Contents/Resources/glm/zcode.cjs）', validate: 'path' },
+  'connection.dsh_path': { value: 'dsh', category: 'connection', type: 'text', label: 'DSH CLI 路径', desc: 'DSH CLI 可执行文件路径', validate: 'path' },
   'connection.hermes_enabled': { value: 'true', category: 'connection', type: 'toggle', label: '启用 Hermes 集成', desc: '启用 Hermes Agent 面板和桥接功能' },
   'connection.hermes_cli_path': { value: 'hermes', category: 'connection', type: 'text', label: 'Hermes CLI 路径', desc: 'Hermes 可执行文件路径', validate: 'path' },
   'connection.hermes_home_dir': { value: '', category: 'connection', type: 'text', label: 'Hermes HOME 目录', desc: 'Hermes 运行时主目录（默认 ~/.hermes/）', validate: 'directory' },

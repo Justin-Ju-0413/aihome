@@ -141,15 +141,15 @@ export function CreateAgentModal() {
           </div>
 
           <div>
-            <label className="text-xs text-muted mb-1 block">Provider</label>
+            <label className="text-xs text-muted mb-1 block">{t('console.provider')}</label>
             <div className="flex gap-2">
-              {['claude', 'codex'].map((p) => (
+              {(['claude', 'codex', 'zcode', 'dsh'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setProvider(p)}
                   className={provider === p ? 'px-3 py-1.5 rounded-lg bg-primary text-white text-xs' : 'px-3 py-1.5 rounded-lg border border-card-border text-xs text-muted'}
                 >
-                  {p === 'claude' ? t('console.claudeCode') : t('console.codexCli')}
+                  {p === 'claude' ? t('console.claudeCode') : p === 'codex' ? t('console.codexCli') : p === 'zcode' ? t('console.zcodeCli') : t('console.dshCli')}
                 </button>
               ))}
             </div>

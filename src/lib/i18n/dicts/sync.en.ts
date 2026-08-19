@@ -1,6 +1,7 @@
 /** sync 模块文案（英文基准）— 由并行任务填充 */
 export const syncEn = {
   // sync 页面 / 状态
+  'sync.title': 'Skill Sync',
   'sync.statusLoadError': 'Failed to load sync status',
   'sync.migrated': 'Migrated {n} skills from ~/skill-sync to ~/.aihome/repo (old directory kept, can be deleted manually)',
   'sync.centerRepo': 'Center repository',
@@ -31,6 +32,7 @@ export const syncEn = {
   'sync.endpoint.pathPlaceholder': 'Endpoint path (e.g. ~/.claude/skills)',
 
   // onboarding
+  'onboarding.kicker': 'GET STARTED',
   'onboarding.welcome': 'Welcome to AIHome',
   'onboarding.intro': 'First time here? Choose the directories that store agent definitions (AGENTS.md / SKILL.md).',
   'onboarding.stepChooseDir': 'Choose directory',

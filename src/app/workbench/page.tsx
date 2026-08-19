@@ -60,7 +60,7 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-heading">Workbench</h1>
+        <h1 className="text-2xl font-bold text-heading">{t('workbench.title')}</h1>
         <button onClick={() => setShowAdd(true)} data-testid="add-site" className="rounded-lg bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">+ {t('workbench.addPlatform')}</button>
       </header>
       <SearchFilter search={search} setSearch={setSearch} category={category} setCategory={setCategory} categories={CATEGORIES} />

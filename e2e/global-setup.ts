@@ -116,4 +116,43 @@ export default function globalSetup(): void {
   hDb.prepare(`INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     'h-1', 'cli', 'qwen3.5-9b', safeSec, 200, 80, 5, 2, 0, 0.05);
   hDb.close();
+
+  // zcode：rollout JSONL，每行一次请求，response.usage 带 token
+  const zcodeDir = path.join(usageRoot, 'zcode-rollout');
+  fs.mkdirSync(zcodeDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(zcodeDir, 'model-io-sess_test.jsonl'),
+    JSON.stringify({
+      completedAt: new Date(safeMs).toISOString(),
+      requestId: 'z-req-1',
+      model: { modelId: 'deepseek-v4-flash', providerId: 'zcode' },
+      response: { usage: { inputTokens: 300, outputTokens: 120, cacheReadTokens: 30, cacheWriteTokens: 0, totalTokens: 450 } },
+    }) + '\n'
+  );
+
+  // dsh：session_projcache.json + settings.yaml 默认模型
+  const dshDir = path.join(usageRoot, 'dsh');
+  const dshStorages = path.join(dshDir, 'storages');
+  fs.mkdirSync(dshStorages, { recursive: true });
+  fs.writeFileSync(
+    path.join(dshDir, 'settings.yaml'),
+    'agent-default-model:\n  provider: opencode-go\n  model: deepseek-v4-flash\n  reasoningEffort: max\n'
+  );
+  fs.writeFileSync(
+    path.join(dshStorages, 'session_projcache.json'),
+    JSON.stringify({
+      tables: {
+        sessions: {
+          'dsh-session-1': {
+            identity: { createdAt: safeMs },
+            rows: {
+              tokenUsage: {
+                val: { totals: { uncachedInputTokens: 400, outputTokens: 150, cacheReadTokens: 40, cacheWriteTokens: 0 } },
+              },
+            },
+          },
+        },
+      },
+    })
+  );
 }

@@ -106,7 +106,7 @@ export default function ConsolePage() {
     <div className="h-full flex flex-col">
       <header className="px-6 pt-6 pb-3 flex items-end justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-heading">Console</h1>
+          <h1 className="font-heading text-3xl font-bold text-heading">{t('console.title')}</h1>
           <div className="w-16 h-px bg-divider mt-2" />
           <p className="text-sm text-muted mt-2">
             {t('console.subtitle')}

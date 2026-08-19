@@ -28,14 +28,14 @@ export async function GET() {
   return NextResponse.json(detailed);
 }
 
-/** 手动创建 Agent（provider 限 claude/codex，hermes 走一键匹配） */
+/** 手动创建 Agent（provider 限 claude/codex/zcode/dsh，hermes 走一键匹配） */
 export async function POST(request: NextRequest) {
   ensureFvInit();
   try {
     const body = await request.json();
     const { name, provider, description, target, cwd, prompt, steps, pipelineId, pipelineOrder, nextAgentId } = body;
-    if (!['claude', 'codex'].includes(provider)) {
-      return NextResponse.json({ error: 'provider must be claude or codex' }, { status: 400 });
+    if (!['claude', 'codex', 'zcode', 'dsh'].includes(provider)) {
+      return NextResponse.json({ error: 'provider must be claude, codex, zcode or dsh' }, { status: 400 });
     }
     if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
     const id = agentRunner.createAgent({

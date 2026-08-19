@@ -106,15 +106,15 @@ export const commonZh: Record<keyof typeof commonEn, string> = {
   'common.language': '语言',
 
   // 导航
-  'nav.board': 'BOARD',
-  'nav.graph': 'GRAPH',
-  'nav.agents': 'AGENTS',
-  'nav.usage': 'USAGE',
-  'nav.workbench': 'WORKBENCH',
-  'nav.sync': 'SYNC',
+  'nav.board': '看板',
+  'nav.graph': '关系图',
+  'nav.agents': '智能体',
+  'nav.usage': '用量',
+  'nav.workbench': '工作台',
+  'nav.sync': '同步',
   'nav.registry': '注册表',
-  'nav.console': 'CONSOLE',
-  'nav.settings': 'SETTINGS',
+  'nav.console': '控制台',
+  'nav.settings': '设置',
 
   // 状态
   'status.running': '运行中',

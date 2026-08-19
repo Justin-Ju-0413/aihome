@@ -156,6 +156,8 @@ function CreatePipelineModal({ onClose }: { onClose: () => void }) {
                   >
                     <option value="claude">Claude</option>
                     <option value="codex">Codex</option>
+                    <option value="zcode">ZCode</option>
+                    <option value="dsh">DSH</option>
                   </select>
                   <input
                     value={ag.name}
