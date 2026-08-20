@@ -29,6 +29,10 @@ export const boardEn = {
   'board.page.rescan': 'Rescan',
   'board.page.newAgent': 'New Agent',
 
+  // empty state
+  'board.empty.title': 'No agents yet',
+  'board.empty.subtitle': 'Scan your workspace or create one manually — agents and skills appear here as cards.',
+
   // 搜索 / 过滤
   'board.search.placeholder': 'Search agents...',
   'board.filter.allTypes': 'All Types',

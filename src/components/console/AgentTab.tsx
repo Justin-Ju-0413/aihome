@@ -109,7 +109,7 @@ function DiffModal({ agentId, onClose }: { agentId: string; onClose: () => void 
       <div className="glass-modal rounded-xl shadow-xl w-full max-w-3xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-divider">
           <h3 className="font-heading font-semibold text-heading">{t('console.diffTitle')}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-primary/10 rounded text-muted"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1 hover:bg-primary/10 rounded text-muted" aria-label={t('common.close')}><X className="w-4 h-4" /></button>
         </div>
         <div className="flex-1 overflow-auto p-4 space-y-3">
           {loading && <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>}

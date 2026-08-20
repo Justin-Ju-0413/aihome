@@ -107,7 +107,7 @@ function FileDetailPanel({ filePath, onClose }: { filePath: string; onClose: () 
         <span className="text-sm font-medium text-heading truncate" title={filePath}>
           {filePath.split('/').pop()}
         </span>
-        <button onClick={onClose} className="p-1 hover:bg-primary/10 rounded text-muted">
+        <button onClick={onClose} className="p-1 hover:bg-primary/10 rounded text-muted" aria-label={t('common.close')}>
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -237,6 +237,10 @@ export function FileTab() {
                 <tr
                   key={f.path}
                   onClick={() => setSelectedFile(f.path)}
+                  tabIndex={0} role="button"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedFile(f.path); }
+                  }}
                   className={cn('cursor-pointer hover:bg-primary/5', selectedFile === f.path && 'bg-primary/10')}
                 >
                   <td className="px-4 py-1.5 flex items-center gap-2 text-text-body">

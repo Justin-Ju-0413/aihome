@@ -31,6 +31,10 @@ export const boardZh: Record<keyof typeof boardEn, string> = {
   'board.page.rescan': '重新扫描',
   'board.page.newAgent': '新建 Agent',
 
+  // 空态
+  'board.empty.title': '还没有 Agent',
+  'board.empty.subtitle': '扫描工作区或手动新建，agent 与 skill 会以看板卡片呈现。',
+
   // 搜索 / 过滤
   'board.search.placeholder': '搜索 agents...',
   'board.filter.allTypes': '全部类型',
