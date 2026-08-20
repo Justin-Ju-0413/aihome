@@ -15,16 +15,29 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 const args = process.argv.slice(2);
-const base =
-  (args.find((a) => a.startsWith('--base='))?.split('=')[1]) ?? 'http://127.0.0.1:3210';
-const outPath =
-  (args.find((a) => a.startsWith('--out='))?.split('=')[1]) ?? 'docs/perf/baseline.json';
-const repeat = Number(args.find((a) => a.startsWith('--repeat='))?.split('=')[1] ?? 3);
+function flag(name, fallback) {
+  const eq = args.find((a) => a.startsWith(`${name}=`))?.split('=').slice(1).join('=');
+  if (eq !== undefined) return eq;
+  const i = args.indexOf(name);
+  return i !== -1 && args[i + 1] ? args[i + 1] : fallback;
+}
+const base = flag('--base', 'http://127.0.0.1:3210');
+const outPath = flag('--out', 'docs/perf/baseline.json');
+const repeat = Number(flag('--repeat', '3'));
+const only = flag('--only', null);
 
 const ROUTES = [
-  '/', '/board', '/graph', '/agents', '/agents/sample-navigator',
+  '/', '/board', '/graph', '/agents',
+  // 真实 sample agent id（base64url），非 ASCII 路径故不用字面量
+  '/agents/' + encodeURIComponent('L1VzZXJzL2dzdGFyL0RvY3VtZW50cy8wNS3pobnnm67ku6PnoIEvQUlIb21lL2RhdGEvc2FtcGxlLWFnZW50cy9jb2RlLWFzc2lzdGFudC9BR0VOVFMubWQ'),
   '/skills', '/settings', '/health', '/usage', '/console', '/workbench', '/sync', '/onboarding',
 ];
+
+if (process.argv.includes('--list-routes')) {
+  for (const r of ROUTES) console.log(r);
+  process.exit(0);
+}
+const ROUTE_LIST = only ? [only] : ROUTES;
 
 function withTimeout(promise, ms, label) {
   return Promise.race([
@@ -83,25 +96,40 @@ async function main() {
     process.exit(2);
   }, 240_000);
 
-  for (const route of ROUTES) {
+  for (const route of ROUTE_LIST) {
     const samples = [];
+    // 复用单 context/page（逐路由 full navigation），末尾统一关浏览器。
+    // 避免每样本新建/强关 context —— 重页面（graph 等）的 renderer 会累计拖垮浏览器。
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const page = await ctx.newPage();
     for (let i = 0; i < repeat; i++) {
-      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-      const page = await ctx.newPage();
       try {
         console.error(`  ${route} #${i + 1} … `);
-        await withTimeout(page.goto(base + route, { waitUntil: 'domcontentloaded' }), 15000, `goto ${route}`);
+        await withTimeout(page.goto(base + route, { waitUntil: 'domcontentloaded' }), 20000, `goto ${route}`);
+        // Next App Router 的 JS chunk 在 DCL 后经 RSC 流式注入，
+        // 必须等到 JS 资源出现 + 页面 complete 才算稳定（避免 transferSize 尚未回填）。
+        await withTimeout(
+          page
+            .waitForFunction(
+              () =>
+                document.readyState === 'complete' &&
+                performance.getEntriesByType('resource').some((r) => r.name.endsWith('.js') && (r.transferSize || 0) > 0),
+              { polling: 100 },
+            )
+            .catch(() => {}),
+          8000,
+          `settle ${route}`,
+        );
         // 等 LCP/CLS 稳定
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(2000);
         samples.push(await measurePage(page));
         console.error('ok');
       } catch (e) {
         samples.push({ route, error: String(e).slice(0, 200) });
         console.error(`ERR: ${String(e).slice(0, 120)}`);
-      } finally {
-        await withTimeout(ctx.close(), 5000, `close ctx ${route}`).catch(() => {});
       }
     }
+    await withTimeout(ctx.close(), 5000, `close ctx ${route}`).catch(() => {});
     const ok = samples.filter((s) => !s.error);
     const row = {
       route,

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { fvApi } from '@/lib/fv/api';
+import { createReloadCoalescer } from '@/lib/fv/reload-coalesce';
 import type {
   ConsoleTab,
   FvAgent,
@@ -14,6 +15,13 @@ import type {
   FvStats,
   FvTemplate,
 } from '@/lib/fv/types';
+
+/**
+ * 事件驱动刷新统一走合并去抖：/api/fv/events 首次 cursor=0 会返回整段积压事件，
+ * 若每条事件都在 applyEvent 里直接 loadAgents，秒级几十个请求风暴。
+ * 同一数据源在 400ms 内只刷新一次。
+ */
+const eventReloader = createReloadCoalescer(400);
 
 interface HermesPanelData {
   available: boolean;
@@ -191,23 +199,23 @@ export const useConsoleStore = create<ConsoleState>((set, get) => ({
 
   applyEvent: (type) => {
     const s = get();
-    // 事件类型 → 需要刷新的数据
+    // 事件类型 → 需要刷新的数据（统一走合并去抖，防积压事件风暴）
     if (type.startsWith('agent:') || type.startsWith('pipeline:')) {
-      void s.loadAgents();
-      if (s.activeTab === 'pipelines') void s.loadPipelines();
-      if (s.activeTab === 'dashboard') void s.loadStats();
+      eventReloader.schedule('agents', () => void s.loadAgents());
+      if (s.activeTab === 'pipelines') eventReloader.schedule('pipelines', () => void s.loadPipelines());
+      if (s.activeTab === 'dashboard') eventReloader.schedule('stats', () => void s.loadStats());
     } else if (type === 'file:change') {
-      if (s.activeTab === 'files') void s.loadTree();
+      if (s.activeTab === 'files') eventReloader.schedule('tree', () => void s.loadTree());
     } else if (type === 'history:new') {
-      if (s.activeTab === 'history') void s.loadHistory();
+      if (s.activeTab === 'history') eventReloader.schedule('history', () => void s.loadHistory());
     } else if (type === 'unified:started' || type === 'unified:completed' || type === 'unified:fallback') {
-      void s.loadRunActive();
-      if (s.activeTab === 'match') void s.loadMatch();
+      eventReloader.schedule('runActive', () => void s.loadRunActive());
+      if (s.activeTab === 'match') eventReloader.schedule('match', () => void s.loadMatch());
     } else if (type.startsWith('hermes:')) {
-      void s.loadRunActive();
-      if (s.activeTab === 'hermes') void s.loadHermes();
+      eventReloader.schedule('runActive', () => void s.loadRunActive());
+      if (s.activeTab === 'hermes') eventReloader.schedule('hermes', () => void s.loadHermes());
     } else if (type === 'settings:changed' || type === 'settings:reset') {
-      void s.loadSettings();
+      eventReloader.schedule('settings', () => void s.loadSettings());
     }
   },
 

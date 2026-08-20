@@ -42,3 +42,34 @@ node scripts/measure-perf.mjs --base http://127.0.0.1:3210 --out docs/perf/basel
 ```bash
 node scripts/measure-perf.mjs --base http://127.0.0.1:3210 --out docs/perf/after.json --repeat 3
 ```
+
+## After P2 (2026-08-20) — request-storm fix
+
+`scripts/run-measure.sh`（每路由独立浏览器进程）重新度量：
+
+| route | before transferKB | after transferKB | before res | after res | change |
+|---|---|---|---|---|---|
+| /board | 375 | 375 | 65 | 65 | — |
+| /graph | 454 | 454 | 66 | 66 | — |
+| /console | **1063** | **384** | **250** | **67** | **trans -64% / res -73%** |
+| /others | ~370 | ~370 | ~63 | ~63 | — |
+
+### P2 改了什么
+- 根因修复 `/console` 请求风暴：页面 effect 依赖 `[store]`，而 zustand 每次 `set()`
+  产生新 state 引用，`[store]` 恒变 → effect 无限重跑 → 同一 API 秒级 44 次请求。
+  改为依赖稳定的 `useConsoleStore.getState()` + 空依赖/原始值 `activeTab`。
+- 事件驱动刷新加**合并去抖**（`src/lib/fv/reload-coalesce.ts` + 4 单测）：
+  积压事件批不再逐条触发刷新。
+- 事件轮询按类型去重；tab 切换跳过首渲染避免双份请求。
+
+### 尝试后撤销
+- `@uiw/react-md-editor` 懒加载：本地实测无效——编辑器在默认 tab 常驻，
+  localhost 下 1MB chunk 300ms 内即下载完，首屏 JS 总量未降（587→588KB）。
+  撤销以避免加载闪烁与复杂度。详情页 1MB chunk 属该库固有体积，
+  建议后续更换轻量编辑器（记入 TODO）。
+
+## 复测命令
+
+```bash
+bash scripts/run-measure.sh --port 3211 --out docs/perf/after.json --repeat 3
+```
