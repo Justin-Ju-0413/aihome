@@ -31,6 +31,10 @@ export const boardZh: Record<keyof typeof boardEn, string> = {
   'board.page.rescan': '重新扫描',
   'board.page.newAgent': '新建 Agent',
 
+  // 空态
+  'board.empty.title': '还没有 Agent',
+  'board.empty.subtitle': '扫描工作区或手动新建，agent 与 skill 会以看板卡片呈现。',
+
   // 搜索 / 过滤
   'board.search.placeholder': '搜索 agents...',
   'board.filter.allTypes': '全部类型',
@@ -86,6 +90,8 @@ export const boardZh: Record<keyof typeof boardEn, string> = {
 
   // graph 页面
   'graph.page.loading': '加载图谱中...',
+  'graph.page.loadFailed': '加载图谱失败',
+  'graph.page.saveRelationFailed': '保存连线失败',
   'graph.page.title': 'Agent 关系图',
   'graph.page.subtitle': '可视化 agent 之间的关系与依赖',
   'graph.page.dragHint': '在节点之间拖拽以创建连线',

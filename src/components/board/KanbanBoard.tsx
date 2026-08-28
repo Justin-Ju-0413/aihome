@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useCallback } from 'react';
+import { Bot } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 import {
   DndContext,
   closestCorners,
@@ -23,6 +25,7 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ onAddAgent, onSelectAgent }: KanbanBoardProps) {
   const { agents, groups, layout, setLayout } = useAppStore();
+  const { t } = useI18n();
 
   // Board arrangement is driven by the persisted layout: each agent's column
   // comes from layout[id].group (falling back to agent.group), and each
@@ -133,6 +136,26 @@ export function KanbanBoard({ onAddAgent, onSelectAgent }: KanbanBoardProps) {
   const handleAddAgent = () => {
     onAddAgent();
   };
+
+  if (agents.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 p-10 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Bot className="w-8 h-8 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-heading text-lg font-semibold text-heading">{t('board.empty.title')}</h3>
+          <p className="text-sm text-muted mt-1 max-w-sm">{t('board.empty.subtitle')}</p>
+        </div>
+        <button
+          onClick={onAddAgent}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium"
+        >
+          {t('board.page.newAgent')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <DndContext

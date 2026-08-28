@@ -92,6 +92,18 @@ describe('fv api routes', () => {
     expect(agents[0].steps).toHaveLength(2);
   });
 
+  it('POST /api/fv/agents accepts zcode and dsh providers', async () => {
+    for (const provider of ['zcode', 'dsh']) {
+      const res = await agentsPOST(
+        new NextRequest('http://localhost/api/fv/agents', {
+          method: 'POST',
+          body: JSON.stringify({ name: `agent-${provider}`, provider, prompt: 'do it' }),
+        })
+      );
+      expect(res.status).toBe(200);
+    }
+  });
+
   it('POST /api/fv/run/explain returns schedule explanation', async () => {
     const res = await runExplainPOST(
       new NextRequest('http://localhost/api/fv/run/explain', {

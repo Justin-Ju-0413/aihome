@@ -1,6 +1,7 @@
 /** console 模块文案（英文基准）— 由并行任务填充 */
 export const consoleEn = {
   // 顶栏
+  'console.title': 'Console',
   'console.subtitle': 'FileVision runtime console: file visualization + Agent orchestration + one-click match',
   'console.agentsRunning': '{count} running',
   'console.agentsPending': '{count} pending',
@@ -57,9 +58,12 @@ export const consoleEn = {
   'console.templateCustom': '-- Custom --',
   'console.templateVariables': 'Template variables',
   'console.name': 'Name',
+  'console.provider': 'Provider',
   'console.agentNamePlaceholder': 'Agent name',
   'console.claudeCode': 'Claude Code',
   'console.codexCli': 'Codex CLI',
+  'console.zcodeCli': 'ZCode CLI',
+  'console.dshCli': 'DSH CLI',
   'console.prompt': 'Prompt',
   'console.promptPlaceholder': 'Instructions for the agent...',
   'console.workdir': 'Working directory',

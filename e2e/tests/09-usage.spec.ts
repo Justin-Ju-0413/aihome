@@ -42,6 +42,8 @@ test.describe('Usage Aggregator', () => {
     await expect(page.locator(selectors.usage.klineChart)).toBeVisible();
     await expect(page.locator(selectors.usage.stats)).toBeVisible();
     await expect(page.locator(selectors.usage.table)).toBeVisible();
+    await expect(page.locator('[data-testid="usage-source-zcode"]')).toBeVisible();
+    await expect(page.locator('[data-testid="usage-source-dsh"]')).toBeVisible();
     const today = await page.locator(selectors.usage.overviewToday).innerText();
     expect(today).not.toBe('$0.00');
   });
@@ -51,8 +53,10 @@ test.describe('Usage Aggregator', () => {
     expect(res.ok()).toBeTruthy();
     const data = await res.json();
     expect(data.totals.requests).toBeGreaterThanOrEqual(4);
-    expect(data.stats.bySource.length).toBeGreaterThanOrEqual(4);
+    expect(data.stats.bySource.length).toBeGreaterThanOrEqual(6);
     expect(data.sourceStatus.find((s: { id: string }) => s.id === 'openclaw').status).toBe('ready');
+    expect(data.sourceStatus.find((s: { id: string }) => s.id === 'zcode').status).toBe('ready');
+    expect(data.sourceStatus.find((s: { id: string }) => s.id === 'dsh').status).toBe('ready');
   });
 
   test('source filter narrows data', async ({ page }) => {

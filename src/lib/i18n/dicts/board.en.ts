@@ -29,6 +29,10 @@ export const boardEn = {
   'board.page.rescan': 'Rescan',
   'board.page.newAgent': 'New Agent',
 
+  // empty state
+  'board.empty.title': 'No agents yet',
+  'board.empty.subtitle': 'Scan your workspace or create one manually — agents and skills appear here as cards.',
+
   // 搜索 / 过滤
   'board.search.placeholder': 'Search agents...',
   'board.filter.allTypes': 'All Types',
@@ -84,6 +88,8 @@ export const boardEn = {
 
   // graph 页面
   'graph.page.loading': 'Loading graph...',
+  'graph.page.loadFailed': 'Failed to load graph',
+  'graph.page.saveRelationFailed': 'Failed to save relation',
   'graph.page.title': 'Agent Graph',
   'graph.page.subtitle': 'Visualize agent relationships and dependencies',
   'graph.page.dragHint': 'Drag between nodes to create connections',

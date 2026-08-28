@@ -34,14 +34,17 @@ export default function ConsolePage() {
   const cursorRef = useRef(0);
   const { t } = useI18n();
 
-  // 首次挂载：全量拉数据
+  // 首次挂载：全量拉数据。
+  // 注意：不能用 [store] 作依赖——zustand 每次 set() 产生新 state 引用，
+  // [store] 永远变化会让 effect 无限重跑，造成 /console 秒级几十个请求风暴。
   useEffect(() => {
-    void store.loadAgents();
-    void store.loadTemplates();
-    void store.loadPipelines();
-    void store.loadTree();
-    void store.loadSettings();
-  }, [store]);
+    const s = useConsoleStore.getState();
+    void s.loadAgents();
+    void s.loadTemplates();
+    void s.loadPipelines();
+    void s.loadTree();
+    void s.loadSettings();
+  }, []);
 
   // 事件轮询：驱动增量刷新（替代原 WS 推送）
   useEffect(() => {
@@ -55,38 +58,46 @@ export default function ConsolePage() {
         }
         if (events.length > 0) {
           cursorRef.current = cursor;
-          for (const e of events) store.applyEvent(e.type);
+          // 同一 tick 的多条事件按类型去重：只触发一次刷新语义
+          const types = new Set(events.map((e: { type: string }) => e.type));
+          for (const t of types) useConsoleStore.getState().applyEvent(t);
         }
       } catch {
         // 服务不可用时静默
       }
     }, 2500);
     return () => clearInterval(timer);
-  }, [store]);
+  }, []);
 
   // Agent 状态轮询（FileVision 原本就有 5s 轮询兜底）
   useEffect(() => {
-    const timer = setInterval(() => void store.loadAgents(), 5000);
+    const timer = setInterval(() => void useConsoleStore.getState().loadAgents(), 5000);
     return () => clearInterval(timer);
-  }, [store]);
+  }, []);
 
-  // tab 激活时按需刷新
+  // tab 激活时按需刷新（跳过首次渲染——mount 已全量拉取，避免双份请求）
+  const firstRenderRef = useRef(true);
   useEffect(() => {
-    const tab = store.activeTab;
-    if (tab === 'files') void store.loadTree();
-    if (tab === 'agents') void store.loadAgents();
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false;
+      return;
+    }
+    const s = useConsoleStore.getState();
+    const tab = s.activeTab;
+    if (tab === 'files') void s.loadTree();
+    if (tab === 'agents') void s.loadAgents();
     if (tab === 'pipelines') {
-      void store.loadPipelines();
-      void store.loadAgents();
+      void s.loadPipelines();
+      void s.loadAgents();
     }
     if (tab === 'dashboard') {
-      void store.loadStats();
-      void store.loadAgents();
+      void s.loadStats();
+      void s.loadAgents();
     }
-    if (tab === 'hermes') void store.loadHermes();
-    if (tab === 'match') void store.loadMatch();
-    if (tab === 'history') void store.loadHistory();
-  }, [store, store.activeTab]);
+    if (tab === 'hermes') void s.loadHermes();
+    if (tab === 'match') void s.loadMatch();
+    if (tab === 'history') void s.loadHistory();
+  }, [store.activeTab]);
 
   const runningCount = store.agents.filter((a) => a.status === 'running').length;
   const pendingCount = store.agents.filter((a) => a.status === 'pending').length;
@@ -106,7 +117,7 @@ export default function ConsolePage() {
     <div className="h-full flex flex-col">
       <header className="px-6 pt-6 pb-3 flex items-end justify-between">
         <div>
-          <h1 className="font-heading text-3xl font-bold text-heading">Console</h1>
+          <h1 className="font-heading text-3xl font-bold text-heading">{t('console.title')}</h1>
           <div className="w-16 h-px bg-divider mt-2" />
           <p className="text-sm text-muted mt-2">
             {t('console.subtitle')}

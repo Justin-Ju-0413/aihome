@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureFvInit } from '@/lib/fv/init';
 import * as agentRunner from '@/lib/fv/agent-runner';
 import { stmts } from '@/lib/fv/db';
+import { readJsonBody, jsonError, handleRouteError } from '@/lib/api-response';
 
 /** Agent 列表（带 steps；运行中的 agent 附带实时活动/日志供轮询展示） */
 export async function GET() {
@@ -28,16 +29,20 @@ export async function GET() {
   return NextResponse.json(detailed);
 }
 
-/** 手动创建 Agent（provider 限 claude/codex，hermes 走一键匹配） */
+/** 手动创建 Agent（provider 限 claude/codex/zcode/dsh，hermes 走一键匹配） */
 export async function POST(request: NextRequest) {
   ensureFvInit();
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{
+      name?: string; provider?: string; description?: string; target?: string;
+      cwd?: string; prompt?: string; steps?: string[];
+      pipelineId?: string | null; pipelineOrder?: number; nextAgentId?: string | null;
+    }>(request);
     const { name, provider, description, target, cwd, prompt, steps, pipelineId, pipelineOrder, nextAgentId } = body;
-    if (!['claude', 'codex'].includes(provider)) {
-      return NextResponse.json({ error: 'provider must be claude or codex' }, { status: 400 });
+    if (!name) return jsonError('name required', 400, 'NAME_REQUIRED');
+    if (!provider || !['claude', 'codex', 'zcode', 'dsh'].includes(provider)) {
+      return jsonError('provider must be claude, codex, zcode or dsh', 400, 'INVALID_PROVIDER');
     }
-    if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
     const id = agentRunner.createAgent({
       name, provider, description, target, cwd, prompt,
       steps: Array.isArray(steps) ? steps : undefined,
@@ -45,7 +50,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ id, agent: agentRunner.getAgentDetail(id) });
   } catch (err) {
-    console.error('Failed to create agent:', err);
-    return NextResponse.json({ error: 'Failed to create agent' }, { status: 500 });
+    return handleRouteError(err, 'Failed to create agent');
   }
 }

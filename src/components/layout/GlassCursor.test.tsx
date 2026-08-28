@@ -22,8 +22,10 @@ beforeEach(() => {
 
 afterEach(() => {
   if (root) {
-    root.unmount();
-    root = null;
+    act(() => {
+      root!.unmount();
+      root = null;
+    });
   }
   host = null;
   document.body.innerHTML = '';
@@ -66,10 +68,10 @@ describe('GlassCursor', () => {
     const inner = document.createElement('span');
     panel.appendChild(inner);
 
-    act(() => {
+    await act(async () => {
       inner.dispatchEvent(new PointerMoveEvent('pointermove', { bubbles: true, clientX: 250, clientY: 200 }));
+      await nextFrames();
     });
-    await nextFrames();
 
     expect(panel.style.getPropertyValue('--px')).toBe('150px');
     expect(panel.style.getPropertyValue('--py')).toBe('100px');
@@ -80,10 +82,10 @@ describe('GlassCursor', () => {
     const plain = document.createElement('div');
     document.body.appendChild(plain);
 
-    act(() => {
+    await act(async () => {
       plain.dispatchEvent(new PointerMoveEvent('pointermove', { bubbles: true, clientX: 50, clientY: 50 }));
+      await nextFrames();
     });
-    await nextFrames();
 
     expect(plain.style.getPropertyValue('--px')).toBe('');
     expect(plain.style.getPropertyValue('--py')).toBe('');
@@ -92,13 +94,15 @@ describe('GlassCursor', () => {
   it('stops writing after unmount (listener cleanup)', async () => {
     await mountCursor();
     const panel = makePanel();
-    root!.unmount();
-    root = null;
+    act(() => {
+      root!.unmount();
+      root = null;
+    });
 
     act(() => {
       panel.dispatchEvent(new PointerMoveEvent('pointermove', { bubbles: true, clientX: 250, clientY: 200 }));
     });
-    await nextFrames();
+    await act(async () => { await nextFrames(); });
 
     expect(panel.style.getPropertyValue('--px')).toBe('');
   });

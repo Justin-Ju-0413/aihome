@@ -8,6 +8,9 @@ export const miscEn = {
   'usage.overviewRequests': 'Requests',
   'usage.overviewTokens': 'Tokens',
   'usage.pageTitle': 'Usage',
+  'usage.filterAll': 'All',
+  'usage.rescan': 'Rescan',
+  'usage.scanning': 'Scanning…',
   'usage.loading': 'Loading usage data…',
   'usage.loadFailed': 'Failed to load usage data',
   'usage.refreshed': 'Usage data refreshed',
@@ -37,6 +40,7 @@ export const miscEn = {
   'health.duplicateAgent': 'Duplicate agent',
 
   // workbench
+  'workbench.title': 'Workbench',
   'workbench.addPlatform': 'Add platform',
   'workbench.editPlatform': 'Edit platform',
   'workbench.loading': 'Loading…',

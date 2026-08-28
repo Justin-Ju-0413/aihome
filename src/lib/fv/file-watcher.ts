@@ -55,6 +55,25 @@ export function ensureWatcher(dir: string): void {
   watcher.on('change', (filePath: string) => broadcastChange('change', filePath));
   watcher.on('unlink', (filePath: string) => broadcastChange('unlink', filePath));
 
+  // chokidar 的 error 事件不监听会导致 Node 未捕获异常直接崩进程
+  // （目录被删 / FS watcher 耗尽 ENOSPC / 权限错误）。自愈：记录 → 关闭 → 延迟重建。
+  watcher.on('error', (err) => {
+    console.error('[fv:watcher] chokidar error:', err instanceof Error ? err.message : err);
+    const current = getState();
+    if (current.watcher === watcher) current.watcher = null;
+    void watcher.close().catch(() => {});
+    setTimeout(() => {
+      const s = getState();
+      if (dir && !s.watcher && s.dir === dir && getValues()['workspace.watch_files'] !== 'false') {
+        try {
+          ensureWatcher(dir);
+        } catch (e) {
+          console.error('[fv:watcher] re-ensure failed:', e);
+        }
+      }
+    }, 2000);
+  });
+
   state.watcher = watcher;
 }
 

@@ -57,7 +57,7 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-primary/10 rounded-lg">
+            <button onClick={onClose} className="p-2 hover:bg-primary/10 rounded-lg" aria-label={t('common.close')}>
               <X className="w-5 h-5 text-muted" />
             </button>
           </div>

@@ -10,6 +10,9 @@ const usage = {
   'usage.overviewRequests': '请求数',
   'usage.overviewTokens': 'Token 数',
   'usage.pageTitle': '用量',
+  'usage.filterAll': '全部',
+  'usage.rescan': '重新扫描',
+  'usage.scanning': '扫描中…',
   'usage.loading': '正在加载用量数据…',
   'usage.loadFailed': '无法加载用量数据',
   'usage.refreshed': '用量数据已刷新',
@@ -43,6 +46,7 @@ const health = {
 
 // workbench
 const workbench = {
+  'workbench.title': '工作台',
   'workbench.addPlatform': '添加平台',
   'workbench.editPlatform': '编辑平台',
   'workbench.loading': '加载中…',

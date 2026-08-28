@@ -3,6 +3,7 @@ import type { consoleEn } from './console.en';
 /** console 模块文案（中文）— 键必须与英文基准完全一致（tsc 强制） */
 export const consoleZh: Record<keyof typeof consoleEn, string> = {
   // 顶栏
+  'console.title': '控制台',
   'console.subtitle': 'FileVision 运行时控制台：文件可视化 + Agent 编排 + 一键匹配',
   'console.agentsRunning': '{count} 运行中',
   'console.agentsPending': '{count} 待启动',
@@ -59,9 +60,12 @@ export const consoleZh: Record<keyof typeof consoleEn, string> = {
   'console.templateCustom': '-- 自定义 --',
   'console.templateVariables': '模板变量',
   'console.name': '名称',
+  'console.provider': '提供方',
   'console.agentNamePlaceholder': 'Agent 名称',
   'console.claudeCode': 'Claude Code',
   'console.codexCli': 'Codex CLI',
+  'console.zcodeCli': 'ZCode CLI',
+  'console.dshCli': 'DSH CLI',
   'console.prompt': '提示词',
   'console.promptPlaceholder': '给 Agent 的指令...',
   'console.workdir': '工作目录',

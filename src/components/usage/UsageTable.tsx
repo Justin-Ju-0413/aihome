@@ -49,7 +49,7 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
             const open = expanded.has(row.source);
             return (
               <Fragment key={row.source}>
-                <tr className="border-b border-divider cursor-pointer hover:bg-neutral-50" onClick={() => toggle(row.source)}>
+                <tr className="border-b border-divider cursor-pointer hover:bg-neutral-50" onClick={() => toggle(row.source)} tabIndex={0} aria-expanded={open} role="button" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(row.source); } }}>
                   <td className="px-4 py-3 font-medium text-primary">
                     {open ? '▾' : '▸'} {row.source}
                   </td>

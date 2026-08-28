@@ -1,10 +1,22 @@
 import { spawn, type ChildProcess } from 'child_process';
 import { randomUUID } from 'crypto';
-import * as crypto from 'crypto';
 import * as fs from 'fs';
-import { stmts, type Row } from './db';
+import { stmts } from './db';
 import { getValues } from './settings';
 import { emitEvent } from './events';
+import { parseStructuredOutput, createJsonLineParser, detectStepProgress } from './agent-output';
+import { createSnapshot, generateDiff } from './agent-snapshots';
+import { getAgentDetail, type AgentRow } from './agent-queries';
+import { updatePipelineProgress } from './agent-pipeline-progress';
+
+/** 对外门面：进程生命周期 + 全量 re-export（API 面不变）。 */
+
+// ---- re-export 子模块（保持既有 import { ... } from './agent-runner' 有效） ----
+export { parseStructuredOutput, createJsonLineParser, detectStepProgress, type StructuredOutput } from './agent-output';
+export { createSnapshot, generateDiff, computeSimpleDiff, rollbackFile } from './agent-snapshots';
+export { getAgentDetail, listAgents, listActiveAgents, getSteps, getLogs, getDiffs, listPipelines, getPipeline, type AgentRow } from './agent-queries';
+export { createPipeline, startPipeline } from './agent-pipelines';
+export { updatePipelineProgress } from './agent-pipeline-progress';
 
 /** Agent 执行器（原 agent-runner.js 移植，ws 广播改为内部事件总线） */
 
@@ -12,27 +24,6 @@ export const activeProcesses = new Map<string, ChildProcess>();
 
 /** 用户主动停止的 agent：close 晚到时不得把 stopped 覆盖为 completed/error */
 const stopRequested = new Set<string>();
-
-export interface AgentRow extends Row {
-  id: string;
-  name: string;
-  provider: string;
-  status: string;
-  description: string;
-  target: string;
-  cwd: string;
-  prompt: string;
-  progress: number;
-  total_steps: number;
-  current_step: number;
-  pipeline_id: string | null;
-  pipeline_order: number;
-  next_agent_id: string | null;
-  token_usage: number;
-  started_at: string | null;
-  finished_at: string | null;
-  created_at: string;
-}
 
 export function createAgent(input: {
   name: string;
@@ -111,7 +102,11 @@ export function startAgent(agentId: string): number {
 
   const cmd = agent.provider === 'claude'
     ? (vals['connection.claude_path'] || 'claude')
-    : (vals['connection.codex_path'] || 'codex');
+    : agent.provider === 'zcode'
+      ? (vals['connection.zcode_path'] || 'zcode')
+      : agent.provider === 'dsh'
+        ? (vals['connection.dsh_path'] || 'dsh')
+        : (vals['connection.codex_path'] || 'codex');
   const args = buildArgs(agent);
 
   const proc = spawn(cmd, args, {
@@ -256,344 +251,23 @@ function buildArgs(agent: AgentRow): string[] {
     if (agent.prompt) args.push(agent.prompt);
     if (agent.target) args.push('--add-dir', agent.target);
     return args;
-  } else {
-    const args = ['exec'];
+  }
+  if (agent.provider === 'zcode') {
+    // ZCode CLI 兼容 Claude Code 风格参数；实际路径可在设置中覆盖。
+    const args = ['-p', '--verbose', '--output-format', 'stream-json'];
     if (agent.prompt) args.push(agent.prompt);
-    args.push('--skip-git-repo-check', '--full-auto');
+    if (agent.target) args.push('--add-dir', agent.target);
     return args;
   }
-}
-
-function detectStepProgress(
-  text: string,
-  steps: Row[],
-  currentIdx: number,
-  agentId: string,
-  onStepAdvance: (idx: number) => void
-): void {
-  if (!steps || currentIdx >= steps.length) return;
-  const keywords = ['edit', 'write', 'create', 'refactor', 'test', 'lint', 'done', 'complete', 'fix', 'update', 'analyz', 'generat', 'modif'];
-  const lower = text.toLowerCase();
-  if (keywords.some((k) => lower.includes(k))) {
-    const nextIdx = Math.min(currentIdx + 1, steps.length - 1);
-    if (nextIdx > currentIdx) {
-      stmts.updateStep({ agentId, stepNum: Number(steps[currentIdx].step_num), status: 'done' });
-      if (nextIdx < steps.length) {
-        stmts.updateStep({ agentId, stepNum: Number(steps[nextIdx].step_num), status: 'active' });
-      }
-      onStepAdvance(nextIdx);
-      emitEvent({ type: 'agent:step', agentId, stepNum: nextIdx, stepName: steps[nextIdx]?.name });
-    }
+  if (agent.provider === 'dsh') {
+    // DSH 当前以通用 run 子命令启动，路径/参数可在后续按真实 CLI 调整。
+    const args = ['run'];
+    if (agent.prompt) args.push(agent.prompt);
+    if (agent.target) args.push('--target', agent.target);
+    return args;
   }
-}
-
-export interface StructuredOutput {
-  tools: Array<{ name: string; input: Record<string, unknown> }>;
-  edits: Array<{ file: string; action: string }>;
-  messages: string[];
-}
-
-function emptyStructuredOutput(): StructuredOutput {
-  return { tools: [], edits: [], messages: [] };
-}
-
-/** 解析一行 claude stream-json（对象累积到 result）。非 JSON / 非 assistant 行静默跳过。 */
-function parseClaudeJsonLine(line: string, result: StructuredOutput): void {
-  try {
-    const obj = JSON.parse(line);
-    if (obj.type === 'assistant' && obj.message?.content) {
-      const content = Array.isArray(obj.message.content) ? obj.message.content : [obj.message.content];
-      for (const c of content) {
-        if (c.type === 'tool_use') {
-          result.tools.push({ name: c.name, input: c.input ?? {} });
-          if (c.name === 'Edit' || c.name === 'Write') {
-            result.edits.push({ file: c.input?.file_path || c.input?.path || '', action: c.name });
-          }
-        }
-        if (c.type === 'text') result.messages.push(c.text?.substring(0, 200));
-      }
-    }
-  } catch {
-    // 跳过非 JSON 行
-  }
-}
-
-export function parseStructuredOutput(text: string, provider: string): StructuredOutput {
-  const result = emptyStructuredOutput();
-  if (provider === 'claude') {
-    for (const line of text.split('\n')) {
-      if (line.trim().startsWith('{')) parseClaudeJsonLine(line, result);
-    }
-  } else {
-    if (text.includes('edit') || text.includes('write') || text.includes('modify')) {
-      result.edits.push({ action: 'file_modification', file: '' });
-    }
-  }
-  return result;
-}
-
-/**
- * 流式 JSON 增量解析器：stdout chunk 落在任意字节边界，把 chunk 拼进行缓冲、
- * 按换行切出完整行回调，残尾留到下一 chunk。JSON 行被切断时不再整条丢失。
- * 无换行的超长缓冲（防御性）按整块回调一次并清空，避免内存无限膨胀。
- */
-export function createJsonLineParser(
-  onLine: (line: string) => void,
-  maxBufferBytes = 1_000_000
-): (chunk: string) => void {
-  let buffer = '';
-  return (chunk: string) => {
-    buffer += chunk;
-    let idx: number;
-    while ((idx = buffer.indexOf('\n')) !== -1) {
-      const line = buffer.slice(0, idx);
-      buffer = buffer.slice(idx + 1);
-      if (line.trim()) onLine(line);
-    }
-    if (buffer.length > maxBufferBytes) {
-      if (buffer.trim()) onLine(buffer);
-      buffer = '';
-    }
-  };
-}
-
-export function createSnapshot(agentId: string, filePath: string): string | null {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const hash = crypto.createHash('sha256').update(content).digest('hex');
-    stmts.insertSnapshot({ agentId, filePath, contentHash: hash, content });
-    return hash;
-  } catch {
-    return null;
-  }
-}
-
-export function generateDiff(agentId: string, filePath: string): string | null {
-  try {
-    const snapshots = stmts.getSnapshotsByAgent(agentId);
-    const fileSnapshots = snapshots.filter((s) => s.file_path === filePath);
-    if (fileSnapshots.length < 1) return null;
-
-    const original = String(fileSnapshots[fileSnapshots.length - 1].content);
-    const current = fs.readFileSync(filePath, 'utf-8');
-    if (original === current) return null;
-
-    const diff = computeSimpleDiff(original, current, filePath);
-    const snapshotId = Number(fileSnapshots[fileSnapshots.length - 1].id);
-    stmts.insertDiff({ agentId, filePath, diffContent: diff, snapshotId });
-    return diff;
-  } catch {
-    return null;
-  }
-}
-
-export function computeSimpleDiff(oldText: string, newText: string, filePath: string): string {
-  const oldLines = oldText.split('\n');
-  const newLines = newText.split('\n');
-  const lines = [`--- a/${filePath}`, `+++ b/${filePath}`];
-  const maxLen = Math.max(oldLines.length, newLines.length);
-  for (let i = 0; i < maxLen; i++) {
-    const o = i < oldLines.length ? oldLines[i] : null;
-    const n = i < newLines.length ? newLines[i] : null;
-    if (o === n) {
-      lines.push(` ${o}`);
-    } else {
-      if (o !== null) lines.push(`-${o}`);
-      if (n !== null) lines.push(`+${n}`);
-    }
-  }
-  return lines.join('\n');
-}
-
-export function rollbackFile(filePath: string): boolean {
-  const snap = stmts.getLatestSnapshot(filePath);
-  if (!snap) return false;
-  try {
-    fs.writeFileSync(filePath, String(snap.content), 'utf-8');
-    stmts.insertHistory({
-      type: 'edit', title: `回滚 ${filePath}`,
-      description: `Restored from snapshot #${snap.id}`,
-      agentId: null, filePath,
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function createPipeline(input: { name: string; description?: string; agents: Array<Record<string, unknown>> }): string {
-  const pipelineId = randomUUID();
-  const agentIds: string[] = [];
-
-  for (let i = 0; i < input.agents.length; i++) {
-    const cfg = input.agents[i] as {
-      name?: string; provider?: string; description?: string; target?: string;
-      cwd?: string; prompt?: string; steps?: string[];
-    };
-    const aid = createAgent({
-      name: cfg.name || `step-${i + 1}`,
-      provider: cfg.provider || 'claude',
-      description: cfg.description,
-      target: cfg.target,
-      cwd: cfg.cwd,
-      prompt: cfg.prompt,
-      steps: cfg.steps,
-      pipelineId,
-      pipelineOrder: i,
-      nextAgentId: null,
-    });
-    agentIds.push(aid);
-  }
-
-  for (let i = 0; i < agentIds.length - 1; i++) {
-    stmts.updateAgentNext({ id: agentIds[i], nextAgentId: agentIds[i + 1] });
-  }
-
-  stmts.insertPipeline({
-    id: pipelineId, name: input.name, description: input.description || '',
-    status: 'pending', agentIds: JSON.stringify(agentIds),
-  });
-
-  return pipelineId;
-}
-
-export function startPipeline(pipelineId: string): string {
-  const pipeline = stmts.getPipeline(pipelineId);
-  if (!pipeline) throw new Error('Pipeline not found');
-  const agentIds = JSON.parse(String(pipeline.agent_ids)) as string[];
-  if (agentIds.length === 0) throw new Error('Pipeline has no agents');
-
-  stmts.updatePipelineStatus({ id: pipelineId, status: 'running', currentIndex: 0, finishedAt: null });
-  startAgent(agentIds[0]);
-  return pipelineId;
-}
-
-function updatePipelineProgress(pipelineId: string): void {
-  const pipeline = stmts.getPipeline(pipelineId);
-  if (!pipeline) return;
-  const agentIds = JSON.parse(String(pipeline.agent_ids)) as string[];
-  const agents = agentIds.map((id) => stmts.getAgent(id));
-  const allCompleted = agents.every((a) => a?.status === 'completed');
-  const anyError = agents.some((a) => a?.status === 'error');
-  const currentIdx = agents.findIndex((a) => a?.status === 'running');
-
-  if (allCompleted) {
-    stmts.updatePipelineStatus({ id: pipelineId, status: 'completed', currentIndex: agentIds.length - 1, finishedAt: new Date().toISOString() });
-    emitEvent({ type: 'pipeline:completed', pipelineId });
-  } else if (anyError) {
-    stmts.updatePipelineStatus({ id: pipelineId, status: 'error', currentIndex: Math.max(0, currentIdx), finishedAt: new Date().toISOString() });
-    emitEvent({ type: 'pipeline:error', pipelineId });
-  } else {
-    stmts.updatePipelineStatus({ id: pipelineId, status: 'running', currentIndex: Math.max(0, currentIdx), finishedAt: null });
-  }
-}
-
-export function getAgentDetail(agentId: string): Record<string, unknown> | null {
-  const agent = stmts.getAgent(agentId) as AgentRow | undefined;
-  if (!agent) return null;
-  const steps = stmts.getSteps(agentId);
-  const logs = stmts.getLogs(agentId);
-  const diffs = stmts.getDiffsByAgent(agentId);
-  const snapshots = stmts.getSnapshotsByAgent(agentId);
-
-  const activities: Array<{ type: string; file: string; tool: string; time: string }> = [];
-  for (const log of logs) {
-    if (log.type === 'structured') {
-      try {
-        const parsed = JSON.parse(String(log.content));
-        if (parsed.edits?.length) {
-          for (const e of parsed.edits) {
-            activities.push({
-              type: e.action === 'Edit' ? 'edit' : e.action === 'Write' ? 'create' : 'modify',
-              file: e.file || '',
-              tool: e.action,
-              time: String(log.created_at),
-            });
-          }
-        }
-        if (parsed.tools?.length) {
-          for (const t of parsed.tools) {
-            if (t.name !== 'Edit' && t.name !== 'Write') {
-              activities.push({
-                type: 'tool',
-                tool: t.name,
-                file: t.input?.file_path || t.input?.path || '',
-                time: String(log.created_at),
-              });
-            }
-          }
-        }
-      } catch {
-        // 忽略解析失败
-      }
-    }
-    if (log.type === 'stdout') {
-      try {
-        const lines = String(log.content).split('\n').filter((l) => l.trim().startsWith('{'));
-        for (const line of lines) {
-          const obj = JSON.parse(line);
-          if (obj.type === 'assistant' && obj.message?.content) {
-            const content = Array.isArray(obj.message.content) ? obj.message.content : [obj.message.content];
-            for (const c of content) {
-              if (c.type === 'tool_use') {
-                const opType = c.name === 'Read' ? 'read' : c.name === 'Edit' ? 'edit' : c.name === 'Write' ? 'create' : c.name === 'Bash' ? 'execute' : 'tool';
-                activities.push({
-                  type: opType,
-                  tool: c.name,
-                  file: c.input?.file_path || c.input?.path || '',
-                  time: String(log.created_at),
-                });
-              }
-            }
-          }
-        }
-      } catch {
-        // 忽略解析失败
-      }
-    }
-  }
-
-  const targetFiles = agent.target ? agent.target.split(',').map((f) => f.trim()).filter(Boolean) : [];
-  const uniqueFiles = [...new Set([...targetFiles, ...activities.map((a) => a.file).filter(Boolean)])];
-
-  return {
-    ...agent, steps, logs: logs.slice(-50), diffs, snapshots: snapshots.length,
-    activities: activities.slice(-30),
-    targetFiles: uniqueFiles,
-    operationStats: {
-      read: activities.filter((a) => a.type === 'read').length,
-      edit: activities.filter((a) => a.type === 'edit').length,
-      create: activities.filter((a) => a.type === 'create').length,
-      execute: activities.filter((a) => a.type === 'execute').length,
-      tool: activities.filter((a) => a.type === 'tool').length,
-    },
-  };
-}
-
-export function listAgents(): Row[] {
-  return stmts.listAgents();
-}
-
-export function listActiveAgents(): Row[] {
-  return stmts.listActiveAgents();
-}
-
-export function getSteps(id: string): Row[] {
-  return stmts.getSteps(id);
-}
-
-export function getLogs(id: string): Row[] {
-  return stmts.getLogs(id);
-}
-
-export function getDiffs(id: string): Row[] {
-  return stmts.getDiffsByAgent(id);
-}
-
-export function listPipelines(): Row[] {
-  return stmts.listPipelines();
-}
-
-export function getPipeline(id: string): Row | undefined {
-  return stmts.getPipeline(id);
+  const args = ['exec'];
+  if (agent.prompt) args.push(agent.prompt);
+  args.push('--skip-git-repo-check', '--full-auto');
+  return args;
 }

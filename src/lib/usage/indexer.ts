@@ -12,6 +12,8 @@ export const SOURCE_LABELS: Record<UsageSource, string> = {
   opencode: 'opencode',
   hermes: 'hermes',
   openclaw: 'openclaw',
+  zcode: 'zcode',
+  dsh: 'dsh',
 };
 
 export const ALL_SOURCES: UsageSource[] = ACTIVE_SOURCES;
@@ -58,7 +60,7 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
         }
         // openclaw rollup 行会被源反复改写（updated_at 变化触发重扫），dedupe 会
         // 丢弃更新后的值 → 该源用全量替换语义；其余源保持增量 dedupe
-        inserted += cache.insertEvents(events, id === 'openclaw' ? { replaceSource: id } : undefined);
+        inserted += cache.insertEvents(events, id === 'openclaw' || id === 'dsh' ? { replaceSource: id } : undefined);
         cache.setCheckpoint(id, checkpoint);
         cache.setMeta(`last_index_${id}`, String(Date.now()));
         cache.setMeta(`last_index_${id}_error`, '');
