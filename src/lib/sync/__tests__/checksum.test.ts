@@ -7,6 +7,7 @@ import { dirSha256, isSkillDir, scanSkills, copyTree, atomicCopy } from '../chec
 const tmp = path.join(os.tmpdir(), `aihome-checksum-test-${process.pid}`);
 
 async function makeSkill(root: string, name: string, extra = 'content'): Promise<string> {
+  if (path.basename(name) !== name) throw new Error(`invalid name: ${name}`);
   const dir = path.join(root, name);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, 'SKILL.md'), `---\ndescription: ${name}\n---\n\n${extra}\n`, 'utf-8');

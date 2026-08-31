@@ -14,8 +14,8 @@ import { execFileSync } from 'node:child_process';
  */
 
 const PREFIX = 'enc:v1:';
-const KEYCHAIN_SERVICE = 'com.justinju.aihome';
-const KEYCHAIN_ACCOUNT = 'workbench-master-key';
+// Keychain 条目固定为本应用专用（service=com.justinju.aihome / account=workbench-master-key）；
+// security CLI 的参数必须为字面量，避免任何外部输入进入选项位。
 
 function deriveKey(master: string): Buffer {
   return createHash('sha256').update(master).digest();
@@ -25,7 +25,7 @@ function keychainFind(): string | null {
   try {
     const out = execFileSync(
       'security',
-      ['find-generic-password', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT, '-w'],
+      ['find-generic-password', '-s', 'com.justinju.aihome', '-a', 'workbench-master-key', '-w'],
       { encoding: 'utf8', timeout: 5000 }
     );
     return out.trim() || null;
@@ -35,9 +35,11 @@ function keychainFind(): string | null {
 }
 
 function keychainStore(secret: string): void {
+  // 仅接受 base64 字符集（getMasterKey 生成的随机密钥必然满足），杜绝控制符/前导 '-' 被当选项解析
+  if (!/^[A-Za-z0-9+/=]+$/.test(secret)) throw new Error('keychain secret 含非法字符');
   execFileSync(
     'security',
-    ['add-generic-password', '-U', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT, '-w', secret],
+    ['add-generic-password', '-U', '-s', 'com.justinju.aihome', '-a', 'workbench-master-key', '-w', secret],
     { timeout: 5000 }
   );
 }

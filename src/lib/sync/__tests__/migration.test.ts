@@ -18,6 +18,7 @@ const OLD_REPO = process.env.AIHOME_REPO_DIR;
 const OLD_CFG = process.env.AIHOME_CONFIG_DIR;
 
 async function makeSkill(root: string, name: string, extra = 'content'): Promise<void> {
+  if (path.basename(name) !== name) throw new Error(`invalid name: ${name}`);
   const dir = path.join(root, name);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, 'SKILL.md'), `---\ndescription: ${name}\n---\n\n${extra}\n`, 'utf-8');

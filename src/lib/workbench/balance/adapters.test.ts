@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { BALANCE_ADAPTERS } from './adapter';
+import { BALANCE_ADAPTERS, fetchJson } from './adapter';
 
 function mockFetchOnce(status: number, body: unknown) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
@@ -54,6 +54,19 @@ describe('openai adapter', () => {
     mockFetchOnce(200, { total_available: 12.34, total_granted: 2.0, total_used: 0 });
     const res = await BALANCE_ADAPTERS.openai.query('sk-oa');
     expect(res).toEqual({ ok: true, balances: [{ currency: 'USD', total: '12.34' }] });
+  });
+});
+
+describe('fetchJson protocol guard', () => {
+  it('rejects remote http endpoints', async () => {
+    await expect(fetchJson('http://api.example.com', '/user/balance', 'sk-xxx')).rejects.toThrow('仅允许 https');
+  });
+  it('allows http on loopback hosts (local mock endpoints)', async () => {
+    mockFetchOnce(200, { ok: true });
+    for (const host of ['127.0.0.1:3210', 'localhost:3210', '[::1]:3210']) {
+      const res = await fetchJson(`http://${host}`, '/user/balance', 'sk-xxx');
+      expect(res.status).toBe(200);
+    }
   });
 });
 

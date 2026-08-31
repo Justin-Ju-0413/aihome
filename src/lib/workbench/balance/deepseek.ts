@@ -1,7 +1,11 @@
 import type { BalanceResult } from '../types';
 import { fetchJson } from './adapter';
 
-const BASE = process.env.AIHOME_WORKBENCH_DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com';
+// BASE 允许 env 覆盖：https 一律放行；http 仅放行本机回环（本地 mock），防止误配成远程明文端点
+const BASE_RAW = process.env.AIHOME_WORKBENCH_DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com';
+const BASE = /^(https:\/\/|http:\/\/(localhost|127\.0\.0\.1|\[::1\]|::1)([:/]|$))/.test(BASE_RAW)
+  ? BASE_RAW
+  : 'https://api.deepseek.com';
 
 export const deepseekAdapter = {
   provider: 'deepseek' as const,

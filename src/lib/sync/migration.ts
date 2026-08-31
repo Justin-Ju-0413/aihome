@@ -33,7 +33,9 @@ export async function migrateLegacyRepo(): Promise<MigrationResult> {
   }
 
   await fs.mkdir(repoDir(), { recursive: true });
-  await copyTree(path.join(legacy, 'common'), commonDir());
+  const legacyCommon = path.resolve(legacy, 'common');
+  if (!legacyCommon.startsWith(path.resolve(legacy) + path.sep)) throw new Error('legacy 路径非法');
+  await copyTree(legacyCommon, commonDir());
   for (const file of ['metadata.json', 'MANIFEST.md']) {
     try {
       await fs.copyFile(path.join(legacy, file), path.join(repoDir(), file));

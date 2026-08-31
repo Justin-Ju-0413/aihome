@@ -14,11 +14,20 @@ export const BALANCE_ADAPTERS: Record<string, BalanceAdapter> = {
   openai: openaiAdapter,
 };
 
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+// http 仅放行本机回环（本地 mock / 开发端点），远程端点一律要求 https
+export function isLoopbackUrl(url: URL): boolean {
+  return url.protocol === 'http:' && LOOPBACK_HOSTS.has(url.hostname);
+}
+
 export async function fetchJson(baseUrl: string, pathname: string, key: string, timeoutMs = 10_000): Promise<{ status: number; json: unknown }> {
+  const url = new URL(`${baseUrl.replace(/\/$/, '')}${pathname}`);
+  if (url.protocol !== 'https:' && !isLoopbackUrl(url)) throw new Error('balance 接口仅允许 https 地址（SSRF 防护，仅放行本机回环 http）');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${baseUrl.replace(/\/$/, '')}${pathname}`, {
+    const res = await fetch(url, {
       headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
       signal: controller.signal,
       cache: 'no-store',

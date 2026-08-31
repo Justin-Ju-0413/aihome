@@ -27,9 +27,11 @@ export function scanZcode(
   let maxMtime = cp.mtime;
   let maxTs = cp.ts;
 
+  const root = path.resolve(dir);
   for (const name of fs.readdirSync(dir)) {
     if (!name.endsWith('.jsonl')) continue;
-    const file = path.join(dir, name);
+    const file = path.resolve(root, name);
+    if (!file.startsWith(root + path.sep)) continue;
     let stat;
     try {
       stat = fs.statSync(file);
