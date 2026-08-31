@@ -28,6 +28,11 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
 - **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths (out-of-workspace requests return HTTP 403).
 - **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
+- **AI API 管理器** (`/vault`) — central vault for provider keys (Anthropic / OpenAI / DeepSeek / 火山方舟 Coding Plan / GLM / Kimi 等模板)；一键切换 Claude Code / Codex / opencode 的 provider。key 以主密码 AES-256-GCM 加密存 `~/.aihome/vault.enc`（0600，不在 git 内）；忘记主密码不可恢复；切换前自动备份工具配置文件（`~/.aihome/backups/`，保留 10 份）；工具配置被手动修改时拒绝覆盖并提示冲突。vault 激活状态同时成为 usage 归属覆盖源。
+
+## Testing / 测试
+
+vault 相关单测与 e2e 全部通过环境变量重定向到 tmp 目录（`AIHOME_VAULT_FILE` / `AIHOME_VAULT_CLAUDE_CODE_CONFIG` / `AIHOME_VAULT_CODEX_CONFIG` / `AIHOME_VAULT_CODEX_AUTH` / `AIHOME_VAULT_OPENCODE_CONFIG` / `AIHOME_VAULT_BACKUP_DIR`），**不会触碰真实的 `~/.claude` / `~/.codex` / `~/.config/opencode` 配置**。
 
 ## Tech stack / 技术栈
 
