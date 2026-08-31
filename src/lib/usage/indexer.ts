@@ -3,6 +3,7 @@ import { UsageCache } from './cache';
 import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo, type UsageSource } from './types';
 import { loadCcSwitchPricing, getPricing } from './pricing';
 import { scanSource, checkSourceAvailability } from './sources';
+import { getProviderOverride } from '@/lib/vault';
 export { checkSourceAvailability };
 
 export const SOURCE_LABELS: Record<UsageSource, string> = {
@@ -26,6 +27,7 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
   const ccPricing = loadCcSwitchPricing(USAGE_SOURCE_PATHS['cc-switch']());
   const pricing = (model: string) => getPricing(model, ccPricing);
   const targets = only && only.length > 0 ? only : ACTIVE_SOURCES;
+  const override = getProviderOverride();
   const sources: SourceInfo[] = [];
   let inserted = 0;
   try {
@@ -33,7 +35,11 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
       try {
         const cp = cache.getCheckpoint(id);
         const { events, checkpoint } = scanSource(id, cp, pricing);
-        inserted += cache.insertEvents(events);
+        const overrideProvider = override[id as 'claude' | 'codex' | 'opencode'];
+        const mapped = overrideProvider
+          ? events.map((e) => ({ ...e, provider: overrideProvider }))
+          : events;
+        inserted += cache.insertEvents(mapped);
         cache.setCheckpoint(id, checkpoint);
         cache.setMeta(`last_index_${id}`, String(Date.now()));
         cache.setMeta(`last_index_${id}_error`, '');
