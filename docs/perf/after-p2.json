@@ -1,0 +1,162 @@
+{
+  "generatedAt": "2026-08-20T08:08:13.314Z",
+  "base": "http://127.0.0.1:3221",
+  "pages": [
+    {
+      "route": "/",
+      "samples": 1,
+      "fcp": 116,
+      "lcp": null,
+      "cls": 0.02762830828966264,
+      "dcl": 96,
+      "load": 123,
+      "transferKB": 375,
+      "jsKB": 239,
+      "resources": 65
+    },
+    {
+      "route": "/board",
+      "samples": 1,
+      "fcp": 68,
+      "lcp": null,
+      "cls": 0.02762830828966264,
+      "dcl": 10,
+      "load": 74,
+      "transferKB": 375,
+      "jsKB": 239,
+      "resources": 65
+    },
+    {
+      "route": "/graph",
+      "samples": 1,
+      "fcp": 64,
+      "lcp": null,
+      "cls": 0.014375568154417437,
+      "dcl": 9,
+      "load": 77,
+      "transferKB": 454,
+      "jsKB": 321,
+      "resources": 66
+    },
+    {
+      "route": "/agents",
+      "samples": 1,
+      "fcp": 60,
+      "lcp": null,
+      "cls": 0.02265440226739326,
+      "dcl": 9,
+      "load": 69,
+      "transferKB": 381,
+      "jsKB": 239,
+      "resources": 71
+    },
+    {
+      "route": "/agents/L1VzZXJzL2dzdGFyL0RvY3VtZW50cy8wNS3pobnnm67ku6PnoIEvQUlIb21lL2RhdGEvc2FtcGxlLWFnZW50cy9jb2RlLWFzc2lzdGFudC9BR0VOVFMubWQ",
+      "samples": 1,
+      "fcp": 264,
+      "lcp": null,
+      "cls": 0.004155646882233796,
+      "dcl": 250,
+      "load": 408,
+      "transferKB": 725,
+      "jsKB": 587,
+      "resources": 69
+    },
+    {
+      "route": "/skills",
+      "samples": 1,
+      "fcp": 60,
+      "lcp": null,
+      "cls": 0.00497768755626286,
+      "dcl": 45,
+      "load": 75,
+      "transferKB": 366,
+      "jsKB": 239,
+      "resources": 62
+    },
+    {
+      "route": "/settings",
+      "samples": 1,
+      "fcp": 56,
+      "lcp": null,
+      "cls": 0.004155646882233796,
+      "dcl": 8,
+      "load": 67,
+      "transferKB": 373,
+      "jsKB": 242,
+      "resources": 70
+    },
+    {
+      "route": "/health",
+      "samples": 1,
+      "fcp": 60,
+      "lcp": null,
+      "cls": 0.003915445461194701,
+      "dcl": 45,
+      "load": 75,
+      "transferKB": 369,
+      "jsKB": 242,
+      "resources": 64
+    },
+    {
+      "route": "/usage",
+      "samples": 1,
+      "fcp": 64,
+      "lcp": null,
+      "cls": 0.04066768005957166,
+      "dcl": 8,
+      "load": 69,
+      "transferKB": 375,
+      "jsKB": 239,
+      "resources": 63
+    },
+    {
+      "route": "/console",
+      "samples": 1,
+      "fcp": 68,
+      "lcp": null,
+      "cls": 0.011692236964431155,
+      "dcl": 11,
+      "load": 74,
+      "transferKB": 384,
+      "jsKB": 239,
+      "resources": 67
+    },
+    {
+      "route": "/workbench",
+      "samples": 1,
+      "fcp": 56,
+      "lcp": null,
+      "cls": 0.004447783745659723,
+      "dcl": 44,
+      "load": 73,
+      "transferKB": 372,
+      "jsKB": 239,
+      "resources": 62
+    },
+    {
+      "route": "/sync",
+      "samples": 1,
+      "fcp": 56,
+      "lcp": null,
+      "cls": 0.003915445461194701,
+      "dcl": 44,
+      "load": 68,
+      "transferKB": 408,
+      "jsKB": 239,
+      "resources": 63
+    },
+    {
+      "route": "/onboarding",
+      "samples": 1,
+      "fcp": 84,
+      "lcp": null,
+      "cls": 0.003915445461194701,
+      "dcl": 61,
+      "load": 84,
+      "transferKB": 370,
+      "jsKB": 244,
+      "resources": 63
+    }
+  ]
+}

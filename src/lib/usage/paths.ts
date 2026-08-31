@@ -15,6 +15,12 @@ export const USAGE_SOURCE_PATHS: Record<ActiveUsageSource, () => string> = {
     path.join(os.homedir(), '.local', 'share', 'opencode', 'opencode.db'),
   hermes: () =>
     process.env.AIHOME_USAGE_HERMES_DB ?? path.join(os.homedir(), '.hermes', 'state.db'),
+  openclaw: () =>
+    process.env.AIHOME_USAGE_OPENCLAW_DIR ?? path.join(os.homedir(), '.openclaw', 'agents'),
+  zcode: () =>
+    process.env.AIHOME_USAGE_ZCODE_DIR ?? path.join(os.homedir(), '.zcode', 'cli', 'rollout'),
+  dsh: () =>
+    process.env.AIHOME_USAGE_DSH_STORE ?? path.join(os.homedir(), '.dsh', 'storages', 'session_projcache.json'),
 };
 
 export function usageCachePath(): string {

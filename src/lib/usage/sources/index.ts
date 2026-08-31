@@ -5,6 +5,9 @@ import { scanClaude } from './claude';
 import { scanCodex } from './codex';
 import { scanOpencode } from './opencode';
 import { scanHermes } from './hermes';
+import { scanOpenclaw } from './openclaw';
+import { scanZcode } from './zcode';
+import { scanDsh } from './dsh';
 import { USAGE_SOURCE_PATHS } from '../paths';
 import type { ModelPricing } from '../pricing';
 
@@ -21,6 +24,9 @@ const ADAPTERS: Record<ActiveUsageSource, Adapter> = {
   codex: (p, cp, pricing) => scanCodex(p, cp, pricing),
   opencode: (p, cp) => scanOpencode(p, cp),
   hermes: (p, cp) => scanHermes(p, cp),
+  openclaw: (p, cp) => scanOpenclaw(p, cp),
+  zcode: (p, cp, pricing) => scanZcode(p, cp, pricing),
+  dsh: (p, cp, pricing) => scanDsh(p, cp, pricing),
 };
 
 export function checkSourceAvailability(id: ActiveUsageSource): { ok: boolean; reason?: string } {

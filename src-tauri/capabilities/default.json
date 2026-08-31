@@ -1,0 +1,5 @@
+{
+  "identifier": "default",
+  "windows": ["main", "widget"],
+  "permissions": ["core:default", "autostart:default"]
+}

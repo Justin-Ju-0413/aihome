@@ -55,7 +55,7 @@ export const selectors = {
     workspaceName: 'section:has-text("Workspace") input',
     saveBtn: '[data-testid="settings-save-btn"]',
     exportBtn: 'button:has-text("Export")',
-    rescanBtn: 'button:has-text("Rescan")',
+    rescanBtn: '[data-testid="settings-rescan-btn"]',
     addPathInput: 'input[placeholder="/path/to/agents"]',
     addPathBtn: '[data-testid="settings-add-path-btn"]',
     addGroupInput: 'input[placeholder="Group name"]',

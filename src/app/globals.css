@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* ============================================================
+ * AIHome Liquid Glass 双主题
+ * 浅色: 蓝调磨砂玻璃; 深色: 暗蓝液态玻璃
+ * prefers-color-scheme 自动跟随系统(Tauri 窗口 vibrancy 同步)
+ * ============================================================ */
+
 :root {
   --color-primary: #0A4F9D;
   --color-secondary: #6B97C8;
@@ -15,6 +21,52 @@
   --color-code-border: #D6E2F0;
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* 玻璃变量(浅色) */
+  --glass-nav-bg: rgba(255, 255, 255, 0.55);
+  --glass-panel-bg: rgba(255, 255, 255, 0.52);
+  --glass-sidebar-bg: rgba(255, 255, 255, 0.38);
+  --glass-modal-bg: rgba(255, 255, 255, 0.68);
+  --glass-input-bg: rgba(255, 255, 255, 0.55);
+  --glass-blur: 24px;
+  --glass-border: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(10, 79, 157, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.80);
+  --glass-glow: rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 8px 32px rgba(10, 79, 157, 0.12);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  --scrim-bg: rgba(23, 46, 84, 0.30);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #7CB3F0;
+    --color-secondary: #5E87B8;
+    --color-accent: #4D9DE0;
+    --color-bg-base: #0B1424;
+    --color-card-bg: #132036;
+    --color-card-border: #2A3E5C;
+    --color-text-body: #AEC9E8;
+    --color-text-heading: #DCEBFA;
+    --color-text-muted: #6E8CB0;
+    --color-divider: #22344E;
+    --color-code-bg: #0F1B2D;
+    --color-code-border: #22344E;
+
+    /* 玻璃变量(深色) */
+    --glass-nav-bg: rgba(19, 32, 54, 0.55);
+    --glass-panel-bg: rgba(19, 32, 54, 0.52);
+    --glass-sidebar-bg: rgba(19, 32, 54, 0.40);
+    --glass-modal-bg: rgba(19, 32, 54, 0.70);
+    --glass-input-bg: rgba(19, 32, 54, 0.55);
+    --glass-border: rgba(124, 179, 240, 0.16);
+    --glass-edge: rgba(124, 179, 240, 0.12);
+    --glass-highlight: rgba(124, 179, 240, 0.12);
+    --glass-glow: rgba(124, 179, 240, 0.14);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --glass-inner: inset 0 1px 0 rgba(124, 179, 240, 0.14);
+    --scrim-bg: rgba(2, 6, 14, 0.55);
+  }
 }
 
 @theme inline {
@@ -32,6 +84,11 @@
   --font-family-body: var(--font-sans);
 }
 
+/* html 保持不透明底色:浏览器(非 Tauri)下兜底,body 半透明叠加其上 */
+html {
+  background: var(--color-bg-base);
+}
+
 body {
   background: var(--color-bg-base);
   color: var(--color-text-body);
@@ -39,6 +96,7 @@ body {
   position: relative;
 }
 
+/* 半透明渐变氛围层:叠加 Tauri 窗口毛玻璃,同时浏览器兜底 */
 body::before {
   content: '';
   position: fixed;
@@ -48,24 +106,125 @@ body::before {
   background:
     radial-gradient(
       ellipse 80% 60% at 10% 20%,
-      rgba(107, 151, 200, 0.15) 0%,
+      rgba(107, 151, 200, 0.16) 0%,
       transparent 70%
     ),
     radial-gradient(
       ellipse 70% 50% at 85% 75%,
-      rgba(59, 125, 216, 0.10) 0%,
+      rgba(59, 125, 216, 0.12) 0%,
       transparent 65%
     ),
     radial-gradient(
       ellipse 90% 40% at 50% 10%,
-      rgba(10, 79, 157, 0.06) 0%,
+      rgba(10, 79, 157, 0.08) 0%,
       transparent 60%
     ),
     radial-gradient(
       ellipse 50% 50% at 20% 80%,
-      rgba(107, 151, 200, 0.08) 0%,
+      rgba(107, 151, 200, 0.10) 0%,
       transparent 50%
     );
+}
+
+/* ============================================================
+ * 液态玻璃基元
+ * --px/--py 由 GlassCursor 写入(面板相对指针坐标),驱动光泽跟随
+ * ============================================================ */
+
+.glass-nav,
+.glass-panel,
+.glass-sidebar,
+.glass-modal,
+.glass-input {
+  position: relative;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-inner), var(--glass-shadow);
+}
+
+.glass-nav {
+  background: var(--glass-nav-bg);
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.glass-panel {
+  background: var(--glass-panel-bg);
+  overflow: hidden;
+}
+
+.glass-sidebar {
+  background: var(--glass-sidebar-bg);
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  overflow: hidden;
+}
+
+.glass-modal {
+  background: var(--glass-modal-bg);
+  overflow: hidden;
+}
+
+.glass-input {
+  background: var(--glass-input-bg);
+  border-color: var(--glass-edge);
+}
+
+/* 顶部折射光带 */
+.glass-nav::before,
+.glass-panel::before,
+.glass-sidebar::before,
+.glass-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 42%;
+  background: linear-gradient(180deg, var(--glass-highlight), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* 指针跟随光泽(液态玻璃核心):--px/--py 由 GlassCursor 实时写入 */
+.glass-nav::after,
+.glass-panel::after,
+.glass-sidebar::after,
+.glass-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    380px circle at var(--px, 50%) var(--py, 0%),
+    var(--glass-glow),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.glass-nav:hover::after,
+.glass-panel:hover::after,
+.glass-sidebar:hover::after,
+.glass-modal:hover::after {
+  opacity: 1;
+}
+
+/* 模态遮罩:半透明 + 背景虚化,玻璃层之下 */
+.scrim {
+  background: var(--scrim-bg);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* 滚动条暗色适配 */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-card-border);
+  }
 }
 
 /* Custom scrollbar */
@@ -124,4 +283,43 @@ body::before {
 
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
+}
+
+/* Onboarding 艺术感动画 */
+@keyframes floatSlow {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -18px, 0) scale(1.06); }
+}
+
+@keyframes floatSlower {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(14px, 12px, 0) scale(1.08); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmerText {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.onb-orb-slow {
+  animation: floatSlow 9s ease-in-out infinite;
+}
+
+.onb-orb-slower {
+  animation: floatSlower 12s ease-in-out infinite;
+}
+
+.onb-fade-up {
+  animation: fadeUp 0.5s ease-out both;
+}
+
+.onb-shimmer {
+  background-size: 200% auto;
+  animation: shimmerText 6s ease-in-out infinite;
 }

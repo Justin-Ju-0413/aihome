@@ -22,6 +22,7 @@ import dagre from 'dagre';
 import { useAppStore } from '@/stores/app-store';
 import type { AgentNode, AgentRelation } from '@/lib/types';
 import { toast } from 'sonner';
+import { useI18n } from '@/lib/i18n';
 
 const nodeWidth = 250;
 const nodeHeight = 100;
@@ -76,7 +77,7 @@ function agentToNode(agent: AgentNode): Node<AgentNodeData> {
   };
 }
 
-function relationToEdge(relation: AgentRelation): Edge {
+function relationToEdge(relation: AgentRelation, labelFor: (type: string) => string): Edge {
   const edgeStyles = {
     calls: { stroke: '#0A4F9D', strokeWidth: 2 },
     depends: { stroke: '#f59e0b', strokeWidth: 1.5, strokeDasharray: '5 5' },
@@ -90,7 +91,7 @@ function relationToEdge(relation: AgentRelation): Edge {
     id: relation.id,
     source: relation.source,
     target: relation.target,
-    label: relation.label || relation.type,
+    label: labelFor(relation.type),
     markerEnd: { type: MarkerType.ArrowClosed, color: style.stroke },
     style,
     labelStyle: { fontSize: 11, fill: '#4A6FA5' },
@@ -101,6 +102,7 @@ function relationToEdge(relation: AgentRelation): Edge {
 
 // Custom node component
 function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
+  const { t } = useI18n();
   const typeColor = data.type === 'skill' ? 'border-secondary bg-secondary/5' : 'border-primary bg-primary/5';
   const typeBadge = data.type === 'skill' ? 'bg-secondary/20 text-primary' : 'bg-primary/10 text-primary';
 
@@ -110,7 +112,7 @@ function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
       <Handle type="source" position={Position.Right} />
       <div className="flex items-center gap-2 mb-1">
         <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${typeBadge}`}>
-          {data.type}
+          {data.type === 'skill' ? t('graph.page.legendSkill') : t('graph.page.legendAgent')}
         </span>
       </div>
       <div className="font-heading font-semibold text-sm text-heading">{data.label}</div>
@@ -118,7 +120,7 @@ function AgentNodeComponent({ data }: NodeProps<Node<AgentNodeData>>) {
         <div className="text-xs text-text-body mt-1 line-clamp-2">{data.description}</div>
       )}
       {data.fileCount > 0 && (
-        <div className="text-xs text-muted mt-1">{data.fileCount} files</div>
+        <div className="text-xs text-muted mt-1">{t('board.agent.filesCount', { count: data.fileCount })}</div>
       )}
     </div>
   );
@@ -130,6 +132,16 @@ export default function AgentGraphInner() {
   const { agents, relations, setAgents, setRelations } = useAppStore();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const { t } = useI18n();
+  const labelFor = useCallback((type: string) => {
+    switch (type) {
+      case 'calls': return t('graph.page.legendCalls');
+      case 'depends': return t('graph.page.legendDepends');
+      case 'extends': return t('graph.page.legendExtends');
+      case 'references': return t('graph.page.legendReferences');
+      default: return type;
+    }
+  }, [t]);
 
   const loadAgents = useCallback(async () => {
     try {
@@ -137,9 +149,9 @@ export default function AgentGraphInner() {
       const data = await res.json();
       setAgents(data);
     } catch {
-      toast.error('Failed to load agents');
+      toast.error(t('graph.page.loadFailed'));
     }
-  }, [setAgents]);
+  }, [setAgents, t]);
 
   const loadRelations = useCallback(async () => {
     try {
@@ -178,13 +190,13 @@ export default function AgentGraphInner() {
         seen.add(key);
         return true;
       });
-      const flowEdges = deduped.map(relationToEdge);
+      const flowEdges = deduped.map((r) => relationToEdge(r, labelFor));
 
       const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(flowNodes, flowEdges);
       setNodes(layoutedNodes);
       setEdges(layoutedEdges);
     }
-  }, [agents, relations, setNodes, setEdges]);
+  }, [agents, relations, setNodes, setEdges, labelFor]);
 
   const onConnect = useCallback(async (connection: Connection) => {
     const newRelation: AgentRelation = {
@@ -206,11 +218,11 @@ export default function AgentGraphInner() {
         body: JSON.stringify(updatedRelations)
       });
     } catch {
-      toast.error('Failed to save relation');
+      toast.error(t('graph.page.saveRelationFailed'));
     }
 
-    setEdges((eds) => addEdge(relationToEdge(newRelation), eds));
-  }, [relations, setRelations, setEdges]);
+    setEdges((eds) => addEdge(relationToEdge(newRelation, labelFor), eds));
+  }, [relations, setRelations, setEdges, t, labelFor]);
 
   return (
     <div className="w-full h-full">

@@ -1,28 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import matter from 'gray-matter';
 import { scanDirectories } from '@/lib/scanner';
 import { getWorkspaceConfig } from '@/lib/workspace-config';
 import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/path-security';
+import { filterByFullText } from '@/lib/search';
+import { assertWritable } from '@/lib/readonly';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const config = await getWorkspaceConfig();
     // 默认开启进程内扫描缓存（见 src/lib/scan-cache.ts），无需透传；scanStats 不暴露为响应头
     const result = await scanDirectories(config.paths);
-    return NextResponse.json(result.agents);
+    const q = request.nextUrl.searchParams.get('q')?.trim();
+    const full = request.nextUrl.searchParams.get('full') === '1';
+    let agents = result.agents;
+    if (q) {
+      if (full) {
+        // full=1：markdown 正文匹配（name/description 命中优先，无需读文件）
+        agents = await filterByFullText(agents, q, (filePath) => readFile(filePath, 'utf-8'));
+      } else {
+        const needle = q.toLowerCase();
+        agents = agents.filter(
+          (a) => a.name.toLowerCase().includes(needle) || a.description.toLowerCase().includes(needle)
+        );
+      }
+    }
+    return NextResponse.json(agents);
   } catch (error) {
     console.error('Failed to fetch agents:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch agents' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    await assertWritable();
     const body = await request.json();
     const { type, name, description, dirPath } = body;
 
@@ -96,8 +113,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Failed to create agent:', error);
     return NextResponse.json(
-      { error: 'Failed to create agent' },
-      { status: 500 }
-    );
+        { error: error instanceof Error ? error.message : 'Request failed' },
+        { status: (error as { status?: number }).status ?? 500 }
+      );
   }
 }

@@ -13,7 +13,6 @@ export interface SyncAction {
 
 export interface CollectStats {
   new: number;
-  updated: number;
   conflict: number;
   skipped: number;
 }
@@ -40,7 +39,7 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
   const endpoints = await resolveEndpoints(only);
   const meta = await loadMetadata(metadataFile());
   const skills = meta.skills;
-  const stats: CollectStats = { new: 0, updated: 0, conflict: 0, skipped: 0 };
+  const stats: CollectStats = { new: 0, conflict: 0, skipped: 0 };
   const actions: SyncAction[] = [];
   const warnings: string[] = [];
 
@@ -107,7 +106,7 @@ export async function collect(only?: string[], dryRun = false): Promise<CollectR
     const tmpFile = `${manifestFile}.tmp`;
     await writeFile(tmpFile, manifest, 'utf-8');
     await rename(tmpFile, manifestFile);
-    const git = await gitCommit(repoDir(), `sync: collect ${stats.new} new, ${stats.updated} updated, ${stats.conflict} conflict`);
+    const git = await gitCommit(repoDir(), `sync: collect ${stats.new} new, ${stats.conflict} conflict, ${stats.skipped} skipped`);
     if (!git.ok) warnings.push(`git 提交失败（collect）: ${git.code ?? 'unknown'}`);
   }
   return { stats, actions, warnings };

@@ -6,11 +6,15 @@ import { Bot, Sparkles, Search, Grid, List, RefreshCw } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 export default function AgentsPage() {
+  const { t } = useI18n();
   const { agents, setAgents, setIsScanning, isScanning } = useAppStore();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [search, setSearch] = useState('');
+  const [fullText, setFullText] = useState(false);
+  const [fullTextResults, setFullTextResults] = useState<typeof agents | null>(null);
 
   const loadAgents = useCallback(async () => {
     try {
@@ -19,40 +23,77 @@ export default function AgentsPage() {
       const data = await res.json();
       setAgents(data);
     } catch {
-      toast.error('Failed to load agents');
+      toast.error(t('agents.page.loadFailed'));
     } finally {
       setIsScanning(false);
     }
-  }, [setAgents, setIsScanning]);
+  }, [setAgents, setIsScanning, t]);
 
   useEffect(() => {
     loadAgents();
   }, [loadAgents]);
 
-  const filteredAgents = agents.filter(a => 
-    !search || a.name.toLowerCase().includes(search.toLowerCase()) ||
-    a.description.toLowerCase().includes(search.toLowerCase())
-  );
+  // 全文模式：服务端按 markdown 正文匹配（debounce 300ms），结果只影响本页
+  useEffect(() => {
+    if (!fullText) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 全文模式切换重置
+      setFullTextResults(null);
+      return;
+    }
+    const q = search.trim();
+    if (!q) {
+      setFullTextResults(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/agents?q=${encodeURIComponent(q)}&full=1`);
+        const data = await res.json();
+        setFullTextResults(data);
+      } catch {
+        setFullTextResults(null);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, fullText]);
+
+  // 全文模式直接用服务端结果（避免本地 name/desc 二次过滤误删正文命中项）
+  const filteredAgents = fullText && fullTextResults !== null
+    ? fullTextResults
+    : agents.filter(a =>
+        !search || a.name.toLowerCase().includes(search.toLowerCase()) ||
+        a.description.toLowerCase().includes(search.toLowerCase())
+      );
 
   return (
     <div className="h-full flex flex-col">
       <header className="px-6 py-8 text-center">
-        <h1 className="font-heading text-3xl font-bold text-heading">Agents</h1>
+        <h1 className="font-heading text-3xl font-bold text-heading">{t('agents.page.title')}</h1>
         <div className="w-16 h-px bg-divider mx-auto mt-3" />
-        <p className="text-sm text-muted mt-2">{agents.length} agents found</p>
+        <p className="text-sm text-muted mt-2">{t('agents.page.found', { count: agents.length })}</p>
 
         <div className="flex items-center justify-center gap-3 mt-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={t('agents.page.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 bg-white/80 focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
+              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
             />
           </div>
-          <div className="flex border border-card-border rounded-lg bg-white/80">
+          <label className="flex items-center gap-1.5 text-sm text-text-body cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={fullText}
+              onChange={(e) => setFullText(e.target.checked)}
+              data-testid="agents-fulltext"
+              className="accent-primary"
+            />
+            {t('agents.page.fullText')}
+          </label>
+          <div className="flex border border-card-border rounded-lg glass-input" data-testid="agents-view-toggle">
             <button
               onClick={() => setViewMode('grid')}
               className={cn('p-2', viewMode === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted')}
@@ -83,7 +124,7 @@ export default function AgentsPage() {
               <Link
                 key={agent.id}
                 href={`/agents/${agent.id}`}
-                className="bg-white rounded-lg border border-card-border p-5 hover:shadow-md transition-shadow"
+                className="glass-panel rounded-lg border border-card-border p-5 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <span className={cn(
@@ -99,21 +140,21 @@ export default function AgentsPage() {
                 <h3 className="font-heading font-semibold text-heading mb-1">{agent.name}</h3>
                 <p className="text-sm text-text-body line-clamp-2">{agent.description}</p>
                 <div className="mt-3 text-xs text-muted">
-                  {agent.associatedFiles.total} files • {agent.dirPath.split('/').pop()}
+                  {t('agents.page.filesDir', { count: agent.associatedFiles.total, dir: agent.dirPath.split('/').pop() || '' })}
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-card-border overflow-hidden">
+          <div className="glass-panel rounded-lg border border-card-border overflow-hidden">
             <table className="w-full">
               <thead className="bg-primary/5 border-b border-card-border">
                 <tr>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Name</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Type</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Description</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Files</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">Actions</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">{t('common.name')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">{t('board.list.type')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">{t('common.description')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">{t('common.files')}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-muted">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-divider">
@@ -136,7 +177,7 @@ export default function AgentsPage() {
                     <td className="px-4 py-3 text-sm text-muted">{agent.associatedFiles.total}</td>
                     <td className="px-4 py-3">
                       <Link href={`/agents/${agent.id}`} className="text-primary hover:text-accent text-sm">
-                        Edit
+                        {t('common.edit')}
                       </Link>
                     </td>
                   </tr>
@@ -149,8 +190,8 @@ export default function AgentsPage() {
         {filteredAgents.length === 0 && (
           <div className="text-center py-12">
             <Bot className="w-12 h-12 text-card-border mx-auto mb-4" />
-            <p className="text-muted">No agents found</p>
-            <p className="text-sm text-muted mt-1">Create your first agent to get started</p>
+            <p className="text-muted">{t('agents.page.noResults')}</p>
+            <p className="text-sm text-muted mt-1">{t('agents.page.emptyHint')}</p>
           </div>
         )}
       </div>

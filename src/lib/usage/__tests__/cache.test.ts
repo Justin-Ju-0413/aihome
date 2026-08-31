@@ -42,8 +42,35 @@ describe('UsageCache', () => {
   it('filters by source', () => {
     expect(cache.countEvents('claude')).toBe(0);
   });
+  it('replaceSource mode replaces prior events for that source (openclaw rewrite)', () => {
+    const before = cache.countEvents('cc-switch');
+    cache.insertEvents([ev('x', 1000), ev('y', 2000)]);
+    expect(cache.countEvents('cc-switch')).toBe(before + 2);
+    // 同 key 重扫且值变化：ON CONFLICT DO NOTHING 会丢弃更新，replace 必须覆盖
+    const updated = { ...ev('x', 1000), inputTokens: 999 };
+    cache.insertEvents([updated], { replaceSource: 'cc-switch' });
+    // 全量替换后只留下本次扫描的事件（x 更新为新值，y 被删除）
+    expect(cache.countEvents('cc-switch')).toBe(1);
+    const rows = cache.queryEvents(['cc-switch'], 0).filter((r) => r.rawId === 'x');
+    expect(rows[0].inputTokens).toBe(999);
+  });
   it('meta round-trip', () => {
     cache.setMeta('last_scan', '123');
     expect(cache.getMeta('last_scan')).toBe('123');
+  });
+  it('purges events older than retention window (local time boundaries)', () => {
+    // 本地时间构造：91 天前 = 过期；9 天前 = 保留
+    // （共享 cache 实例中还有更早用例插入的 1970 时间戳事件，同样会被清理，故用 >= 断言）
+    const now = Date.now();
+    const day = 24 * 3600_000;
+    cache.insertEvents([
+      ev('old-1', now - 91 * day),
+      ev('old-2', now - 100 * day),
+      ev('fresh-1', now - 9 * day),
+    ]);
+    expect(cache.purgeExpired(now)).toBeGreaterThanOrEqual(2);
+    expect(cache.countEvents('cc-switch')).toBe(1);
+    const rows = cache.queryEvents(['cc-switch'], now - 30 * day);
+    expect(rows.map((r) => r.rawId)).toEqual(['fresh-1']);
   });
 });

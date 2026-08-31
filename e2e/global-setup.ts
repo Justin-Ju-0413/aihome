@@ -24,12 +24,36 @@ export default function globalSetup(): void {
     path.join(config, 'sync-config.json'),
     JSON.stringify({ version: 1, endpoints: { alpha, beta } }, null, 2)
   );
+  // config.json：保证首页 redirect /board（无 config 时首页会跳 /onboarding）。
+  // 11-onboarding.spec.ts 会自管删除/恢复此文件来测首用引导。
+  // paths 指向真实 data（等价无 config 时的 DEFAULT），让不依赖 testData 的
+  // API 契约测试扫到 sample-agents；groups 必须非空（validateWorkspaceConfig 要求）。
+  fs.writeFileSync(
+    path.join(config, 'config.json'),
+    JSON.stringify(
+      {
+        name: 'AIHome',
+        paths: [path.join(root, 'data')],
+        groups: [
+          { id: 'default', name: 'Default', color: '#6366f1', description: 'Default group' },
+          { id: 'agents', name: 'Agents', color: '#10b981', description: 'Agent definitions' },
+          { id: 'skills', name: 'Skills', color: '#f59e0b', description: 'Skill definitions' },
+        ],
+      },
+      null,
+      2
+    )
+  );
   fs.mkdirSync(repo, { recursive: true });
+
+  fs.rmSync(path.join(root, 'e2e', '.e2e-workbench'), { recursive: true, force: true });
 
   const usageRoot = path.join(root, 'e2e', '.e2e-usage');
   fs.rmSync(usageRoot, { recursive: true, force: true });
   fs.mkdirSync(path.join(usageRoot, 'claude-projects', 'proj'), { recursive: true });
   fs.mkdirSync(path.join(usageRoot, 'codex-sessions', '2026', '08'), { recursive: true });
+  // openclaw：空 agents 目录（模拟装了 OpenClaw 但无 agent 库，status 应为 ready 且 0 事件）
+  fs.mkdirSync(path.join(usageRoot, 'openclaw-agents'), { recursive: true });
 
   const nowMs = Date.now();
   const todayStart = new Date();
@@ -47,6 +71,9 @@ export default function globalSetup(): void {
     'r-ok', 'p1', 'opencode', 'deepseek-v4-flash', 100, 50, 0, 0, '0.01', 300, 's1', 200, safeSec);
   ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     'r-fail', 'p1', 'opencode', 'deepseek-v4-flash', 1, 1, 0, 0, '0', 100, 's1', 500, safeSec - 60);
+  // 未知模型：五层定价全部 miss，UI 应显示"未知定价"徽章
+  ccDb.prepare(`INSERT INTO proxy_request_logs VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+    'r-unknown', 'p1', 'opencode', 'x-unknown-model-9x', 10, 5, 0, 0, '0', 100, 's1', 200, safeSec - 120);
   ccDb.close();
 
   fs.writeFileSync(
@@ -89,4 +116,43 @@ export default function globalSetup(): void {
   hDb.prepare(`INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
     'h-1', 'cli', 'qwen3.5-9b', safeSec, 200, 80, 5, 2, 0, 0.05);
   hDb.close();
+
+  // zcode：rollout JSONL，每行一次请求，response.usage 带 token
+  const zcodeDir = path.join(usageRoot, 'zcode-rollout');
+  fs.mkdirSync(zcodeDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(zcodeDir, 'model-io-sess_test.jsonl'),
+    JSON.stringify({
+      completedAt: new Date(safeMs).toISOString(),
+      requestId: 'z-req-1',
+      model: { modelId: 'deepseek-v4-flash', providerId: 'zcode' },
+      response: { usage: { inputTokens: 300, outputTokens: 120, cacheReadTokens: 30, cacheWriteTokens: 0, totalTokens: 450 } },
+    }) + '\n'
+  );
+
+  // dsh：session_projcache.json + settings.yaml 默认模型
+  const dshDir = path.join(usageRoot, 'dsh');
+  const dshStorages = path.join(dshDir, 'storages');
+  fs.mkdirSync(dshStorages, { recursive: true });
+  fs.writeFileSync(
+    path.join(dshDir, 'settings.yaml'),
+    'agent-default-model:\n  provider: opencode-go\n  model: deepseek-v4-flash\n  reasoningEffort: max\n'
+  );
+  fs.writeFileSync(
+    path.join(dshStorages, 'session_projcache.json'),
+    JSON.stringify({
+      tables: {
+        sessions: {
+          'dsh-session-1': {
+            identity: { createdAt: safeMs },
+            rows: {
+              tokenUsage: {
+                val: { totals: { uncachedInputTokens: 400, outputTokens: 150, cacheReadTokens: 40, cacheWriteTokens: 0 } },
+              },
+            },
+          },
+        },
+      },
+    })
+  );
 }

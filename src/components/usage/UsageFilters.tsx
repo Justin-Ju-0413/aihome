@@ -1,6 +1,7 @@
 'use client';
 
 import { USAGE_RANGES, type UsageRange } from '@/lib/usage/aggregate';
+import { useI18n } from '@/lib/i18n';
 
 export const SOURCE_OPTIONS = [
   { id: 'all', label: 'All' },
@@ -9,6 +10,9 @@ export const SOURCE_OPTIONS = [
   { id: 'codex', label: 'Codex' },
   { id: 'opencode', label: 'opencode' },
   { id: 'hermes', label: 'hermes' },
+  { id: 'openclaw', label: 'openclaw' },
+  { id: 'zcode', label: 'zcode' },
+  { id: 'dsh', label: 'dsh' },
 ];
 
 interface Props {
@@ -21,6 +25,7 @@ interface Props {
 }
 
 export function UsageFilters({ source, range, onSourceChange, onRangeChange, onRescan, rescanning }: Props) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
       <div className="flex gap-1">
@@ -35,7 +40,7 @@ export function UsageFilters({ source, range, onSourceChange, onRangeChange, onR
                 : 'border-divider text-secondary hover:text-primary'
             }`}
           >
-            {s.label}
+            {s.id === 'all' ? t('usage.filterAll') : s.label}
           </button>
         ))}
       </div>
@@ -61,7 +66,7 @@ export function UsageFilters({ source, range, onSourceChange, onRangeChange, onR
         disabled={rescanning}
         className="ml-auto px-3 py-1.5 text-sm rounded-md border border-divider text-secondary hover:text-primary disabled:opacity-50"
       >
-        {rescanning ? 'Scanning…' : 'Rescan'}
+        {rescanning ? t('usage.scanning') : t('usage.rescan')}
       </button>
     </div>
   );

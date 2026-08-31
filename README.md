@@ -28,7 +28,19 @@ A local-first visual workspace for discovering, organizing, and managing AI agen
 - **Workspace settings** — configure scan paths and groups; rescan on demand; export config.
 - **Path-sandboxed file API** — `/api/files` only reads/writes within configured workspace paths (out-of-workspace requests return HTTP 403).
 - **Usage dashboard** — aggregate spend & token K-line across CC Switch, Claude Code, Codex, opencode, and hermes; local-only, incremental indexer.
+- **Console** (`/console`) — the FileVision runtime merged in: file tree browser with live watching, Agent run console (start/stop Claude Code & Codex, step progress, logs, diffs & rollback), pipelines, one-click task dispatch with auto provider/model scheduling and fallback, Hermes sessions/skills/launch, dashboard stats and history timeline. Data lives in SQLite at `~/.aihome/filevision.db`; legacy `file-visualizer/data.db` is auto-migrated on first run.
 - **AI API 管理器** (`/vault`) — central vault for provider keys (Anthropic / OpenAI / DeepSeek / 火山方舟 Coding Plan / GLM / Kimi 等模板)；一键切换 Claude Code / Codex / opencode 的 provider。key 以主密码 AES-256-GCM 加密存 `~/.aihome/vault.enc`（0600，不在 git 内）；忘记主密码不可恢复；切换前自动备份工具配置文件（`~/.aihome/backups/`，保留 10 份）；工具配置被手动修改时拒绝覆盖并提示冲突。vault 激活状态同时成为 usage 归属覆盖源。
+
+## Desktop app / 桌面版
+
+```bash
+npm run build:standalone   # 产出 .next/standalone + 复制 static/public
+bash scripts/smoke-desktop.sh  # 打包 .dmg + 冒烟验证
+```
+
+打包产物在 `src-tauri/target/release/bundle/dmg/AIHome_0.3.0_*.dmg`，双击即用，无需 Node 环境。
+桌面版 = 全部 web 功能 + 托盘菜单（显示/隐藏主窗口、悬浮窗开关、开机自启、退出）+ 悬浮窗（置顶用量 K 线）。
+仅绑定 `127.0.0.1:3010`。
 
 ## Testing / 测试
 
@@ -49,10 +61,10 @@ vault 相关单测与 e2e 全部通过环境变量重定向到 tmp 目录（`AIH
 
 ```bash
 npm ci
-npm run dev
+npm run dev -- -p 3011
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`.
+Open [http://localhost:3011](http://localhost:3011) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`. (Port 3011: 3000/3010 are commonly taken by other local projects; the Tauri shell uses 3010.)
 
 The sample workspace is a no-account, no-API-key demo. Use a throwaway clone when trying create, edit, or delete operations so your own workspace files are not affected.
 

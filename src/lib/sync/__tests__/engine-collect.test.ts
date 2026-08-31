@@ -13,6 +13,7 @@ const OLD_REPO = process.env.AIHOME_REPO_DIR;
 const OLD_CFG = process.env.AIHOME_CONFIG_DIR;
 
 async function makeSkill(root: string, name: string, extra = 'content'): Promise<void> {
+  if (path.basename(name) !== name) throw new Error(`invalid name: ${name}`);
   const dir = path.join(root, name);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, 'SKILL.md'), `---\ndescription: ${name}\n---\n\n${extra}\n`, 'utf-8');
@@ -41,7 +42,7 @@ describe('collect', () => {
   it('collects new skills and records sources', async () => {
     await makeSkill(endpoints.alpha, 'foo');
     const result = await collect();
-    expect(result.stats).toMatchObject({ new: 1, updated: 0, conflict: 0, skipped: 0 });
+    expect(result.stats).toMatchObject({ new: 1, conflict: 0, skipped: 0 });
     expect(await scanSkills(commonDir())).toHaveProperty('foo');
     const meta = await loadMetadata(metadataFile());
     expect(meta.skills.foo.sources).toContain('alpha');

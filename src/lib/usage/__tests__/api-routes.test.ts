@@ -41,6 +41,9 @@ beforeAll(() => {
     AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
     AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
     AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+    AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
+    AIHOME_USAGE_ZCODE_DIR: path.join(dir, 'no-zcode'),
+    AIHOME_USAGE_DSH_STORE: path.join(dir, 'no-dsh.json'),
     AIHOME_USAGE_CACHE: cacheDb,
   });
 });
@@ -66,9 +69,9 @@ describe('usage API routes', () => {
     expect(data.kline.length).toBeGreaterThan(0);
     expect(data.table.length).toBeGreaterThanOrEqual(1);
     expect(data.stats.bySource.length).toBeGreaterThanOrEqual(1);
-    expect(data.sourceStatus.length).toBe(6);
+    expect(data.sourceStatus.length).toBe(8);
     const openclaw = data.sourceStatus.find((s: { id: string }) => s.id === 'openclaw');
-    expect(openclaw.status).toBe('not-supported');
+    expect(openclaw.status).toBe('unavailable');
   });
   it('events: invalid range falls back to default', async () => {
     const res = await eventsGet(makeRequest('http://localhost/api/usage/events?range=bogus'));
@@ -78,7 +81,7 @@ describe('usage API routes', () => {
     const res = await eventsGet(makeRequest('http://localhost/api/usage/events?source=bogus'));
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.sourceStatus.length).toBe(6);
+    expect(data.sourceStatus.length).toBe(8);
     expect(data.totals).toBeDefined();
   });
   it('events: totals span all sources even with a source filter active', async () => {
@@ -93,7 +96,7 @@ describe('usage API routes', () => {
     const res = await sourcesGet();
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.sources.length).toBe(6);
+    expect(data.sources.length).toBe(8);
   });
   it('rescan: validates only param', async () => {
     const res = await rescanPost(makeRequest('http://localhost/api/usage/rescan', {

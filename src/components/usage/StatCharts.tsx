@@ -1,5 +1,7 @@
 'use client';
 
+import { useI18n } from '@/lib/i18n';
+
 interface Stats {
   byDay: Array<{ day: string; cost: number; tokens: number; count: number }>;
   bySource: Array<{ source: string; cost: number; tokens: number; count: number }>;
@@ -7,14 +9,16 @@ interface Stats {
 }
 
 export function StatCharts({ stats }: { stats: Stats }) {
+  const { t } = useI18n();
+  const noData = t('common.noData');
   const maxDay = Math.max(1, ...stats.byDay.map((d) => d.cost));
   const totalCost = Math.max(1e-9, stats.bySource.reduce((s, x) => s + x.cost, 0));
   return (
     <div data-testid="usage-stats" className="grid md:grid-cols-3 gap-4">
-      <div className="rounded-lg border border-divider bg-white/80 p-4">
-        <h3 className="text-sm font-semibold text-primary mb-2">Daily Spend</h3>
+      <div className="glass-panel rounded-lg border border-divider p-4">
+        <h3 className="text-sm font-semibold text-primary mb-2">{t('usage.dailySpend')}</h3>
         {stats.byDay.length === 0 ? (
-          <p className="text-xs text-secondary">No data</p>
+          <p className="text-xs text-secondary">{noData}</p>
         ) : (
           <div className="flex items-end gap-1 h-32">
             {stats.byDay.map((d) => (
@@ -28,10 +32,10 @@ export function StatCharts({ stats }: { stats: Stats }) {
           </div>
         )}
       </div>
-      <div className="rounded-lg border border-divider bg-white/80 p-4">
-        <h3 className="text-sm font-semibold text-primary mb-2">By Source</h3>
+      <div className="glass-panel rounded-lg border border-divider p-4">
+        <h3 className="text-sm font-semibold text-primary mb-2">{t('usage.bySource')}</h3>
         {stats.bySource.length === 0 ? (
-          <p className="text-xs text-secondary">No data</p>
+          <p className="text-xs text-secondary">{noData}</p>
         ) : (
           stats.bySource.map((s) => {
             const pct = (s.cost / totalCost) * 100;
@@ -49,10 +53,10 @@ export function StatCharts({ stats }: { stats: Stats }) {
           })
         )}
       </div>
-      <div className="rounded-lg border border-divider bg-white/80 p-4">
-        <h3 className="text-sm font-semibold text-primary mb-2">Top Models</h3>
+      <div className="glass-panel rounded-lg border border-divider p-4">
+        <h3 className="text-sm font-semibold text-primary mb-2">{t('usage.topModels')}</h3>
         {stats.topModels.length === 0 ? (
-          <p className="text-xs text-secondary">No data</p>
+          <p className="text-xs text-secondary">{noData}</p>
         ) : (
           <ol className="space-y-1">
             {stats.topModels.map((m, i) => (

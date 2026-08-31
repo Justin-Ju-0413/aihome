@@ -2,7 +2,8 @@ import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import { join } from 'path';
 import type { WorkspaceConfig, AgentRelation } from './types';
 
-const CONFIG_DIR = join(process.cwd(), '.aihome');
+// 配置目录：AIHOME_CONFIG_DIR 覆盖（与 sync/paths 的 env 惯例一致，测试隔离用）
+const CONFIG_DIR = process.env.AIHOME_CONFIG_DIR ?? join(process.cwd(), '.aihome');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 const LAYOUT_FILE = join(CONFIG_DIR, 'layout.json');
 const RELATIONS_FILE = join(CONFIG_DIR, 'relations.json');
@@ -23,6 +24,16 @@ async function ensureConfigDir(): Promise<void> {
     await access(CONFIG_DIR);
   } catch {
     await mkdir(CONFIG_DIR, { recursive: true });
+  }
+}
+
+/** config.json 是否已存在（首用引导判断：无配置 → 跳转 /onboarding） */
+export async function workspaceConfigExists(): Promise<boolean> {
+  try {
+    await access(CONFIG_FILE);
+    return true;
+  } catch {
+    return false;
   }
 }
 

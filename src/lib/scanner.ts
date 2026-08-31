@@ -1,10 +1,11 @@
 import { readdir, readFile, stat } from 'fs/promises';
-import { join, resolve, basename } from 'path';
+import { join, resolve } from 'path';
 import matter from 'gray-matter';
 import type { AgentNode, ScanResult } from './types';
 import { parseAgentsMd } from './parser';
 import { ScanCache } from './scan-cache';
 import type { ParseOutcome } from './scan-cache';
+import { extractDependencyNamesFromSections, normalizeDepNames, resolveDependencies } from './dependencies';
 
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', '.next', 'dist', 'build', 'coverage',
@@ -295,73 +296,6 @@ async function buildClaudeOutcome(
   };
 
   return { node, depNames: extractDependencyNamesFromSections(parsed.sections) };
-}
-
-/**
- * Parse declared dependency names from an AGENTS.md `## Dependencies` (or
- * "Depends On" / "依赖") section. Accepts `- Name`, `- [[Name]]`,
- * `- [Name](path)`, and `` - `Name` `` list items.
- */
-function extractDependencyNamesFromSections(
-  sections: Array<{ title: string; content: string }>
-): string[] {
-  const depSection = sections.find(s =>
-    /^(dependencies|depends[ -]on|依赖)$/i.test(s.title.trim())
-  );
-  if (!depSection) return [];
-
-  const names: string[] = [];
-  for (const line of depSection.content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed.startsWith('-') && !trimmed.startsWith('*')) continue;
-    const item = trimmed.replace(/^[-*]\s+/, '').trim();
-    const wiki = item.match(/^\[\[([^\]]+)\]\]/);
-    const md = item.match(/^\[([^\]]+)\]/);
-    const code = item.match(/^`([^`]+)`/);
-    const raw = wiki?.[1] || md?.[1] || code?.[1] || item;
-    const name = raw.replace(/\s*\(.*\)$/, '').replace(/\s*:.*$/, '').trim();
-    if (name) names.push(name);
-  }
-  return names;
-}
-
-function normalizeDepNames(value: unknown): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
-  if (typeof value === 'string') return value.split(',').map(s => s.trim()).filter(Boolean);
-  return [];
-}
-
-/**
- * Resolve declared dependency names to agent ids and populate the forward
- * (`dependencies`) and reverse (`calledBy`) links. Names match by agent name
- * or directory basename, case-insensitively.
- */
-function resolveDependencies(agents: AgentNode[], depNamesByAgentId: Map<string, string[]>): void {
-  const byName = new Map<string, AgentNode>();
-  const byDir = new Map<string, AgentNode>();
-  for (const a of agents) {
-    byName.set(a.name.toLowerCase(), a);
-    byDir.set(basename(a.dirPath).toLowerCase(), a);
-  }
-
-  for (const a of agents) {
-    a.dependencies = [];
-    a.calledBy = [];
-  }
-
-  for (const a of agents) {
-    const names = depNamesByAgentId.get(a.id) ?? [];
-    const depIds: string[] = [];
-    for (const n of names) {
-      const target = byName.get(n.toLowerCase()) ?? byDir.get(n.toLowerCase());
-      if (target && target.id !== a.id && !depIds.includes(target.id)) {
-        depIds.push(target.id);
-        if (!target.calledBy.includes(a.id)) target.calledBy.push(a.id);
-      }
-    }
-    a.dependencies = depIds;
-  }
 }
 
 async function countAssociatedFiles(

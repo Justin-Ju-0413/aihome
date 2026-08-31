@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import type { TableRow } from '@/lib/usage/aggregate';
 
 function costColor(v: number): string {
@@ -9,7 +10,8 @@ function costColor(v: number): string {
   return 'text-emerald-600';
 }
 
-export function UsageTable({ rows }: { rows: TableRow[] }) {
+export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow[]; unknownPricingModels?: string[] }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (source: string) => {
     setExpanded((prev) => {
@@ -22,24 +24,24 @@ export function UsageTable({ rows }: { rows: TableRow[] }) {
 
   if (rows.length === 0) {
     return (
-      <section data-testid="usage-table" className="rounded-lg border border-divider bg-white/80 p-8 text-center">
+      <section data-testid="usage-table" className="glass-panel rounded-lg border border-divider p-8 text-center">
         <p className="text-sm text-secondary">
-          No usage data yet — click Rescan after using your AI tools.
+          {t('usage.emptyText')}
         </p>
       </section>
     );
   }
 
   return (
-    <section data-testid="usage-table" className="rounded-lg border border-divider bg-white/80 overflow-hidden">
+    <section data-testid="usage-table" className="glass-panel rounded-lg border border-divider overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-xs tracking-widest text-secondary border-b border-divider">
-            <th className="px-4 py-3">Agent</th>
-            <th className="px-4 py-3 text-right">24h Tokens</th>
-            <th className="px-4 py-3 text-right">24h Cost</th>
-            <th className="px-4 py-3 text-right">Month Tokens</th>
-            <th className="px-4 py-3 text-right">Month Cost</th>
+            <th className="px-4 py-3">{t('usage.tableAgent')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.table24hTokens')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.table24hCost')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.tableMonthTokens')}</th>
+            <th className="px-4 py-3 text-right">{t('usage.tableMonthCost')}</th>
           </tr>
         </thead>
         <tbody>
@@ -47,7 +49,7 @@ export function UsageTable({ rows }: { rows: TableRow[] }) {
             const open = expanded.has(row.source);
             return (
               <Fragment key={row.source}>
-                <tr className="border-b border-divider cursor-pointer hover:bg-neutral-50" onClick={() => toggle(row.source)}>
+                <tr className="border-b border-divider cursor-pointer hover:bg-neutral-50" onClick={() => toggle(row.source)} tabIndex={0} aria-expanded={open} role="button" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(row.source); } }}>
                   <td className="px-4 py-3 font-medium text-primary">
                     {open ? '▾' : '▸'} {row.source}
                   </td>
@@ -59,7 +61,14 @@ export function UsageTable({ rows }: { rows: TableRow[] }) {
                 {open &&
                   row.models.map((m) => (
                     <tr key={`${row.source}-${m.model}`} className="border-b border-divider bg-neutral-50/50 text-xs">
-                      <td className="px-8 py-2 text-secondary">{m.model}</td>
+                      <td className="px-8 py-2 text-secondary">
+                        {m.model}
+                        {unknownPricingModels.includes(m.model) && (
+                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700" data-testid="unknown-pricing-badge">
+                            {t('usage.unknownPricing')}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-2 text-right text-secondary">{m.tokens24h.toLocaleString()}</td>
                       <td className={`px-4 py-2 text-right ${costColor(m.cost24h)}`}>${m.cost24h.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right text-secondary">{m.tokensMonth.toLocaleString()}</td>

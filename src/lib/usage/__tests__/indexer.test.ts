@@ -1,8 +1,12 @@
-import { describe, it, expect, afterAll, beforeAll } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { DatabaseSync } from 'node:sqlite';
-import { runIndex, checkSourceAvailability, SOURCE_LABELS } from '../indexer';
+// fixture 用 1970 固定时间戳；保留窗口设 100 年，避免 purge 清掉（须在模块 import 前设置）
+vi.hoisted(() => {
+  process.env.AIHOME_USAGE_RETENTION_DAYS = '36500';
+});
+import { runIndex, checkSourceAvailability, SOURCE_LABELS, indexIfStale, triggerBackgroundIndex } from '../indexer';
 import { makeCcSwitchDb, tmpDir, rmTmp } from './fixtures';
 
 const dir = tmpDir('indexer-');
@@ -39,6 +43,9 @@ describe('runIndex', () => {
       AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
       AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
       AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
+      AIHOME_USAGE_ZCODE_DIR: path.join(dir, 'no-zcode'),
+      AIHOME_USAGE_DSH_STORE: path.join(dir, 'no-dsh.json'),
       AIHOME_USAGE_CACHE: cacheDb,
     };
     const prev = { ...process.env };
@@ -50,7 +57,7 @@ describe('runIndex', () => {
       expect(byId['cc-switch'].eventCount).toBe(1);
       expect(byId.opencode.status).toBe('ready');
       expect(byId.opencode.eventCount).toBe(1);
-      expect(byId.openclaw.status).toBe('not-supported');
+      expect(byId.openclaw.status).toBe('unavailable');
       expect(res.inserted).toBe(2);
       const res2 = runIndex();
       expect(res2.inserted).toBe(0);
@@ -78,12 +85,79 @@ describe('runIndex', () => {
       AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
       AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
       AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+      AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
+      AIHOME_USAGE_ZCODE_DIR: path.join(dir, 'no-zcode'),
+      AIHOME_USAGE_DSH_STORE: path.join(dir, 'no-dsh.json'),
       AIHOME_USAGE_CACHE: path.join(dir, 'corrupt-cache.db'),
     });
     try {
       const res = runIndex(['cc-switch']);
       const byId = Object.fromEntries(res.sources.map((s) => [s.id, s]));
       expect(byId['cc-switch'].status).toBe('error');
+    } finally {
+      process.env = prev;
+    }
+  });
+});
+
+describe('indexIfStale / background trigger', () => {
+  const env = {
+    AIHOME_USAGE_CCSWITCH_DB: ccDb,
+    AIHOME_USAGE_OPENCODE_DB: ocDb,
+    AIHOME_USAGE_CLAUDE_DIR: path.join(dir, 'no-claude'),
+    AIHOME_USAGE_CODEX_DIR: path.join(dir, 'no-codex'),
+    AIHOME_USAGE_HERMES_DB: path.join(dir, 'no-hermes.db'),
+    AIHOME_USAGE_OPENCLAW_DIR: path.join(dir, 'no-openclaw'),
+    AIHOME_USAGE_ZCODE_DIR: path.join(dir, 'no-zcode'),
+    AIHOME_USAGE_DSH_STORE: path.join(dir, 'no-dsh.json'),
+    AIHOME_USAGE_CACHE: cacheDb,
+  };
+
+  it('returns false when fresh, true when stale, and refreshes in background', async () => {
+    const prev = { ...process.env };
+    Object.assign(process.env, env);
+    try {
+      runIndex(['cc-switch']);
+      expect(indexIfStale()).toBe(false);
+
+      // 把 last_index_ms 改成过期 → 触发后台重索引
+      const db = new DatabaseSync(cacheDb);
+      db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('last_index_ms', '1')").run();
+      db.close();
+      expect(indexIfStale()).toBe(true);
+      expect(indexIfStale()).toBe(true); // 后台运行期间仍标记 stale
+
+      // 等待后台任务（setImmediate 后）完成，meta 应被刷新
+      await new Promise((r) => setTimeout(r, 100));
+      const db2 = new DatabaseSync(cacheDb);
+      const row = db2.prepare("SELECT value FROM meta WHERE key = 'last_index_ms'").get() as { value: string };
+      db2.close();
+      expect(Number(row.value)).toBeGreaterThan(1);
+    } finally {
+      process.env = prev;
+    }
+  });
+
+  it('coalesces concurrent background triggers (running + queued, no thundering herd)', async () => {
+    const prev = { ...process.env };
+    Object.assign(process.env, env);
+    try {
+      // 把 meta 弄旧，连续多次触发（模拟并发请求）
+      const db = new DatabaseSync(cacheDb);
+      db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES ('last_index_ms', '1')").run();
+      db.close();
+      triggerBackgroundIndex();
+      triggerBackgroundIndex();
+      triggerBackgroundIndex();
+      // 等待排队任务全部完成（守卫：running 期间重复触发只合并为 queued）
+      await new Promise((r) => setTimeout(r, 150));
+      const db2 = new DatabaseSync(cacheDb);
+      const row = db2.prepare("SELECT value FROM meta WHERE key = 'last_index_ms'").get() as { value: string };
+      db2.close();
+      expect(Number(row.value)).toBeGreaterThan(1);
+      // 任务结束后新的触发立即执行（守卫无卡死）
+      triggerBackgroundIndex();
+      await new Promise((r) => setTimeout(r, 100));
     } finally {
       process.env = prev;
     }
