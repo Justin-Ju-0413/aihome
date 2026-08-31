@@ -3,6 +3,7 @@ import { UsageCache } from './cache';
 import { ACTIVE_SOURCES, type ActiveUsageSource, type SourceInfo, type UsageSource } from './types';
 import { loadCcSwitchPricing, getPricingWithStatus } from './pricing';
 import { scanSource, checkSourceAvailability } from './sources';
+import { getProviderOverride } from '@/lib/vault';
 export { checkSourceAvailability };
 
 export const SOURCE_LABELS: Record<UsageSource, string> = {
@@ -34,6 +35,7 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
     return r.pricing;
   };
   const targets = only && only.length > 0 ? only : ACTIVE_SOURCES;
+  const override = getProviderOverride();
   const sources: SourceInfo[] = [];
   let inserted = 0;
   try {
@@ -60,7 +62,11 @@ export function runIndex(only?: ActiveUsageSource[]): IndexResult {
         }
         // openclaw rollup 行会被源反复改写（updated_at 变化触发重扫），dedupe 会
         // 丢弃更新后的值 → 该源用全量替换语义；其余源保持增量 dedupe
-        inserted += cache.insertEvents(events, id === 'openclaw' || id === 'dsh' ? { replaceSource: id } : undefined);
+        const overrideProvider = override[id as 'claude' | 'codex' | 'opencode'];
+        const mapped = overrideProvider
+          ? events.map((e) => ({ ...e, provider: overrideProvider }))
+          : events;
+        inserted += cache.insertEvents(mapped, id === 'openclaw' || id === 'dsh' ? { replaceSource: id } : undefined);
         cache.setCheckpoint(id, checkpoint);
         cache.setMeta(`last_index_${id}`, String(Date.now()));
         cache.setMeta(`last_index_${id}_error`, '');

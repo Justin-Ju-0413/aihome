@@ -72,6 +72,12 @@ export default defineConfig({
         // e2e 用固定测试密钥，不触碰 macOS Keychain
         AIHOME_WORKBENCH_ENC_KEY: 'e2e-master-key',
         AIHOME_REGISTRY_DIR: path.join(e2eSyncRoot, 'registry'),
+        AIHOME_VAULT_FILE: path.join(e2eSyncRoot, 'vault', 'vault.enc'),
+        AIHOME_VAULT_CLAUDE_CODE_CONFIG: path.join(e2eSyncRoot, 'vault', 'settings.json'),
+        AIHOME_VAULT_CODEX_CONFIG: path.join(e2eSyncRoot, 'vault', 'config.toml'),
+        AIHOME_VAULT_CODEX_AUTH: path.join(e2eSyncRoot, 'vault', 'auth.json'),
+        AIHOME_VAULT_OPENCODE_CONFIG: path.join(e2eSyncRoot, 'vault', 'opencode.json'),
+        AIHOME_VAULT_BACKUP_DIR: path.join(e2eSyncRoot, 'vault', 'backups'),
       },
     },
   ],

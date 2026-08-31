@@ -112,6 +112,7 @@ export const commonZh: Record<keyof typeof commonEn, string> = {
   'nav.usage': '用量',
   'nav.workbench': '工作台',
   'nav.sync': '同步',
+  'nav.vault': '保险库',
   'nav.registry': '注册表',
   'nav.console': '控制台',
   'nav.settings': '设置',

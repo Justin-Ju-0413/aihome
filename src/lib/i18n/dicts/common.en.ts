@@ -110,6 +110,7 @@ export const commonEn = {
   'nav.usage': 'USAGE',
   'nav.workbench': 'WORKBENCH',
   'nav.sync': 'SYNC',
+  'nav.vault': 'VAULT',
   'nav.registry': 'Registry',
   'nav.console': 'CONSOLE',
   'nav.settings': 'SETTINGS',

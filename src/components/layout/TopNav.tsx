@@ -13,6 +13,7 @@ const navItems: Array<{ href: string; labelKey: DictKey; testId: string }> = [
   { href: '/usage', labelKey: 'nav.usage', testId: 'nav-usage' },
   { href: '/workbench', labelKey: 'nav.workbench', testId: 'nav-workbench' },
   { href: '/sync', labelKey: 'nav.sync', testId: 'nav-sync' },
+  { href: '/vault', labelKey: 'nav.vault', testId: 'nav-vault' },
   { href: '/skills', labelKey: 'nav.registry', testId: 'nav-skills' },
   { href: '/console', labelKey: 'nav.console', testId: 'nav-console' },
   { href: '/settings', labelKey: 'nav.settings', testId: 'nav-settings' },
