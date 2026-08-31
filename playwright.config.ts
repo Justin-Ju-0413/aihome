@@ -52,6 +52,12 @@ export default defineConfig({
       AIHOME_USAGE_OPENCODE_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'opencode.db'),
       AIHOME_USAGE_HERMES_DB: path.join(e2eSyncRoot, '..', '.e2e-usage', 'hermes.db'),
       AIHOME_USAGE_CACHE: path.join(e2eSyncRoot, '..', '.e2e-usage', 'cache.db'),
+      AIHOME_VAULT_FILE: path.join(e2eSyncRoot, 'vault', 'vault.enc'),
+      AIHOME_VAULT_CLAUDE_CODE_CONFIG: path.join(e2eSyncRoot, 'vault', 'settings.json'),
+      AIHOME_VAULT_CODEX_CONFIG: path.join(e2eSyncRoot, 'vault', 'config.toml'),
+      AIHOME_VAULT_CODEX_AUTH: path.join(e2eSyncRoot, 'vault', 'auth.json'),
+      AIHOME_VAULT_OPENCODE_CONFIG: path.join(e2eSyncRoot, 'vault', 'opencode.json'),
+      AIHOME_VAULT_BACKUP_DIR: path.join(e2eSyncRoot, 'vault', 'backups'),
     },
   },
 });
