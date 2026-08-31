@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useI18n } from '@/lib/i18n';
 
 export interface VaultStatus {
   locked: boolean;
@@ -26,6 +27,7 @@ export async function vaultFetch(url: string, init?: RequestInit): Promise<Respo
 }
 
 export function LockScreen({ firstTime, onUnlocked }: { firstTime: boolean; onUnlocked: () => void }) {
+  const { t } = useI18n();
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,10 +45,10 @@ export function LockScreen({ firstTime, onUnlocked }: { firstTime: boolean; onUn
         onUnlocked();
       } else {
         const body = (await res.json()) as { error?: string };
-        setError(body.error ?? (res.status === 401 ? '密码错误' : '操作失败'));
+        setError(body.error ?? (res.status === 401 ? t('vault.error.wrongPassword') : t('vault.error.operationFailed')));
       }
     } catch {
-      setError('网络错误');
+      setError(t('vault.toast.network'));
     } finally {
       setBusy(false);
     }
@@ -59,14 +61,14 @@ export function LockScreen({ firstTime, onUnlocked }: { firstTime: boolean; onUn
         onSubmit={submit}
         className="w-full max-w-sm bg-white/90 backdrop-blur-sm border border-divider rounded-2xl p-8 shadow-sm"
       >
-        <h1 className="font-heading text-xl font-bold text-primary mb-1">AI API 管理器</h1>
-        <p className="text-sm text-secondary mb-6">{firstTime ? '设置主密码' : '输入主密码'}</p>
+        <h1 className="font-heading text-xl font-bold text-primary mb-1">{t('vault.appTitle')}</h1>
+        <p className="text-sm text-secondary mb-6">{firstTime ? t('vault.setPassword') : t('vault.enterPassword')}</p>
         <input
           data-testid="vault-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="主密码（至少 8 位）"
+          placeholder={t('vault.masterPassword')}
           className="w-full rounded-lg border border-divider px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
         {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
@@ -76,7 +78,7 @@ export function LockScreen({ firstTime, onUnlocked }: { firstTime: boolean; onUn
           disabled={busy || password.length < 8}
           className="w-full rounded-lg bg-primary text-white py-2 text-sm font-medium disabled:opacity-40"
         >
-          {firstTime ? '创建并解锁' : '解锁'}
+          {firstTime ? t('vault.createAndUnlock') : t('vault.unlock')}
         </button>
       </form>
     </div>

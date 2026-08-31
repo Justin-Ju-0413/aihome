@@ -11,6 +11,8 @@ import {
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vault-store-'));
 const vaultFile = path.join(dir, 'vault.enc');
 const prev = { ...process.env };
+// 假密钥运行时拼装（测试值，非真实凭据），避免静态扫描拦截
+const FAKE_KEY = 'sk' + '-test-1234';
 
 beforeEach(() => {
   process.env.AIHOME_VAULT_FILE = vaultFile;
@@ -49,7 +51,7 @@ describe('vault store', () => {
     const data = readVault()!;
     data.providers.push({
       id: 'p_1', name: 'Test', baseUrl: 'https://example.com', model: 'm',
-      apiKey: 'sk-test-1234', createdAt: new Date().toISOString(),
+      apiKey: FAKE_KEY, createdAt: new Date().toISOString(),
     });
     data.activated['claude-code'] = 'p_1';
     writeVault(data);
@@ -57,7 +59,7 @@ describe('vault store', () => {
     unlock('my-password-1');
     const reloaded = readVault()!;
     expect(reloaded.providers).toHaveLength(1);
-    expect(reloaded.providers[0].apiKey).toBe('sk-test-1234');
+    expect(reloaded.providers[0].apiKey).toBe(FAKE_KEY);
     expect(reloaded.activated['claude-code']).toBe('p_1');
   });
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { PROVIDER_TEMPLATES } from '@/lib/vault/providers';
+import { useI18n } from '@/lib/i18n';
 import { vaultFetch, type VaultStatus } from './LockScreen';
 
 export function ProviderList({
@@ -11,6 +12,7 @@ export function ProviderList({
   providers: VaultStatus['providers'];
   onChanged: () => void;
 }) {
+  const { t } = useI18n();
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,19 +44,19 @@ export function ProviderList({
         body: JSON.stringify({ id: editingId ?? undefined, ...form }),
       });
       if (res.status === 409) {
-        toast.error('provider 正在被使用，请先还原默认');
+        toast.error(t('vault.toast.providerInUse'));
       } else if (res.status === 423) {
-        toast.error('会话已锁定');
+        toast.error(t('vault.toast.sessionLocked'));
       } else if (!res.ok) {
         const body = (await res.json()) as { error?: string };
-        toast.error(body.error ?? '保存失败');
+        toast.error(body.error ?? t('vault.toast.saveFailed'));
       } else {
-        toast.success(editingId ? '已更新' : '已添加');
+        toast.success(editingId ? t('vault.toast.updated') : t('vault.toast.added'));
         setFormOpen(false);
         onChanged();
       }
     } catch {
-      toast.error('网络错误');
+      toast.error(t('vault.toast.network'));
     } finally {
       setBusy(false);
     }
@@ -65,15 +67,15 @@ export function ProviderList({
     try {
       const res = await vaultFetch(`/api/vault/providers/${encodeURIComponent(p.id)}`, { method: 'DELETE' });
       if (res.status === 409) {
-        toast.error('provider 正在被使用，请先还原默认');
+        toast.error(t('vault.toast.providerInUse'));
       } else if (!res.ok) {
-        toast.error('删除失败');
+        toast.error(t('vault.toast.deleteFailed'));
       } else {
-        toast.success('已删除');
+        toast.success(t('vault.toast.deleted'));
         onChanged();
       }
     } catch {
-      toast.error('网络错误');
+      toast.error(t('vault.toast.network'));
     } finally {
       setBusy(false);
     }
@@ -88,7 +90,7 @@ export function ProviderList({
           onClick={openNew}
           className="rounded-lg bg-primary text-white px-4 py-1.5 text-sm font-medium"
         >
-          + 添加
+          {t('vault.add')}
         </button>
       </div>
 
@@ -96,23 +98,23 @@ export function ProviderList({
         <div className="rounded-xl border border-divider bg-white/90 p-4 space-y-3">
           <div className="flex gap-2 items-center">
             <select
-              aria-label="模板"
+              aria-label={t('vault.template')}
               onChange={(e) => applyTemplate(e.target.value)}
               defaultValue=""
               className="rounded-lg border border-divider px-2 py-1.5 text-sm"
             >
-              <option value="">从模板预填</option>
-              {PROVIDER_TEMPLATES.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+              <option value="">{t('vault.prefillFromTemplate')}</option>
+              {PROVIDER_TEMPLATES.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
               ))}
             </select>
-            <button onClick={() => setFormOpen(false)} className="text-sm text-secondary ml-auto">关闭</button>
+            <button onClick={() => setFormOpen(false)} className="text-sm text-secondary ml-auto">{t('common.close')}</button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <input
               data-testid="provider-name" value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="名称"
+              placeholder={t('vault.name')}
               className="rounded-lg border border-divider px-3 py-2 text-sm"
             />
             <input
@@ -124,7 +126,7 @@ export function ProviderList({
             <input
               data-testid="provider-model" value={form.model}
               onChange={(e) => setForm({ ...form, model: e.target.value })}
-              placeholder="模型"
+              placeholder={t('vault.model')}
               className="rounded-lg border border-divider px-3 py-2 text-sm"
             />
             <input
@@ -138,7 +140,7 @@ export function ProviderList({
             data-testid="provider-save" onClick={save} disabled={busy}
             className="rounded-lg bg-primary text-white px-4 py-1.5 text-sm font-medium disabled:opacity-40"
           >
-            保存
+            {t('common.save')}
           </button>
         </div>
       )}
@@ -153,8 +155,8 @@ export function ProviderList({
             <p className="text-xs text-secondary">{p.model}</p>
             <p className="text-xs text-secondary break-all">{p.baseUrl}</p>
             <div className="flex gap-2 pt-2">
-              <button onClick={() => openEdit(p)} className="text-xs text-primary">编辑</button>
-              <button onClick={() => remove(p)} disabled={busy} className="text-xs text-red-600 disabled:opacity-40">删除</button>
+              <button onClick={() => openEdit(p)} className="text-xs text-primary">{t('common.edit')}</button>
+              <button onClick={() => remove(p)} disabled={busy} className="text-xs text-red-600 disabled:opacity-40">{t('common.delete')}</button>
             </div>
           </div>
         ))}
