@@ -10,6 +10,7 @@ const navItems = [
   { href: '/agents', label: 'AGENTS', testId: 'nav-agents' },
   { href: '/usage', label: 'USAGE', testId: 'nav-usage' },
   { href: '/sync', label: 'SYNC', testId: 'nav-sync' },
+  { href: '/vault', label: 'VAULT', testId: 'nav-vault' },
   { href: '/settings', label: 'SETTINGS', testId: 'nav-settings' },
 ];
 
