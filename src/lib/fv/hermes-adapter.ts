@@ -114,12 +114,15 @@ export function getSkills(): Row[] {
     const skillFilter = settings['connection.hermes_skill_filter'] || '';
     const allowedCats = skillFilter ? skillFilter.split(',').map((s) => s.trim()).filter(Boolean) : null;
     const skills: Row[] = [];
+    const skillsRoot = path.resolve(HERMES_SKILLS_DIR());
     for (const cat of categories) {
       if (allowedCats && !allowedCats.includes(cat)) continue;
-      const catPath = path.join(HERMES_SKILLS_DIR(), cat);
+      const catPath = path.resolve(skillsRoot, cat);
+      if (!catPath.startsWith(skillsRoot + path.sep)) continue;
       const files = fs.readdirSync(catPath).filter((f) => f.endsWith('.md') || f.endsWith('.yaml') || f.endsWith('.yml'));
       for (const file of files) {
-        const filePath = path.join(catPath, file);
+        const filePath = path.resolve(catPath, file);
+        if (!filePath.startsWith(catPath + path.sep)) continue;
         try {
           const content = fs.readFileSync(filePath, 'utf-8');
           const nameMatch = content.match(/(?:^|\n)(?:name|skill_name)[:\s]+(.+)/);

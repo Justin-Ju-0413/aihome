@@ -47,7 +47,9 @@ export class TestDataManager {
 
   removeAgent(name: string) {
     const dirName = name.toLowerCase().replace(/\s+/g, '-');
-    const agentDir = path.join(this.testDataDir, dirName);
+    if (path.basename(dirName) !== dirName) throw new Error(`invalid dirName: ${dirName}`);
+    const agentDir = path.resolve(this.testDataDir, dirName);
+    if (!agentDir.startsWith(path.resolve(this.testDataDir) + path.sep)) throw new Error('dir escapes test data dir');
     if (fs.existsSync(agentDir)) {
       fs.rmSync(agentDir, { recursive: true, force: true });
     }

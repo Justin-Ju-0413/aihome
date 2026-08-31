@@ -10,6 +10,7 @@ let reg: Registry;
 let platformDir: string;
 
 function makeSkill(id: string) {
+  if (path.basename(id) !== id) throw new Error(`invalid id: ${id}`);
   const dir = path.join(getSkillsDir(), id);
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, 'SKILL.md'), `# ${id}\n\nbody\n`);
