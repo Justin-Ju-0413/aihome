@@ -26,8 +26,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // suppressHydrationWarning: 浏览器翻译插件（Trancy/有道）会在 hydrate 前往 <html> 注入属性
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} font-body`}>
         <LanguageProvider>
           <GlassCursor />
