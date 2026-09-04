@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n';
 import type { DictKey } from '@/lib/i18n';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 const navItems: Array<{ href: string; labelKey: DictKey; testId: string }> = [
   { href: '/board', labelKey: 'nav.board', testId: 'nav-board' },
@@ -22,6 +24,7 @@ const navItems: Array<{ href: string; labelKey: DictKey; testId: string }> = [
 export function TopNav() {
   const pathname = usePathname();
   const { t, lang, setLang } = useI18n();
+  const { theme, toggle } = useTheme();
 
   return (
     <nav className="sticky top-0 z-40 glass-nav border-b border-divider px-6 py-3">
@@ -55,6 +58,16 @@ export function TopNav() {
               );
             })}
           </ul>
+
+          {/* 亮/暗主题切换 */}
+          <button
+            onClick={toggle}
+            data-testid="theme-switch"
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            className="rounded-md p-1.5 text-secondary transition-colors hover:text-primary hover:bg-primary/10"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
 
           {/* 中 / EN 语言切换 */}
           <div
