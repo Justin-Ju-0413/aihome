@@ -44,7 +44,7 @@ export function WidgetApp() {
 
   if (error) {
     return (
-      <div className="p-2 text-[10px] text-gray-400" data-testid="widget-error">
+      <div className="p-2 text-[10px] text-muted" data-testid="widget-error">
         {t('widget.serviceUnavailable')}
       </div>
     );

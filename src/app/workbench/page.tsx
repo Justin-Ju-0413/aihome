@@ -60,16 +60,16 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-heading">{t('workbench.title')}</h1>
+        <h1 className="font-heading text-3xl font-bold text-heading">{t('workbench.title')}</h1>
         <button onClick={() => setShowAdd(true)} data-testid="add-site" className="rounded-lg bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">+ {t('workbench.addPlatform')}</button>
       </header>
       <SearchFilter search={search} setSearch={setSearch} category={category} setCategory={setCategory} categories={CATEGORIES} />
-      {!loaded && <p className="mt-8 text-center text-body">{t('workbench.loading')}</p>}
-      {loaded && groups.length === 0 && <p className="mt-8 text-center text-body">{t('workbench.noMatch')}</p>}
+      {!loaded && <p className="mt-8 text-center text-muted">{t('workbench.loading')}</p>}
+      {loaded && groups.length === 0 && <p className="mt-8 text-center text-muted">{t('workbench.noMatch')}</p>}
       <div className="mt-6 space-y-8">
         {groups.map(([cat, items]) => (
           <section key={cat} data-testid={`group-${cat}`}>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-body">{categoryLabel(cat)}</h2>
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">{categoryLabel(cat)}</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {items.map((s) => <PlatformCard key={s.id} site={s} onEdit={setEditing} onConfigKey={setKeyFor} />)}
             </div>

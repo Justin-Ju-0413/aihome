@@ -11,11 +11,11 @@ import type { DictKey } from '@/lib/i18n';
 import type { FvAgent, FvAgentDetail } from '@/lib/fv/types';
 
 const STATUS_META: Record<string, { labelKey: DictKey; cls: string }> = {
-  running: { labelKey: 'console.status.running', cls: 'bg-emerald-50 text-emerald-700' },
+  running: { labelKey: 'console.status.running', cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
   completed: { labelKey: 'console.status.completed', cls: 'bg-primary/10 text-primary' },
-  pending: { labelKey: 'console.status.pending', cls: 'bg-amber-50 text-amber-700' },
+  pending: { labelKey: 'console.status.pending', cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-300' },
   stopped: { labelKey: 'console.status.stopped', cls: 'bg-muted/20 text-muted' },
-  error: { labelKey: 'console.status.error', cls: 'bg-rose-50 text-rose-600' },
+  error: { labelKey: 'console.status.error', cls: 'bg-rose-500/15 text-rose-600 dark:text-rose-300' },
 };
 
 const PROVIDER_ICON: Record<string, string> = { claude: '🤖', codex: '⚡', hermes: '🧠' };
@@ -61,7 +61,7 @@ function StepsFlow({ steps }: { steps: FvAgent['steps'] }) {
             title={s.name}
             className={cn(
               'text-[10px] px-1.5 py-0.5 rounded border',
-              s.status === 'done' && 'border-emerald-300 bg-emerald-50 text-emerald-700',
+              s.status === 'done' && 'border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
               s.status === 'active' && 'border-primary bg-primary/10 text-primary',
               s.status === 'pending' && 'border-card-border glass-input text-muted'
             )}
@@ -128,8 +128,8 @@ function DiffModal({ agentId, onClose }: { agentId: string; onClose: () => void 
               <pre className="text-xs p-3 overflow-auto max-h-64">
                 {String(d.diff_content).split('\n').map((line, i) => (
                   <div key={i} className={cn(
-                    line.startsWith('+') ? 'bg-emerald-50 text-emerald-700' :
-                    line.startsWith('-') ? 'bg-rose-50 text-rose-600' : 'text-muted'
+                    line.startsWith('+') ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' :
+                    line.startsWith('-') ? 'bg-rose-500/15 text-rose-600 dark:text-rose-300' : 'text-muted'
                   )}>
                     {line}
                   </div>

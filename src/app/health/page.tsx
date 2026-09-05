@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { HeartPulse, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import type { HealthIssue } from '@/lib/health';
+import { Button } from '@/components/ui/Button';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function HealthPage() {
   const { t } = useI18n();
@@ -30,39 +32,35 @@ export default function HealthPage() {
   const healthy = issues !== null && issues.length === 0;
 
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-2 text-xl font-semibold flex items-center gap-2">
-        <HeartPulse className="w-5 h-5 text-primary" /> {t('health.title')}
-      </h1>
-      <p className="mb-4 text-sm text-gray-500">{t('health.subtitle')}</p>
+    <main className="mx-auto max-w-3xl px-6 pb-10">
+      <PageHeader
+        title={<span className="flex items-center gap-2 justify-center"><HeartPulse className="w-6 h-6 text-primary" /> {t('health.title')}</span>}
+        subtitle={t('health.subtitle')}
+      />
 
-      <div className="flex items-center gap-3 mb-4">
-        <button
-          onClick={load}
-          data-testid="health-refresh"
-          className="rounded border px-3 py-1.5 text-sm disabled:opacity-50"
-        >
-          <RefreshCw className="w-4 h-4 inline mr-1" />
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <Button onClick={load} data-testid="health-refresh" variant="secondary" size="sm">
+          <RefreshCw className="w-4 h-4" />
           {t('health.recheck')}
-        </button>
+        </Button>
         {healthy && (
-          <span className="text-sm text-green-600 flex items-center gap-1" data-testid="health-ok">
+          <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1" data-testid="health-ok">
             <CheckCircle2 className="w-4 h-4" /> {t('health.allGood')}
           </span>
         )}
       </div>
 
-      {error && <div className="text-sm text-red-500">{t('health.fetchFailed')}</div>}
+      {error && <div className="text-sm text-red-600 dark:text-red-400 text-center mb-4">{t('health.fetchFailed')}</div>}
 
       {issues !== null && issues.length > 0 && (
         <ul data-testid="health-issues" className="space-y-2">
           {issues.map((i, idx) => (
-            <li key={idx} className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <li key={idx} className="glass-panel rounded-xl border border-amber-500/30 p-4 text-sm text-amber-700 dark:text-amber-300">
               <span className="font-medium flex items-center gap-1">
                 <AlertTriangle className="w-4 h-4" />
                 {i.type === 'unreadable_path' ? t('health.unreadablePath') : i.type === 'scan_error' ? t('health.scanError') : t('health.duplicateAgent')}
               </span>
-              <span className="mt-1 block font-mono text-xs">{i.detail}</span>
+              <span className="mt-1 block font-mono text-xs text-muted">{i.detail}</span>
             </li>
           ))}
         </ul>

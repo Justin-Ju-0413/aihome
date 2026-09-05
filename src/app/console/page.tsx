@@ -127,7 +127,7 @@ export default function ConsolePage() {
           <span
             className={cn(
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium',
-              runningCount > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-primary/10 text-primary'
+              runningCount > 0 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 'bg-primary/10 text-primary'
             )}
           >
             <span className={cn('w-2 h-2 rounded-full', runningCount > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-primary/40')} />

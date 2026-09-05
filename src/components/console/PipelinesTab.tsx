@@ -12,9 +12,9 @@ import type { FvPipeline } from '@/lib/fv/types';
 
 const PIPELINE_STATUS: Record<string, { labelKey: DictKey; cls: string }> = {
   completed: { labelKey: 'console.status.completed', cls: 'bg-primary/10 text-primary' },
-  running: { labelKey: 'console.status.running', cls: 'bg-emerald-50 text-emerald-700' },
-  error: { labelKey: 'console.status.error', cls: 'bg-rose-50 text-rose-600' },
-  pending: { labelKey: 'console.status.pending', cls: 'bg-amber-50 text-amber-700' },
+  running: { labelKey: 'console.status.running', cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
+  error: { labelKey: 'console.status.error', cls: 'bg-rose-500/15 text-rose-600 dark:text-rose-300' },
+  pending: { labelKey: 'console.status.pending', cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-300' },
 };
 
 const PROVIDER_ICON: Record<string, string> = { claude: '🤖', codex: '⚡', hermes: '🧠' };

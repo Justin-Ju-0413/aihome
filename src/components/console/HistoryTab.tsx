@@ -9,9 +9,9 @@ import type { DictKey, Lang } from '@/lib/i18n';
 
 const TYPE_META: Record<string, { labelKey: DictKey; color: string }> = {
   edit: { labelKey: 'type.edit', color: 'bg-primary/10 text-primary' },
-  agent: { labelKey: 'type.agent', color: 'bg-emerald-50 text-emerald-700' },
-  create: { labelKey: 'console.op.create', color: 'bg-sky-50 text-sky-700' },
-  delete: { labelKey: 'type.delete', color: 'bg-rose-50 text-rose-600' },
+  agent: { labelKey: 'type.agent', color: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
+  create: { labelKey: 'console.op.create', color: 'bg-sky-500/15 text-sky-700 dark:text-sky-300' },
+  delete: { labelKey: 'type.delete', color: 'bg-rose-500/15 text-rose-600 dark:text-rose-300' },
 };
 
 function groupByDay(rows: Array<{ created_at: string; id: number }>, lang: Lang): Array<{ day: string; items: Array<Record<string, unknown>> }> {
