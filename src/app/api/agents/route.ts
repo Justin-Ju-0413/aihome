@@ -7,6 +7,7 @@ import { getWorkspaceConfig } from '@/lib/workspace-config';
 import { isExistingPathWithinWorkspace, isNewPathWithinWorkspace } from '@/lib/path-security';
 import { filterByFullText } from '@/lib/search';
 import { assertWritable } from '@/lib/readonly';
+import { handleRouteError, jsonError, readJsonBody } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,60 +29,41 @@ export async function GET(request: NextRequest) {
       }
     }
     return NextResponse.json(agents);
-  } catch (error) {
-    console.error('Failed to fetch agents:', error);
-    return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Request failed' },
-        { status: (error as { status?: number }).status ?? 500 }
-      );
+  } catch (err) {
+    return handleRouteError(err, 'Request failed');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     await assertWritable();
-    const body = await request.json();
+    const body = await readJsonBody<{ type: string; name?: string; description?: string; dirPath?: string }>(request);
     const { type, name, description, dirPath } = body;
 
     if (!['agent', 'skill'].includes(type) || typeof name !== 'string' || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Type and name are required' },
-        { status: 400 }
-      );
+      return jsonError('Type and name are required', 400);
     }
 
     const slug = name.trim().toLowerCase().replace(/\s+/g, '-');
     if (!/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(slug)) {
-      return NextResponse.json(
-        { error: 'Name must contain only letters, numbers, hyphens or underscores' },
-        { status: 400 }
-      );
+      return jsonError('Name must contain only letters, numbers, hyphens or underscores', 400);
     }
 
     const config = await getWorkspaceConfig();
     const baseDir = dirPath || config.paths[0];
-    
+
     if (!baseDir) {
-      return NextResponse.json(
-        { error: 'No directory path provided' },
-        { status: 400 }
-      );
+      return jsonError('No directory path provided', 400);
     }
 
     if (!await isExistingPathWithinWorkspace(baseDir, config.paths)) {
-      return NextResponse.json(
-        { error: 'Directory is outside the configured workspace' },
-        { status: 403 }
-      );
+      return jsonError('Directory is outside the configured workspace', 403);
     }
 
     // Create agent/skill directory
     const agentDir = join(baseDir, slug);
     if (!await isNewPathWithinWorkspace(agentDir, config.paths)) {
-      return NextResponse.json(
-        { error: 'Directory is outside the configured workspace' },
-        { status: 403 }
-      );
+      return jsonError('Directory is outside the configured workspace', 403);
     }
     await mkdir(agentDir, { recursive: true });
 
@@ -110,11 +92,7 @@ export async function POST(request: NextRequest) {
     const created = result.agents.find(a => a.filePath === filePath);
 
     return NextResponse.json(created || { filePath, name, type });
-  } catch (error) {
-    console.error('Failed to create agent:', error);
-    return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Request failed' },
-        { status: (error as { status?: number }).status ?? 500 }
-      );
+  } catch (err) {
+    return handleRouteError(err, 'Request failed');
   }
 }

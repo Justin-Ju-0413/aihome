@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Registry } from '@/lib/registry/registry';
 import { syncSkills } from '@/lib/registry/sync-engine';
 import { assertWritable } from '@/lib/readonly';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function POST(req: Request) {
   const reg = new Registry();
@@ -13,12 +14,8 @@ export async function POST(req: Request) {
     reg.open();
     const results = syncSkills(reg, { dryRun, platform: body.platform, skillId: body.skillId });
     return NextResponse.json({ results });
-  } catch (error) {
-    console.error('Registry sync error:', error);
-    return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Request failed' },
-        { status: (error as { status?: number }).status ?? 500 }
-      );
+  } catch (err) {
+    return handleRouteError(err, 'Request failed');
   } finally {
     reg.close();
   }

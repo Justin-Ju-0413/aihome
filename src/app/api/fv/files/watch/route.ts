@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureFvInit } from '@/lib/fv/init';
 import { watchFile } from '@/lib/fv/file-scanner';
+import { handleRouteError, jsonError, readJsonBody } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
   ensureFvInit();
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ path?: string; agentIds?: unknown }>(request);
     const { path: filePath, agentIds } = body;
-    if (!filePath) return NextResponse.json({ error: 'path required' }, { status: 400 });
+    if (!filePath) return jsonError('path required', 400);
     watchFile(filePath, Array.isArray(agentIds) ? agentIds : []);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('Failed to watch file:', err);
-    return NextResponse.json({ error: 'Failed to watch file' }, { status: 500 });
+    return handleRouteError(err, 'Failed to watch file');
   }
 }
