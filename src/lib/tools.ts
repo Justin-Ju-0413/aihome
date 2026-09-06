@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { getStatus } from '@/lib/vault';
+import { vaultToolConfigPaths } from '@/lib/tool-config-paths';
 
 const execFileAsync = promisify(execFile);
 
@@ -72,10 +73,7 @@ export const TOOL_CATALOG: ToolCatalogEntry[] = [
     kind: 'cli',
     installPath: envPath('AIHOME_TOOLS_CLAUDE_DIR', () => path.join(os.homedir(), '.claude')),
     binary: 'claude',
-    configPath: envPath(
-      'AIHOME_VAULT_CLAUDE_CODE_CONFIG',
-      () => path.join(os.homedir(), '.claude', 'settings.json'),
-    ),
+    configPath: vaultToolConfigPaths['claude-code'],
     vaultLinked: true,
   },
   {
@@ -84,10 +82,7 @@ export const TOOL_CATALOG: ToolCatalogEntry[] = [
     kind: 'cli',
     installPath: envPath('AIHOME_TOOLS_CODEX_DIR', () => path.join(os.homedir(), '.codex')),
     binary: 'codex',
-    configPath: envPath(
-      'AIHOME_VAULT_CODEX_CONFIG',
-      () => path.join(os.homedir(), '.codex', 'config.toml'),
-    ),
+    configPath: vaultToolConfigPaths.codex,
     vaultLinked: true,
   },
   {
@@ -99,10 +94,7 @@ export const TOOL_CATALOG: ToolCatalogEntry[] = [
       () => path.join(os.homedir(), '.config', 'opencode'),
     ),
     binary: 'opencode',
-    configPath: envPath(
-      'AIHOME_VAULT_OPENCODE_CONFIG',
-      () => path.join(os.homedir(), '.config', 'opencode', 'opencode.json'),
-    ),
+    configPath: vaultToolConfigPaths.opencode,
     vaultLinked: true,
   },
   {

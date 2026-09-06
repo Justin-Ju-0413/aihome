@@ -81,49 +81,45 @@ export function totalsFor(events: UsageEvent[], now = Date.now()): Totals {
   return t;
 }
 
-export function groupBySource(events: UsageEvent[]): Array<{ source: string; cost: number; tokens: number; count: number }> {
-  const map = new Map<string, { cost: number; tokens: number; count: number }>();
+interface GroupAcc { cost: number; tokens: number; count: number }
+
+/** groupBySource/groupByModel/byDay 共用的 fold 骨架:按 key 聚合后排序输出。 */
+function groupBy<K extends string>(
+  events: UsageEvent[],
+  keyOf: (e: UsageEvent) => K,
+  compare: (a: { key: K } & GroupAcc, b: { key: K } & GroupAcc) => number,
+  limit?: number,
+): Array<{ key: K } & GroupAcc> {
+  const map = new Map<K, GroupAcc>();
   for (const e of events) {
-    const g = map.get(e.source) ?? { cost: 0, tokens: 0, count: 0 };
+    const key = keyOf(e);
+    const g = map.get(key) ?? { cost: 0, tokens: 0, count: 0 };
     g.cost += e.costUsd;
     g.tokens += e.inputTokens + e.outputTokens;
     g.count += 1;
-    map.set(e.source, g);
+    map.set(key, g);
   }
-  return [...map.entries()]
-    .map(([source, g]) => ({ source, ...g }))
-    .sort((a, b) => b.cost - a.cost);
+  const rows = [...map.entries()].map(([key, g]) => ({ key, ...g }));
+  rows.sort(compare);
+  return limit !== undefined ? rows.slice(0, limit) : rows;
+}
+
+const byCostDesc = (a: GroupAcc & { key: string }, b: GroupAcc & { key: string }) => b.cost - a.cost;
+
+export function groupBySource(events: UsageEvent[]): Array<{ source: string; cost: number; tokens: number; count: number }> {
+  return groupBy(events, (e) => e.source, byCostDesc).map(({ key, ...g }) => ({ source: key, ...g }));
 }
 
 export function groupByModel(events: UsageEvent[], limit = 10): Array<{ model: string; cost: number; tokens: number; count: number }> {
-  const map = new Map<string, { cost: number; tokens: number; count: number }>();
-  for (const e of events) {
-    const g = map.get(e.model) ?? { cost: 0, tokens: 0, count: 0 };
-    g.cost += e.costUsd;
-    g.tokens += e.inputTokens + e.outputTokens;
-    g.count += 1;
-    map.set(e.model, g);
-  }
-  return [...map.entries()]
-    .map(([model, g]) => ({ model, ...g }))
-    .sort((a, b) => b.cost - a.cost)
-    .slice(0, limit);
+  return groupBy(events, (e) => e.model, byCostDesc, limit).map(({ key, ...g }) => ({ model: key, ...g }));
 }
 
 export function byDay(events: UsageEvent[]): Array<{ day: string; cost: number; tokens: number; count: number }> {
-  const map = new Map<string, { cost: number; tokens: number; count: number }>();
-  for (const e of events) {
+  const dayOf = (e: UsageEvent): string => {
     const d = new Date(e.timestamp);
-    const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const g = map.get(day) ?? { cost: 0, tokens: 0, count: 0 };
-    g.cost += e.costUsd;
-    g.tokens += e.inputTokens + e.outputTokens;
-    g.count += 1;
-    map.set(day, g);
-  }
-  return [...map.entries()]
-    .map(([day, g]) => ({ day, ...g }))
-    .sort((a, b) => (a.day < b.day ? -1 : 1));
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  return groupBy(events, dayOf, (a, b) => (a.key < b.key ? -1 : 1)).map(({ key, ...g }) => ({ day: key, ...g }));
 }
 
 export interface TableModelRow {

@@ -100,11 +100,27 @@ async function scanDirectory(
   }
 }
 
+type BuildOutcome = (filePath: string, dirPath: string, st: Awaited<ReturnType<typeof stat>>, cache: ScanCache | null) => Promise<ParseOutcome>;
+
 async function parseAgentsMdFile(
   filePath: string,
   dirPath: string,
   depNamesByAgentId: Map<string, string[]>,
   cache: ScanCache | null
+): Promise<AgentNode | null> {
+  return parseMdFile(filePath, dirPath, depNamesByAgentId, cache, buildAgentsOutcome);
+}
+
+/**
+ * AGENTS.md / SKILL.md / CLAUDE.md 三种入口共用的解析骨架:
+ * 指纹缓存命中直接复用节点,未命中则 build 后写缓存。
+ */
+async function parseMdFile(
+  filePath: string,
+  dirPath: string,
+  depNamesByAgentId: Map<string, string[]>,
+  cache: ScanCache | null,
+  build: BuildOutcome
 ): Promise<AgentNode | null> {
   const st = await stat(filePath);
   if (cache) {
@@ -115,12 +131,12 @@ async function parseAgentsMdFile(
       depNamesByAgentId.set(hit.node.id, hit.depNames);
       return hit.node;
     }
-    const outcome = await buildAgentsOutcome(filePath, dirPath, st, cache);
+    const outcome = await build(filePath, dirPath, st, cache);
     cache.setFile(filePath, fp, outcome);
     depNamesByAgentId.set(outcome.node.id, outcome.depNames);
     return outcome.node;
   }
-  const outcome = await buildAgentsOutcome(filePath, dirPath, st, null);
+  const outcome = await build(filePath, dirPath, st, null);
   depNamesByAgentId.set(outcome.node.id, outcome.depNames);
   return outcome.node;
 }
@@ -131,29 +147,7 @@ async function buildAgentsOutcome(
   st: Awaited<ReturnType<typeof stat>>,
   cache: ScanCache | null
 ): Promise<ParseOutcome> {
-  const content = await readFile(filePath, 'utf-8');
-  const parsed = parseAgentsMd(content);
-  const associatedFiles = await countAssociatedFiles(dirPath, cache);
-
-  const node: AgentNode = {
-    id: generateId(filePath),
-    name: parsed.name || 'Untitled Agent',
-    type: 'agent',
-    ruleFiles: ['AGENTS.md'],
-    description: parsed.description || '',
-    filePath,
-    dirPath,
-    status: 'active',
-    associatedFiles,
-    dependencies: [],
-    calledBy: [],
-    group: 'default',
-    position: { x: 0, y: 0 },
-    createdAt: st.birthtime.toISOString(),
-    updatedAt: st.mtime.toISOString()
-  };
-
-  return { node, depNames: extractDependencyNamesFromSections(parsed.sections) };
+  return buildRuleFileOutcome(filePath, dirPath, st, cache, 'AGENTS.md');
 }
 
 async function parseSkillMdFile(
@@ -162,23 +156,7 @@ async function parseSkillMdFile(
   depNamesByAgentId: Map<string, string[]>,
   cache: ScanCache | null
 ): Promise<AgentNode | null> {
-  const st = await stat(filePath);
-  if (cache) {
-    const fp = cache.fileFingerprint(st);
-    const hit = cache.getFile(filePath, fp);
-    if (hit) {
-      hit.node.associatedFiles = await countAssociatedFiles(dirPath, cache);
-      depNamesByAgentId.set(hit.node.id, hit.depNames);
-      return hit.node;
-    }
-    const outcome = await buildSkillOutcome(filePath, dirPath, st, cache);
-    cache.setFile(filePath, fp, outcome);
-    depNamesByAgentId.set(outcome.node.id, outcome.depNames);
-    return outcome.node;
-  }
-  const outcome = await buildSkillOutcome(filePath, dirPath, st, null);
-  depNamesByAgentId.set(outcome.node.id, outcome.depNames);
-  return outcome.node;
+  return parseMdFile(filePath, dirPath, depNamesByAgentId, cache, buildSkillOutcome);
 }
 
 async function buildSkillOutcome(
@@ -248,30 +226,18 @@ async function parseClaudeMdFile(
   depNamesByAgentId: Map<string, string[]>,
   cache: ScanCache | null
 ): Promise<AgentNode | null> {
-  const st = await stat(filePath);
-  if (cache) {
-    const fp = cache.fileFingerprint(st);
-    const hit = cache.getFile(filePath, fp);
-    if (hit) {
-      hit.node.associatedFiles = await countAssociatedFiles(dirPath, cache);
-      depNamesByAgentId.set(hit.node.id, hit.depNames);
-      return hit.node;
-    }
-    const outcome = await buildClaudeOutcome(filePath, dirPath, st, cache);
-    cache.setFile(filePath, fp, outcome);
-    depNamesByAgentId.set(outcome.node.id, outcome.depNames);
-    return outcome.node;
-  }
-  const outcome = await buildClaudeOutcome(filePath, dirPath, st, null);
-  depNamesByAgentId.set(outcome.node.id, outcome.depNames);
-  return outcome.node;
+  return parseMdFile(filePath, dirPath, depNamesByAgentId, cache, buildClaudeOutcome);
 }
 
-async function buildClaudeOutcome(
+/**
+ * AGENTS.md 与 CLAUDE.md 的节点构建只差 ruleFiles 标记,解析逻辑共用 parseAgentsMd。
+ */
+async function buildRuleFileOutcome(
   filePath: string,
   dirPath: string,
   st: Awaited<ReturnType<typeof stat>>,
-  cache: ScanCache | null
+  cache: ScanCache | null,
+  ruleFile: 'AGENTS.md' | 'CLAUDE.md'
 ): Promise<ParseOutcome> {
   const content = await readFile(filePath, 'utf-8');
   const parsed = parseAgentsMd(content);
@@ -281,11 +247,11 @@ async function buildClaudeOutcome(
     id: generateId(filePath),
     name: parsed.name || 'Untitled Agent',
     type: 'agent',
+    ruleFiles: [ruleFile],
     description: parsed.description || '',
     filePath,
     dirPath,
     status: 'active',
-    ruleFiles: ['CLAUDE.md'],
     associatedFiles,
     dependencies: [],
     calledBy: [],
@@ -296,6 +262,15 @@ async function buildClaudeOutcome(
   };
 
   return { node, depNames: extractDependencyNamesFromSections(parsed.sections) };
+}
+
+async function buildClaudeOutcome(
+  filePath: string,
+  dirPath: string,
+  st: Awaited<ReturnType<typeof stat>>,
+  cache: ScanCache | null
+): Promise<ParseOutcome> {
+  return buildRuleFileOutcome(filePath, dirPath, st, cache, 'CLAUDE.md');
 }
 
 async function countAssociatedFiles(
