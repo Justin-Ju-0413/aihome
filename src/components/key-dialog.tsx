@@ -77,12 +77,13 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
 
         <form onSubmit={(e) => void handleSave(e)} className="space-y-3">
           <div>
-            <FieldLabel>label</FieldLabel>
-            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('key.defaultLabel')} className="w-full" />
+            <FieldLabel htmlFor="wb-key-label">label</FieldLabel>
+            <Input id="wb-key-label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('key.defaultLabel')} className="w-full" />
           </div>
           <div>
-            <FieldLabel>provider</FieldLabel>
+            <FieldLabel htmlFor="wb-key-provider">provider</FieldLabel>
             <select
+              id="wb-key-provider"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
               className="w-full rounded-lg border border-card-border glass-input px-3 py-2 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
@@ -91,8 +92,8 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
             </select>
           </div>
           <div>
-            <FieldLabel>key</FieldLabel>
-            <Input value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-..." className="w-full" />
+            <FieldLabel htmlFor="wb-key-key">key</FieldLabel>
+            <Input id="wb-key-key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-..." className="w-full" />
           </div>
           {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">
