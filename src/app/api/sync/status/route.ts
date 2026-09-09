@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { buildState } from '@/lib/sync/engine';
 import { detectLegacyRepo, migrateLegacyRepo } from '@/lib/sync/migration';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -16,8 +17,7 @@ export async function GET() {
       if (result.migrated) legacy.copiedSkills = result.copiedSkills;
     }
     return NextResponse.json({ state, legacy });
-  } catch (error) {
-    console.error('Sync status error:', error);
-    return NextResponse.json({ error: 'Failed to load sync status' }, { status: 500 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to load sync status');
   }
 }

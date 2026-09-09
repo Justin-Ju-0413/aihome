@@ -1,20 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { removeProvider } from '@/lib/vault';
 import { touchSession } from '@/lib/vault/store';
+import { handleRouteError } from '@/lib/api-response';
+import { vaultResultResponse, VAULT_FALLBACK_ERROR } from '@/lib/vault/http';
 
 export async function DELETE(_request: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     touchSession();
     const { id } = await ctx.params;
-    const result = removeProvider(id);
-    if (!result.ok) {
-      return NextResponse.json(
-        { error: (result as { error?: string }).error ?? 'bad request' },
-        { status: (result as { status?: number }).status ?? 400 }
-      );
-    }
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: 'vault 文件损坏或密码错误' }, { status: 500 });
+    return vaultResultResponse(removeProvider(id));
+  } catch (err) {
+    return handleRouteError(err, VAULT_FALLBACK_ERROR);
   }
 }

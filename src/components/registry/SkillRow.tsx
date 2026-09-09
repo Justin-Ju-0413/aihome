@@ -1,6 +1,8 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n';
+import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 type Skill = {
   id: string;
@@ -18,29 +20,31 @@ export function SkillRow({ skill }: { skill: Skill }) {
   }
 
   return (
-    <li className="flex items-center justify-between rounded border p-3">
+    <li
+      className={cn(
+        'glass-panel rounded-xl border border-card-border p-4 flex items-center justify-between gap-4',
+      )}
+    >
       <div>
-        <div className="font-medium">{skill.name}</div>
-        <div className="text-sm text-gray-500">{skill.description}</div>
-        <div className="mt-1 flex gap-2">
+        <div className="font-medium text-heading">{skill.name}</div>
+        <div className="text-sm text-muted">{skill.description}</div>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
           {skill.platforms.map((p) => (
-            <span
+            <Badge
               key={p.name}
               data-testid={`badge-${p.name}-${skill.id}`}
-              className={
-                p.status === 'linked'
-                  ? 'rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700'
-                  : p.status === 'conflict'
-                    ? 'rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700'
-                    : 'rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500'
-              }
+              tone={p.status === 'linked' ? 'success' : p.status === 'conflict' ? 'warning' : 'neutral'}
             >
               {p.name}: {p.status === 'none' ? t('registry.notSynced') : p.status}
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
-      <button onClick={handleDelete} className="text-sm text-red-500" data-testid={`delete-${skill.id}`}>
+      <button
+        onClick={handleDelete}
+        className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-500/10"
+        data-testid={`delete-${skill.id}`}
+      >
         {t('common.delete')}
       </button>
     </li>

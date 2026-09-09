@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { listSites, createSite, getCurrentKeyRecord } from '@/lib/workbench/crud';
 import { seedBuiltins } from '@/lib/workbench/seed';
 import type { Site, SiteInput } from '@/lib/workbench/types';
+import { handleRouteError, jsonError } from '@/lib/api-response';
 
 function withCurrentKey(site: Site) {
   const key = getCurrentKeyRecord(site.id);
@@ -34,12 +35,11 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: '无效的 JSON' }, { status: 400 });
   }
-  if (!body?.name || !body?.url) return NextResponse.json({ error: 'name 和 url 必填' }, { status: 400 });
+  if (!body?.name || !body?.url) return jsonError('name 和 url 必填', 400);
   try {
     const site = createSite(body);
     return NextResponse.json({ site }, { status: 201 });
-  } catch (error) {
-    console.error('Failed to create site:', error);
-    return NextResponse.json({ error: 'Failed to create site' }, { status: 400 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to create site', 400);
   }
 }

@@ -1,8 +1,8 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import type { ProviderConfig, VaultData } from '../store';
 import { backupConfig, fingerprintOf, type AdapterState, type ToolAdapter, type WriteResult } from './index';
+import { vaultToolConfigPaths } from '@/lib/tool-config-paths';
 
 const segId = (id: string) => `vault_${id}`;
 
@@ -18,8 +18,7 @@ export const opencodeAdapter: ToolAdapter = {
   id: 'opencode',
   label: 'opencode',
   configPath(): string {
-    return process.env.AIHOME_VAULT_OPENCODE_CONFIG ??
-      path.join(os.homedir(), '.config', 'opencode', 'opencode.json');
+    return vaultToolConfigPaths.opencode();
   },
 
   detect(data: VaultData): AdapterState {

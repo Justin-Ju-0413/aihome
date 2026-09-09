@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { KeyRound } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 
 export interface VaultStatus {
   locked: boolean;
@@ -59,27 +62,27 @@ export function LockScreen({ firstTime, onUnlocked }: { firstTime: boolean; onUn
       <form
         data-testid="vault-lock-form"
         onSubmit={submit}
-        className="w-full max-w-sm bg-white/90 backdrop-blur-sm border border-divider rounded-2xl p-8 shadow-sm"
+        className="w-full max-w-sm glass-modal rounded-2xl border border-card-border p-8 shadow-xl animate-fade-in"
       >
-        <h1 className="font-heading text-xl font-bold text-primary mb-1">{t('vault.appTitle')}</h1>
-        <p className="text-sm text-secondary mb-6">{firstTime ? t('vault.setPassword') : t('vault.enterPassword')}</p>
-        <input
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
+            <KeyRound className="w-7 h-7 text-primary" />
+          </div>
+          <h1 className="font-heading text-xl font-bold text-heading">{t('vault.appTitle')}</h1>
+          <p className="text-sm text-muted mt-1">{firstTime ? t('vault.setPassword') : t('vault.enterPassword')}</p>
+        </div>
+        <Input
           data-testid="vault-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t('vault.masterPassword')}
-          className="w-full rounded-lg border border-divider px-3 py-2 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-full mb-4"
         />
-        {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
-        <button
-          data-testid="vault-unlock-btn"
-          type="submit"
-          disabled={busy || password.length < 8}
-          className="w-full rounded-lg bg-primary text-white py-2 text-sm font-medium disabled:opacity-40"
-        >
+        {error && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>}
+        <Button data-testid="vault-unlock-btn" type="submit" disabled={busy || password.length < 8} className="w-full">
           {firstTime ? t('vault.createAndUnlock') : t('vault.unlock')}
-        </button>
+        </Button>
       </form>
     </div>
   );

@@ -101,8 +101,8 @@ export function AgentCard({ agent, onSelect }: AgentCardProps) {
       <div className="absolute top-2 right-2">
         <div className={cn(
           'w-2 h-2 rounded-full',
-          agent.status === 'active' ? 'bg-green-400' :
-          agent.status === 'draft' ? 'bg-yellow-400' : 'bg-gray-400'
+          agent.status === 'active' ? 'bg-emerald-400' :
+          agent.status === 'draft' ? 'bg-amber-400' : 'bg-muted'
         )} />
       </div>
     </div>

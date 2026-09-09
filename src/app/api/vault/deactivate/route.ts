@@ -1,26 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { deactivateTool } from '@/lib/vault';
-import { touchSession } from '@/lib/vault/store';
-import type { ToolId } from '@/lib/vault/store';
+import { touchSession, type ToolId } from '@/lib/vault/store';
+import { handleRouteError, readJsonBody, jsonError } from '@/lib/api-response';
+import { vaultResultResponse, VAULT_FALLBACK_ERROR } from '@/lib/vault/http';
 
 const TOOLS: ToolId[] = ['claude-code', 'codex', 'opencode'];
 
 export async function POST(request: NextRequest) {
   try {
     touchSession();
-    const { tool } = (await request.json()) as { tool?: string };
+    const { tool } = await readJsonBody<{ tool?: string }>(request);
     if (!tool || !TOOLS.includes(tool as ToolId)) {
-      return NextResponse.json({ error: 'unknown tool' }, { status: 400 });
+      return jsonError('unknown tool', 400);
     }
-    const result = deactivateTool(tool as ToolId);
-    if (!result.ok) {
-      return NextResponse.json(
-        { error: (result as { error?: string }).error ?? 'bad request', conflictDetail: (result as { conflictDetail?: string }).conflictDetail },
-        { status: (result as { status?: number }).status ?? 400 }
-      );
-    }
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: 'vault 文件损坏或密码错误' }, { status: 500 });
+    return vaultResultResponse(deactivateTool(tool as ToolId));
+  } catch (err) {
+    return handleRouteError(err, VAULT_FALLBACK_ERROR);
   }
 }

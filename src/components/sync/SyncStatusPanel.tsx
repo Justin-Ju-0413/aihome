@@ -5,6 +5,9 @@ import { toast } from 'sonner';
 import { RefreshCw, Upload, Download } from 'lucide-react';
 import type { SyncState } from '@/lib/sync/engine';
 import { useI18n } from '@/lib/i18n';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 
 interface Props {
   state: SyncState;
@@ -45,52 +48,44 @@ export function SyncStatusPanel({ state, onChanged }: Props) {
 
   return (
     <section className="mb-8">
-      <div className="flex items-center gap-3 mb-4">
-        <h2 className="font-heading text-xl font-semibold">{t('sync.centerRepo')}</h2>
-        <span className="text-sm text-secondary">{t('sync.summarySkills', { n: state.summary.total_skills })}</span>
-        <span className="text-sm text-amber-600">{t('sync.summaryConflicts', { n: state.summary.conflict_count })}</span>
-        <span className="text-sm text-secondary">{t('sync.summaryEndpoints', { n: state.summary.endpoint_count })}</span>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <h2 className="font-heading text-xl font-semibold text-heading">{t('sync.centerRepo')}</h2>
+        <span className="text-sm text-muted">{t('sync.summarySkills', { n: state.summary.total_skills })}</span>
+        <span className="text-sm text-amber-600 dark:text-amber-400">{t('sync.summaryConflicts', { n: state.summary.conflict_count })}</span>
+        <span className="text-sm text-muted">{t('sync.summaryEndpoints', { n: state.summary.endpoint_count })}</span>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
         {Object.entries(state.endpoints).map(([name, ep]) => (
-          <div key={name} className="border border-divider rounded-lg p-4">
+          <Card key={name}>
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium">{name}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${ep.exists ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              <span className="font-medium text-heading">{name}</span>
+              <Badge tone={ep.exists ? 'success' : 'danger'}>
                 {ep.exists ? t('common.online') : t('sync.pathMissing')}
-              </span>
+              </Badge>
             </div>
-            <p className="text-xs text-secondary truncate mb-2" title={ep.path}>{ep.path}</p>
-            <p className="text-sm">
+            <p className="text-xs text-muted truncate mb-2" title={ep.path}>{ep.path}</p>
+            <p className="text-sm text-text-body">
               {t('sync.endpointStats', { count: ep.count, missing: ep.diff.missing, different: ep.diff.different, extra: ep.diff.extra })}
             </p>
-          </div>
+          </Card>
         ))}
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => run('collect')}
-          disabled={busy}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
-        >
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button onClick={() => run('collect')} disabled={busy}>
           <Download size={16} /> collect
-        </button>
-        <button
-          onClick={() => run('push')}
-          disabled={busy}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg disabled:opacity-50"
-        >
+        </Button>
+        <Button onClick={() => run('push')} disabled={busy}>
           <Upload size={16} /> push
-        </button>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} />
+        </Button>
+        <label className="flex items-center gap-2 text-sm text-text-body cursor-pointer">
+          <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="accent-[var(--color-primary)]" />
           dry-run
         </label>
-        <button onClick={onChanged} disabled={busy} className="inline-flex items-center gap-2 px-3 py-2 text-sm text-secondary hover:text-primary">
+        <Button onClick={onChanged} disabled={busy} variant="ghost" size="sm">
           <RefreshCw size={16} /> {t('common.refresh')}
-        </button>
+        </Button>
       </div>
     </section>
   );

@@ -69,7 +69,7 @@ export default function UsagePage() {
 
   return (
     <main data-testid="usage-page" className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="font-heading text-3xl font-bold text-primary mb-6">{t('usage.pageTitle')}</h1>
+      <h1 className="font-heading text-3xl font-bold text-heading mb-6">{t('usage.pageTitle')}</h1>
       <UsageFilters
         source={source}
         range={range}
@@ -90,10 +90,10 @@ export default function UsagePage() {
                 title={s.message ?? ''}
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${
                   s.status === 'ready'
-                    ? 'border-emerald-200 text-emerald-700 bg-emerald-50'
+                    ? 'border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/15'
                     : s.status === 'unavailable'
-                      ? 'border-neutral-200 text-neutral-500 bg-neutral-50'
-                      : 'border-amber-200 text-amber-700 bg-amber-50'
+                      ? 'border-card-border text-muted bg-muted/10'
+                      : 'border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/15'
                 }`}
               >
                 {s.label} · {s.status}

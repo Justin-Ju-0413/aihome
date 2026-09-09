@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collect } from '@/lib/sync/engine';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,10 +9,7 @@ export async function POST(request: NextRequest) {
     const dryRun = request.nextUrl.searchParams.get('dryRun') === 'true';
     const result = await collect(only, dryRun);
     return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to collect' },
-      { status: 400 }
-    );
+  } catch (err) {
+    return handleRouteError(err, 'Failed to collect', 400);
   }
 }

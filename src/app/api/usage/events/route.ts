@@ -8,6 +8,7 @@ import {
   byDay, buildTable, USAGE_RANGES,
   type UsageRange, type UsageDimension,
 } from '@/lib/usage/aggregate';
+import { handleRouteError } from '@/lib/api-response';
 
 const DIMENSIONS: UsageDimension[] = ['cost', 'tokens'];
 
@@ -94,8 +95,7 @@ export async function GET(request: NextRequest) {
     } finally {
       cache.close();
     }
-  } catch (error) {
-    console.error('Usage events error:', error);
-    return NextResponse.json({ error: 'Failed to load usage data' }, { status: 500 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to load usage data');
   }
 }

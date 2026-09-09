@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ACTIVE_SOURCES, type ActiveUsageSource } from '@/lib/usage/types';
 import { runIndex } from '@/lib/usage/indexer';
 import { assertWritable } from '@/lib/readonly';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,10 +22,7 @@ export async function POST(request: NextRequest) {
       : undefined;
     const result = runIndex(only);
     return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to rescan' },
-      { status: 400 }
-    );
+  } catch (err) {
+    return handleRouteError(err, 'Failed to rescan', 400);
   }
 }

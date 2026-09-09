@@ -4,6 +4,10 @@ import { useI18n } from '@/lib/i18n';
 import { useWorkbenchStore } from '@/stores/workbench-store';
 import type { SiteView } from '@/stores/workbench-store';
 import type { KeyView } from '@/lib/workbench/types';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Input, FieldLabel } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
 
 const PROVIDERS = ['deepseek', 'openai', 'openrouter', 'none'];
 
@@ -40,32 +44,31 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center scrim p-4" onClick={onClose}>
-      <div
-        className="w-full max-w-md glass-modal rounded-xl p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-        data-testid="key-dialog"
-      >
-        <h2 className="mb-3 text-lg font-semibold">{t('key.title', { name: site.name })}</h2>
-
+    <Modal
+      open
+      onClose={onClose}
+      title={t('key.title', { name: site.name })}
+      className="!p-0"
+    >
+      <div data-testid="key-dialog" className="-my-2">
         {keys.length > 0 && (
           <div className="mb-4 space-y-1.5">
             {keys.map((k) => (
-              <div key={k.id} className="flex items-center justify-between gap-2 rounded-md border border-card-border px-2 py-1.5">
-                <div className="min-w-0 text-xs">
-                  <span className="font-medium">{k.label}</span>{' '}
-                  <span className="text-body">{k.masked}</span>
-                  {k.isCurrent && <span className="ml-1 text-green-600">{t('common.current')}</span>}
+              <div key={k.id} className="flex items-center justify-between gap-2 rounded-lg border border-card-border glass-input px-2.5 py-1.5">
+                <div className="min-w-0 text-xs text-text-body">
+                  <span className="font-medium text-heading">{k.label}</span>{' '}
+                  <span className="text-muted font-mono">{k.masked}</span>
+                  {k.isCurrent && <Badge tone="success" className="ml-1.5">{t('common.current')}</Badge>}
                 </div>
                 <div className="flex shrink-0 gap-1">
                   {!k.isCurrent && (
-                    <button onClick={() => void setCurrentKey(site.id, k.id)} className="rounded border border-card-border px-1.5 py-0.5 text-xs hover:bg-primary/5">
+                    <Button variant="secondary" size="sm" className="!px-1.5 !py-0.5" onClick={() => void setCurrentKey(site.id, k.id)}>
                       {t('common.setCurrent')}
-                    </button>
+                    </Button>
                   )}
-                  <button onClick={() => void deleteKey(k.id)} className="rounded border border-red-100 px-1.5 py-0.5 text-xs text-red-600 hover:bg-red-50">
+                  <Button variant="danger" size="sm" className="!px-1.5 !py-0.5" onClick={() => void deleteKey(k.id)}>
                     {t('common.delete')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -73,41 +76,32 @@ export default function KeyDialog({ site, onClose }: { site: SiteView; onClose: 
         )}
 
         <form onSubmit={(e) => void handleSave(e)} className="space-y-3">
-          <label className="block text-sm">
-            label
-            <input
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder={t('key.defaultLabel')}
-              className="mt-1 w-full rounded-md border border-card-border px-2 py-1.5 text-sm"
-            />
-          </label>
-          <label className="block text-sm">
-            provider
+          <div>
+            <FieldLabel htmlFor="wb-key-label">label</FieldLabel>
+            <Input id="wb-key-label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('key.defaultLabel')} className="w-full" />
+          </div>
+          <div>
+            <FieldLabel htmlFor="wb-key-provider">provider</FieldLabel>
             <select
+              id="wb-key-provider"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
-              className="mt-1 w-full rounded-md border border-card-border px-2 py-1.5 text-sm"
+              className="w-full rounded-lg border border-card-border glass-input px-3 py-2 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
             >
               {PROVIDERS.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
-          </label>
-          <label className="block text-sm">
-            key
-            <input
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              placeholder="sk-..."
-              className="mt-1 w-full rounded-md border border-card-border px-2 py-1.5 text-sm"
-            />
-          </label>
-          {error && <p className="text-xs text-red-600">{error}</p>}
+          </div>
+          <div>
+            <FieldLabel htmlFor="wb-key-key">key</FieldLabel>
+            <Input id="wb-key-key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="sk-..." className="w-full" />
+          </div>
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={onClose} className="rounded-md border border-card-border px-3 py-1.5 text-sm hover:bg-primary/5">{t('common.cancel')}</button>
-            <button type="submit" className="rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary/90">{t('common.save')}</button>
+            <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+            <Button type="submit">{t('common.save')}</Button>
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }

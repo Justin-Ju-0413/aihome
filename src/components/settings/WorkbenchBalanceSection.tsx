@@ -117,7 +117,7 @@ export function WorkbenchBalanceSection() {
         <button
           data-testid="btn-clear-keys"
           onClick={() => void clearKeys()}
-          className="px-3 py-1.5 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 flex items-center gap-2"
+          className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-500/40 rounded-lg hover:bg-red-500/10 flex items-center gap-2 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
           {t('settings.balance.clearKeys')}
