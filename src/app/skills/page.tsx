@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 export default function SkillsPage() {
   const { t } = useI18n();
   return (
-    <main className="mx-auto max-w-3xl px-6 pb-10">
+    <main className="mx-auto max-w-3xl px-6 pt-8 pb-10">
       <PageHeader
         title={t('skills.title')}
         subtitle={t('skills.description')}

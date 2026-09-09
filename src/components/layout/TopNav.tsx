@@ -63,7 +63,7 @@ export function TopNav() {
           <button
             onClick={toggle}
             data-testid="theme-switch"
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            aria-label={t(theme === 'dark' ? 'nav.switchToLight' : 'nav.switchToDark')}
             className="rounded-md p-1.5 text-secondary transition-colors hover:text-primary hover:bg-primary/10"
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
