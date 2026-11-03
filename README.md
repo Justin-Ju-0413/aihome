@@ -61,10 +61,12 @@ vault 相关单测与 e2e 全部通过环境变量重定向到 tmp 目录（`AIH
 
 ```bash
 npm ci
-npm run dev -- -p 3011
+npm run dev -- -H 127.0.0.1 -p 3011
 ```
 
 Open [http://localhost:3011](http://localhost:3011) — you'll be redirected to the board, pre-populated with the sample agents in `data/sample-agents/`. (Port 3011: 3000/3010 are commonly taken by other local projects; the Tauri shell uses 3010.)
+> **Security note**: the dev server is bound to `127.0.0.1` only. `/api/*` routes have no built-in authentication and can read/write files inside your configured workspaces — never expose the server to untrusted networks.
+
 
 The sample workspace is a no-account, no-API-key demo. Use a throwaway clone when trying create, edit, or delete operations so your own workspace files are not affected.
 
