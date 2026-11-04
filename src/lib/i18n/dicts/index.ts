@@ -12,6 +12,8 @@ import { miscEn } from './misc.en';
 import { miscZh } from './misc.zh';
 import { vaultEn } from './vault.en';
 import { vaultZh } from './vault.zh';
+import { toolsEn } from './tools.en';
+import { toolsZh } from './tools.zh';
 
 /** 英文基准字典（平铺 key） */
 export const en = {
@@ -22,6 +24,7 @@ export const en = {
   ...syncEn,
   ...miscEn,
   ...vaultEn,
+  ...toolsEn,
 } as const;
 
 /** 中文：键与英文基准完全一致（缺键/多余键由 tsc 报错） */
@@ -33,4 +36,5 @@ export const zh: Record<keyof typeof en, string> = {
   ...syncZh,
   ...miscZh,
   ...vaultZh,
+  ...toolsZh,
 };
