@@ -4,6 +4,7 @@ import { usageCachePath, USAGE_SOURCE_PATHS } from '@/lib/usage/paths';
 import { UsageCache } from '@/lib/usage/cache';
 import { ACTIVE_SOURCES, type SourceInfo } from '@/lib/usage/types';
 import { SOURCE_LABELS } from '@/lib/usage/indexer';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function GET() {
   try {
@@ -25,8 +26,7 @@ export async function GET() {
       cache.close();
     }
     return NextResponse.json({ sources });
-  } catch (error) {
-    console.error('Usage sources error:', error);
-    return NextResponse.json({ error: 'Failed to load usage sources' }, { status: 500 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to load usage sources');
   }
 }

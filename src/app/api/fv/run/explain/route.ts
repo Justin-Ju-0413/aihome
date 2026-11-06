@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureFvInit } from '@/lib/fv/init';
 import { getScheduleExplanation } from '@/lib/fv/scheduler';
+import { handleRouteError, jsonError, readJsonBody } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
   ensureFvInit();
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ task?: string; provider?: string; model?: string; skill?: string }>(request);
     const { task, provider, model, skill } = body;
-    if (!task) return NextResponse.json({ error: 'task required' }, { status: 400 });
+    if (!task) return jsonError('task required', 400);
     return NextResponse.json(getScheduleExplanation(task, { provider, model, skill }));
   } catch (err) {
-    console.error('Failed to explain schedule:', err);
-    return NextResponse.json({ error: 'Failed to explain schedule' }, { status: 500 });
+    return handleRouteError(err, 'Failed to explain schedule');
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Registry } from '@/lib/registry/registry';
 import { removeSkillFromPlatform } from '@/lib/registry/sync-engine';
 import { assertWritable } from '@/lib/readonly';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const reg = new Registry();
@@ -13,12 +14,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     const results = platforms.map((p) => removeSkillFromPlatform(reg, id, p.name));
     reg.deleteSkill(id);
     return NextResponse.json({ results });
-  } catch (error) {
-    console.error('Registry delete error:', error);
-    return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Request failed' },
-        { status: (error as { status?: number }).status ?? 500 }
-      );
+  } catch (err) {
+    return handleRouteError(err, 'Request failed');
   } finally {
     reg.close();
   }

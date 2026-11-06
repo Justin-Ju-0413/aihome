@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureFvInit } from '@/lib/fv/init';
 import { applyTemplate } from '@/lib/fv/templates';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   ensureFvInit();
@@ -10,6 +11,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const result = applyTemplate(id, body.variables || {});
     return NextResponse.json(result);
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    return handleRouteError(err, 'Failed to apply template');
   }
 }

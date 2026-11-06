@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Registry } from '@/lib/registry/registry';
 import { ensurePlatformsRegistered } from '@/lib/registry/adapters';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function GET() {
   const reg = new Registry();
@@ -18,9 +19,8 @@ export async function GET() {
       })),
     }));
     return NextResponse.json({ skills: enriched, platforms });
-  } catch (error) {
-    console.error('Registry skills error:', error);
-    return NextResponse.json({ error: 'Failed to load registry' }, { status: 500 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to load registry');
   } finally {
     reg.close();
   }

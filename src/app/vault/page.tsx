@@ -2,11 +2,15 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { KeyRound } from 'lucide-react';
 import useSWR from 'swr';
 import { LockScreen, vaultFetch, type VaultStatus } from '@/components/vault/LockScreen';
 import { ProviderList } from '@/components/vault/ProviderList';
 import { ToolStatusPanel } from '@/components/vault/ToolStatusPanel';
 import { useI18n } from '@/lib/i18n';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input, FieldLabel } from '@/components/ui/Input';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -57,16 +61,15 @@ export default function VaultPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 space-y-10">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-bold text-primary">{t('vault.title')}</h1>
+        <h1 className="font-heading text-3xl font-bold text-heading flex items-center gap-3">
+          <KeyRound className="w-6 h-6 text-primary" />
+          {t('vault.title')}
+        </h1>
         <div className="flex gap-2">
           <PasswordDialog busy={pwBusy} onSubmit={changePassword} />
-          <button
-            data-testid="vault-lock-btn"
-            onClick={lock}
-            className="rounded-lg border border-divider px-3 py-1.5 text-sm font-medium"
-          >
+          <Button data-testid="vault-lock-btn" onClick={lock} variant="secondary" size="sm">
             {t('vault.lock')}
-          </button>
+          </Button>
         </div>
       </div>
       <ToolStatusPanel tools={data.tools} providers={data.providers} onChanged={() => mutate()} />
@@ -90,41 +93,36 @@ function PasswordDialog({ busy, onSubmit }: { busy: boolean; onSubmit: (oldPw: s
     }
   };
 
-  if (!open) {
-    return (
-      <button
-        data-testid="vault-change-password"
-        onClick={() => setOpen(true)}
-        className="rounded-lg border border-divider px-3 py-1.5 text-sm font-medium"
-      >
-        {t('vault.changePassword')}
-      </button>
-    );
-  }
+  const close = () => setOpen(false);
 
   return (
-    <div className="rounded-xl border border-divider bg-white/90 p-4 w-72 space-y-3 shadow-sm">
-      <input
-        type="password" value={oldPassword}
-        onChange={(e) => setOldPassword(e.target.value)}
-        placeholder={t('vault.oldPassword')}
-        className="w-full rounded-lg border border-divider px-3 py-2 text-sm"
-      />
-      <input
-        type="password" value={newPassword}
-        onChange={(e) => setNewPassword(e.target.value)}
-        placeholder={t('vault.newPassword')}
-        className="w-full rounded-lg border border-divider px-3 py-2 text-sm"
-      />
-      <div className="flex gap-2">
-        <button
-          onClick={submit} disabled={busy || newPassword.length < 8}
-          className="rounded-lg bg-primary text-white px-3 py-1 text-xs font-medium disabled:opacity-40"
-        >
-          {t('common.confirm')}
-        </button>
-        <button onClick={() => setOpen(false)} className="rounded-lg border border-divider px-3 py-1 text-xs">{t('common.cancel')}</button>
-      </div>
-    </div>
+    <>
+      <Button data-testid="vault-change-password" onClick={() => setOpen(true)} variant="secondary" size="sm">
+        {t('vault.changePassword')}
+      </Button>
+      <Modal
+        open={open}
+        onClose={close}
+        title={t('vault.changePassword')}
+        maxWidth="max-w-sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={close}>{t('common.cancel')}</Button>
+            <Button onClick={submit} disabled={busy || newPassword.length < 8}>{t('common.confirm')}</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <FieldLabel>{t('vault.oldPassword')}</FieldLabel>
+            <Input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="w-full" />
+          </div>
+          <div>
+            <FieldLabel>{t('vault.newPassword')}</FieldLabel>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full" />
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }

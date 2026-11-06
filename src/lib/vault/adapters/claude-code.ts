@@ -1,8 +1,7 @@
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import type { ProviderConfig, VaultData } from '../store';
 import { backupConfig, fingerprintOf, type AdapterState, type ToolAdapter, type WriteResult } from './index';
+import { vaultToolConfigPaths } from '@/lib/tool-config-paths';
 
 export const CLAUDE_CODE_FIELDS = [
   'ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_MODEL', 'AIHOME_VAULT_PROVIDER',
@@ -20,8 +19,7 @@ export const claudeCodeAdapter: ToolAdapter = {
   id: 'claude-code',
   label: 'Claude Code',
   configPath(): string {
-    return process.env.AIHOME_VAULT_CLAUDE_CODE_CONFIG ??
-      path.join(os.homedir(), '.claude', 'settings.json');
+    return vaultToolConfigPaths['claude-code']();
   },
 
   detect(data: VaultData): AdapterState {

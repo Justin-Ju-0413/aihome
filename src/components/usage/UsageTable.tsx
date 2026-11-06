@@ -49,7 +49,7 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
             const open = expanded.has(row.source);
             return (
               <Fragment key={row.source}>
-                <tr className="border-b border-divider cursor-pointer hover:bg-neutral-50" onClick={() => toggle(row.source)} tabIndex={0} aria-expanded={open} role="button" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(row.source); } }}>
+                <tr className="border-b border-divider cursor-pointer hover:bg-primary/5 transition-colors" onClick={() => toggle(row.source)} tabIndex={0} aria-expanded={open} role="button" onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(row.source); } }}>
                   <td className="px-4 py-3 font-medium text-primary">
                     {open ? '▾' : '▸'} {row.source}
                   </td>
@@ -60,11 +60,11 @@ export function UsageTable({ rows, unknownPricingModels = [] }: { rows: TableRow
                 </tr>
                 {open &&
                   row.models.map((m) => (
-                    <tr key={`${row.source}-${m.model}`} className="border-b border-divider bg-neutral-50/50 text-xs">
+                    <tr key={`${row.source}-${m.model}`} className="border-b border-divider bg-primary/5 text-xs">
                       <td className="px-8 py-2 text-secondary">
                         {m.model}
                         {unknownPricingModels.includes(m.model) && (
-                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-700" data-testid="unknown-pricing-badge">
+                          <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300" data-testid="unknown-pricing-badge">
                             {t('usage.unknownPricing')}
                           </span>
                         )}

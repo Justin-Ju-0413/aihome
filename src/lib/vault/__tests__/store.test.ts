@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { lock, unlock, isUnlocked, getKey } from '../session';
 import {
+  lock, unlock, isUnlocked, getKey,
   vaultExists, readVault, writeVault, changePassword,
   emptyVaultData, maskKey,
 } from '../store';

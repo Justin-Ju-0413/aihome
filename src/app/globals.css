@@ -1,12 +1,17 @@
 @import "tailwindcss";
 
+/* dark: variant 跟随 html[data-theme](手动切换),而非系统 media query */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 /* ============================================================
  * AIHome Liquid Glass 双主题
  * 浅色: 蓝调磨砂玻璃; 深色: 暗蓝液态玻璃
- * prefers-color-scheme 自动跟随系统(Tauri 窗口 vibrancy 同步)
+ * html[data-theme] 由 ThemeScript 预设(默认跟随系统,可手动切换)
  * ============================================================ */
 
 :root {
+  color-scheme: light;
+
   --color-primary: #0A4F9D;
   --color-secondary: #6B97C8;
   --color-accent: #3B7DD8;
@@ -38,35 +43,36 @@
   --scrim-bg: rgba(23, 46, 84, 0.30);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary: #7CB3F0;
-    --color-secondary: #5E87B8;
-    --color-accent: #4D9DE0;
-    --color-bg-base: #0B1424;
-    --color-card-bg: #132036;
-    --color-card-border: #2A3E5C;
-    --color-text-body: #AEC9E8;
-    --color-text-heading: #DCEBFA;
-    --color-text-muted: #6E8CB0;
-    --color-divider: #22344E;
-    --color-code-bg: #0F1B2D;
-    --color-code-border: #22344E;
+/* 暗色主题:由 ThemeScript 在 hydrate 前写入 html[data-theme],SSR 默认浅色 */
+:root[data-theme='dark'] {
+  color-scheme: dark;
 
-    /* 玻璃变量(深色) */
-    --glass-nav-bg: rgba(19, 32, 54, 0.55);
-    --glass-panel-bg: rgba(19, 32, 54, 0.52);
-    --glass-sidebar-bg: rgba(19, 32, 54, 0.40);
-    --glass-modal-bg: rgba(19, 32, 54, 0.70);
-    --glass-input-bg: rgba(19, 32, 54, 0.55);
-    --glass-border: rgba(124, 179, 240, 0.16);
-    --glass-edge: rgba(124, 179, 240, 0.12);
-    --glass-highlight: rgba(124, 179, 240, 0.12);
-    --glass-glow: rgba(124, 179, 240, 0.14);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-    --glass-inner: inset 0 1px 0 rgba(124, 179, 240, 0.14);
-    --scrim-bg: rgba(2, 6, 14, 0.55);
-  }
+  --color-primary: #7CB3F0;
+  --color-secondary: #5E87B8;
+  --color-accent: #4D9DE0;
+  --color-bg-base: #0B1424;
+  --color-card-bg: #132036;
+  --color-card-border: #2A3E5C;
+  --color-text-body: #AEC9E8;
+  --color-text-heading: #DCEBFA;
+  --color-text-muted: #6E8CB0;
+  --color-divider: #22344E;
+  --color-code-bg: #0F1B2D;
+  --color-code-border: #22344E;
+
+  /* 玻璃变量(深色) */
+  --glass-nav-bg: rgba(19, 32, 54, 0.55);
+  --glass-panel-bg: rgba(19, 32, 54, 0.52);
+  --glass-sidebar-bg: rgba(19, 32, 54, 0.40);
+  --glass-modal-bg: rgba(19, 32, 54, 0.70);
+  --glass-input-bg: rgba(19, 32, 54, 0.55);
+  --glass-border: rgba(124, 179, 240, 0.16);
+  --glass-edge: rgba(124, 179, 240, 0.12);
+  --glass-highlight: rgba(124, 179, 240, 0.12);
+  --glass-glow: rgba(124, 179, 240, 0.14);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-inner: inset 0 1px 0 rgba(124, 179, 240, 0.14);
+  --scrim-bg: rgba(2, 6, 14, 0.55);
 }
 
 @theme inline {
@@ -75,13 +81,14 @@
   --color-accent: var(--color-accent);
   --color-background: var(--color-bg-base);
   --color-foreground: var(--color-text-body);
+  --color-text-body: var(--color-text-body);
   --color-card: var(--color-card-bg);
   --color-card-border: var(--color-card-border);
   --color-heading: var(--color-text-heading);
   --color-muted: var(--color-text-muted);
   --color-divider: var(--color-divider);
-  --font-family-heading: var(--font-serif);
-  --font-family-body: var(--font-sans);
+  --font-heading: var(--font-serif);
+  --font-body: var(--font-sans);
 }
 
 /* html 保持不透明底色:浏览器(非 Tauri)下兜底,body 半透明叠加其上 */
@@ -221,10 +228,8 @@ body::before {
 }
 
 /* 滚动条暗色适配 */
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-card-border);
-  }
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
 }
 
 /* Custom scrollbar */

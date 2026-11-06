@@ -116,6 +116,8 @@ export const commonZh: Record<keyof typeof commonEn, string> = {
   'nav.registry': '注册表',
   'nav.console': '控制台',
   'nav.settings': '设置',
+  'nav.switchToLight': '切换到浅色主题',
+  'nav.switchToDark': '切换到深色主题',
 
   // 状态
   'status.running': '运行中',

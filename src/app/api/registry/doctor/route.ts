@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Registry } from '@/lib/registry/registry';
 import { runDoctor } from '@/lib/registry/doctor';
+import { handleRouteError } from '@/lib/api-response';
 
 export async function GET() {
   const reg = new Registry();
@@ -8,9 +9,8 @@ export async function GET() {
     reg.open();
     const issues = runDoctor(reg);
     return NextResponse.json({ issues });
-  } catch (error) {
-    console.error('Registry doctor error:', error);
-    return NextResponse.json({ error: 'Failed to run doctor' }, { status: 500 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to run doctor');
   } finally {
     reg.close();
   }

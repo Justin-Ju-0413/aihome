@@ -78,6 +78,14 @@ export default defineConfig({
         AIHOME_VAULT_CODEX_AUTH: path.join(e2eSyncRoot, 'vault', 'auth.json'),
         AIHOME_VAULT_OPENCODE_CONFIG: path.join(e2eSyncRoot, 'vault', 'opencode.json'),
         AIHOME_VAULT_BACKUP_DIR: path.join(e2eSyncRoot, 'vault', 'backups'),
+        // 本机 AI 工具检测：应用与配置目录全部指向 e2e 沙箱（不存在的路径 → 未安装），
+        // CLI 二进制经 which 仍可能命中宿主机真机安装，e2e 只断言结构不依赖安装状态
+        AIHOME_TOOLS_CLAUDE_DIR: path.join(e2eSyncRoot, 'tools', 'claude'),
+        AIHOME_TOOLS_CODEX_DIR: path.join(e2eSyncRoot, 'tools', 'codex'),
+        AIHOME_TOOLS_OPENCODE_DIR: path.join(e2eSyncRoot, 'tools', 'opencode'),
+        AIHOME_TOOLS_CLAUDE_DESKTOP_APP: path.join(e2eSyncRoot, 'tools', 'Claude.app'),
+        AIHOME_TOOLS_CHATGPT_APP: path.join(e2eSyncRoot, 'tools', 'ChatGPT.app'),
+        AIHOME_TOOLS_CLAUDE_DESKTOP_CONFIG: path.join(e2eSyncRoot, 'tools', 'claude-desktop-config.json'),
       },
     },
   ],

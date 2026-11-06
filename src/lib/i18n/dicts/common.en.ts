@@ -114,6 +114,8 @@ export const commonEn = {
   'nav.registry': 'Registry',
   'nav.console': 'CONSOLE',
   'nav.settings': 'SETTINGS',
+  'nav.switchToLight': 'Switch to light theme',
+  'nav.switchToDark': 'Switch to dark theme',
 
   // 状态
   'status.running': 'Running',

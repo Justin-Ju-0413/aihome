@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { updateSite, deleteSite } from '@/lib/workbench/crud';
 import type { SiteInput } from '@/lib/workbench/types';
+import { handleRouteError, jsonError } from '@/lib/api-response';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -12,11 +13,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   }
   try {
     const site = updateSite(id, body as unknown as Partial<SiteInput>);
-    if (!site) return NextResponse.json({ error: 'site 不存在' }, { status: 404 });
+    if (!site) return jsonError('site 不存在', 404);
     return NextResponse.json({ site });
-  } catch (error) {
-    console.error('Failed to update site:', error);
-    return NextResponse.json({ error: 'Failed to update site' }, { status: 400 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to update site', 400);
   }
 }
 

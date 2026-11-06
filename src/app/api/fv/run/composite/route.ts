@@ -3,13 +3,14 @@ import { ensureFvInit } from '@/lib/fv/init';
 import { detectCompositeTasks } from '@/lib/fv/prompt-converter';
 import { selectProvider, selectModel } from '@/lib/fv/scheduler';
 import { convert } from '@/lib/fv/prompt-converter';
+import { handleRouteError, jsonError, readJsonBody } from '@/lib/api-response';
 
 export async function POST(request: NextRequest) {
   ensureFvInit();
   try {
-    const body = await request.json();
+    const body = await readJsonBody<{ task?: string; provider?: string; model?: string; target?: string; cwd?: string; skill?: string }>(request);
     const { task, provider, model, target, cwd, skill } = body;
-    if (!task) return NextResponse.json({ error: 'task required' }, { status: 400 });
+    if (!task) return jsonError('task required', 400);
     const parts = detectCompositeTasks(task);
     if (!parts) return NextResponse.json({ composite: false, parts: null });
     const results = parts.map((p) => {
@@ -20,7 +21,6 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ composite: true, parts: results });
   } catch (err) {
-    console.error('Failed to detect composite tasks:', err);
-    return NextResponse.json({ error: 'Failed to detect composite tasks' }, { status: 500 });
+    return handleRouteError(err, 'Failed to detect composite tasks');
   }
 }

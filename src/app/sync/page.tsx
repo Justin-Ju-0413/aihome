@@ -6,6 +6,7 @@ import type { SyncState } from '@/lib/sync/engine';
 import { SyncStatusPanel } from '@/components/sync/SyncStatusPanel';
 import { ConflictsList } from '@/components/sync/ConflictsList';
 import { useI18n } from '@/lib/i18n';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface LegacyInfo {
   present: boolean;
@@ -45,7 +46,7 @@ export default function SyncPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="font-heading text-3xl font-bold text-primary mb-6">{t('sync.title')}</h1>
+      <PageHeader title={t('sync.title')} className="!p-0 mb-6" />
       {loading ? (
         <p className="text-sm text-secondary">{t('common.loading')}</p>
       ) : state ? (

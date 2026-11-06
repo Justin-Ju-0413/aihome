@@ -3,8 +3,16 @@ import { validateProviderInput } from './providers';
 import {
   emptyVaultData, isUnlocked, lock, maskKey, newProviderId, readVault,
   touchSession, unlock, vaultExists, writeVault, changePassword as storeChangePassword,
-  type ToolId, type VaultData,
+  type ProviderConfig, type ToolId, type VaultData,
 } from './store';
+
+/**
+ * 编排层统一判别联合:失败分支恒带 status + error(可选 conflictDetail),
+ * 路由层据此直接映射 HTTP 响应,无需再补 cast。
+ */
+export type VaultResult<P = unknown> =
+  | { ok: true; provider?: P }
+  | { ok: false; status: number; error: string; conflictDetail?: string };
 
 const override: Partial<Record<'claude' | 'codex' | 'opencode', string>> = {};
 
@@ -81,11 +89,12 @@ export function changeVaultPassword(oldPassword: string, newPassword: string) {
   }
 }
 
-export function upsertProvider(input: { id?: string; name: string; baseUrl: string; model: string; apiKey: string }) {
-  if (!isUnlocked()) return { ok: false as const, status: 423 };
+export function upsertProvider(input: { id?: string; name: string; baseUrl: string; model: string; apiKey: string }): VaultResult<ProviderConfig> {
+  if (!isUnlocked()) return { ok: false as const, status: 423, error: 'vault locked' };
   const validation = validateProviderInput(input);
   if (validation) return { ok: false as const, status: 400, error: validation };
-  const data = currentData()!;
+  const data = currentData();
+  if (!data) return { ok: false as const, status: 423, error: 'vault locked' };
   if (input.id) {
     const existing = data.providers.find((p) => p.id === input.id);
     if (!existing) return { ok: false as const, status: 404, error: 'provider not found' };
@@ -102,12 +111,14 @@ export function upsertProvider(input: { id?: string; name: string; baseUrl: stri
   }
   writeVault(data);
   refreshOverride(data);
-  return { ok: true as const, provider: data.providers[data.providers.length - 1] };
+  const created = data.providers[data.providers.length - 1];
+  return { ok: true as const, provider: created };
 }
 
-export function removeProvider(id: string) {
-  if (!isUnlocked()) return { ok: false as const, status: 423 };
-  const data = currentData()!;
+export function removeProvider(id: string): VaultResult {
+  if (!isUnlocked()) return { ok: false as const, status: 423, error: 'vault locked' };
+  const data = currentData();
+  if (!data) return { ok: false as const, status: 423, error: 'vault locked' };
   if (Object.values(data.activated).includes(id)) {
     return { ok: false as const, status: 409, error: 'provider 正在被使用，请先还原默认' };
   }
@@ -117,9 +128,10 @@ export function removeProvider(id: string) {
   return { ok: true as const };
 }
 
-export function activateTool(tool: ToolId, providerId: string) {
-  if (!isUnlocked()) return { ok: false as const, status: 423 };
-  const data = currentData()!;
+export function activateTool(tool: ToolId, providerId: string): VaultResult {
+  if (!isUnlocked()) return { ok: false as const, status: 423, error: 'vault locked' };
+  const data = currentData();
+  if (!data) return { ok: false as const, status: 423, error: 'vault locked' };
   const provider = data.providers.find((p) => p.id === providerId);
   if (!provider) return { ok: false as const, status: 404, error: 'provider not found' };
   const adapter = TOOL_ADAPTERS[tool];
@@ -137,9 +149,10 @@ export function activateTool(tool: ToolId, providerId: string) {
   return { ok: true as const };
 }
 
-export function deactivateTool(tool: ToolId) {
-  if (!isUnlocked()) return { ok: false as const, status: 423 };
-  const data = currentData()!;
+export function deactivateTool(tool: ToolId): VaultResult {
+  if (!isUnlocked()) return { ok: false as const, status: 423, error: 'vault locked' };
+  const data = currentData();
+  if (!data) return { ok: false as const, status: 423, error: 'vault locked' };
   const adapter = TOOL_ADAPTERS[tool];
   const state = adapter.deactivate(data);
   if (state.fileState === 'conflict') {

@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import { updateKey, deleteKey } from '@/lib/workbench/crud';
+import { handleRouteError, jsonError } from '@/lib/api-response';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   try {
     const key = updateKey(Number(id), { label: body?.label, key: body?.key });
-    if (!key) return NextResponse.json({ error: 'key 不存在' }, { status: 404 });
+    if (!key) return jsonError('key 不存在', 404);
     return NextResponse.json({ key });
-  } catch (error) {
-    console.error('Failed to update key:', error);
-    return NextResponse.json({ error: 'Failed to update key' }, { status: 400 });
+  } catch (err) {
+    return handleRouteError(err, 'Failed to update key', 400);
   }
 }
 

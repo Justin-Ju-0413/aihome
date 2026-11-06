@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { SkillRow } from './SkillRow';
 import { useI18n } from '@/lib/i18n';
+import { Button } from '@/components/ui/Button';
 
 type Skill = {
   id: string;
@@ -85,27 +86,27 @@ export function RegistryPanel() {
 
   return (
     <div className="space-y-4">
-      {error && <div className="text-sm text-red-500">{error}</div>}
+      {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => runSync()} disabled={busy} data-testid="registry-sync" className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white disabled:opacity-50">
+        <Button onClick={() => runSync()} disabled={busy} data-testid="registry-sync" size="sm">
           {t('common.syncAll')}
-        </button>
-        <button onClick={() => runSync(true)} disabled={busy} data-testid="registry-sync-dryrun" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
+        </Button>
+        <Button onClick={() => runSync(true)} disabled={busy} data-testid="registry-sync-dryrun" variant="secondary" size="sm">
           {t('common.dryRun')}
-        </button>
-        <button onClick={() => runDoctor(false)} disabled={busy} data-testid="registry-doctor" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
+        </Button>
+        <Button onClick={() => runDoctor(false)} disabled={busy} data-testid="registry-doctor" variant="secondary" size="sm">
           {t('common.healthCheck')}
-        </button>
-        <button onClick={() => runDoctor(true)} disabled={busy} data-testid="registry-doctor-fix" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
+        </Button>
+        <Button onClick={() => runDoctor(true)} disabled={busy} data-testid="registry-doctor-fix" variant="secondary" size="sm">
           {t('common.fix')}
-        </button>
-        <button onClick={handleImport} disabled={busy} data-testid="registry-import" className="rounded border px-3 py-1.5 text-sm disabled:opacity-50">
+        </Button>
+        <Button onClick={handleImport} disabled={busy} data-testid="registry-import" variant="secondary" size="sm">
           {t('common.import')}
-        </button>
+        </Button>
       </div>
 
       {issues.length > 0 && (
-        <ul data-testid="registry-issues" className="space-y-1 text-sm text-amber-600">
+        <ul data-testid="registry-issues" className="space-y-1 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-300">
           {issues.map((i, idx) => (
             <li key={idx}>
               [{i.type}] {i.skill}/{i.platform} — {i.detail}
@@ -119,7 +120,7 @@ export function RegistryPanel() {
         {skills.map((s) => (
           <SkillRow key={s.id} skill={s} />
         ))}
-        {skills.length === 0 && <li className="text-sm text-gray-400">{t('registry.empty')}</li>}
+        {skills.length === 0 && <li className="text-sm text-muted">{t('registry.empty')}</li>}
       </ul>
     </div>
   );

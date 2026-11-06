@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 import MDEditor from '@uiw/react-md-editor';
 import type { AgentNode } from '@/lib/types';
 import { useI18n } from '@/lib/i18n';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 export default function AgentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { t } = useI18n();
+  const { theme } = useTheme();
   const [agent, setAgent] = useState<AgentNode | null>(null);
   const [frontmatter, setFrontmatter] = useState<Record<string, unknown>>({});
   const [markdownBody, setMarkdownBody] = useState('');
@@ -124,7 +126,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <button
               onClick={handleDelete}
               data-testid="agent-detail-delete-btn"
-              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
+              className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-2"
             >
               <Trash2 className="w-4 h-4" />
               {t('common.delete')}
@@ -200,7 +202,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <div className="px-4 py-3 border-b border-card-border bg-primary/5">
                 <h2 className="text-sm font-medium text-text-body">{t('agents.detail.content')}</h2>
               </div>
-              <div data-color-mode="light">
+              <div data-color-mode={theme}>
                 <MDEditor
                   value={markdownBody}
                   onChange={(val) => setMarkdownBody(val || '')}
@@ -238,7 +240,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         {activeTab === 'preview' && (
           <div className="p-6">
             <div className="glass-panel rounded-lg border border-card-border p-6">
-              <div data-color-mode="light" className="prose max-w-none">
+              <div data-color-mode={theme} className="prose max-w-none">
                 <MDEditor.Markdown source={markdownBody} />
               </div>
             </div>

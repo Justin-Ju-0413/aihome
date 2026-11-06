@@ -45,7 +45,7 @@ export function StatCharts({ stats }: { stats: Stats }) {
                   <span>{s.source}</span>
                   <span>${s.cost.toFixed(4)} · {pct.toFixed(1)}%</span>
                 </div>
-                <div className="h-2 bg-neutral-100 rounded-full">
+                <div className="h-2 bg-primary/10 rounded-full">
                   <div className="h-2 bg-primary rounded-full" style={{ width: `${pct}%` }} />
                 </div>
               </div>

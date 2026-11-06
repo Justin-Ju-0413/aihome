@@ -121,7 +121,7 @@ export function HermesTab() {
   return (
     <div className="p-6 max-w-5xl space-y-6" data-testid="hermes-tab">
       <div className="flex items-center gap-2">
-        <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700">{t('console.connected')}</span>
+        <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">{t('console.connected')}</span>
         <span className="text-xs text-muted">{hermes.home}</span>
         <button onClick={() => void loadHermes()} className="ml-auto text-xs text-primary hover:text-accent">{t('common.refresh')}</button>
       </div>

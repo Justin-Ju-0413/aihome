@@ -2,9 +2,14 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Plus, X } from 'lucide-react';
 import { PROVIDER_TEMPLATES } from '@/lib/vault/providers';
 import { useI18n } from '@/lib/i18n';
 import { vaultFetch, type VaultStatus } from './LockScreen';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Input, FieldLabel } from '@/components/ui/Input';
 
 export function ProviderList({
   providers, onChanged,
@@ -31,9 +36,9 @@ export function ProviderList({
   };
 
   const applyTemplate = (templateId: string) => {
-    const t = PROVIDER_TEMPLATES.find((p) => p.id === templateId);
-    if (!t) return;
-    setForm((f) => ({ ...f, name: t.name, baseUrl: t.baseUrl, model: t.model }));
+    const tpl = PROVIDER_TEMPLATES.find((p) => p.id === templateId);
+    if (!tpl) return;
+    setForm((f) => ({ ...f, name: tpl.name, baseUrl: tpl.baseUrl, model: tpl.model }));
   };
 
   const save = async () => {
@@ -84,81 +89,69 @@ export function ProviderList({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-lg font-bold text-primary">Provider</h2>
-        <button
-          data-testid="vault-add-provider"
-          onClick={openNew}
-          className="rounded-lg bg-primary text-white px-4 py-1.5 text-sm font-medium"
-        >
+        <h2 className="font-heading text-lg font-bold text-heading">Provider</h2>
+        <Button data-testid="vault-add-provider" onClick={openNew} size="sm">
+          <Plus className="w-4 h-4" />
           {t('vault.add')}
-        </button>
+        </Button>
       </div>
 
       {formOpen && (
-        <div className="rounded-xl border border-divider bg-white/90 p-4 space-y-3">
-          <div className="flex gap-2 items-center">
+        <Card className="animate-fade-in">
+          <div className="flex gap-2 items-center mb-4">
             <select
               aria-label={t('vault.template')}
               onChange={(e) => applyTemplate(e.target.value)}
               defaultValue=""
-              className="rounded-lg border border-divider px-2 py-1.5 text-sm"
+              className="rounded-lg border border-card-border glass-input px-2 py-1.5 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="">{t('vault.prefillFromTemplate')}</option>
               {PROVIDER_TEMPLATES.map((tpl) => (
                 <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
               ))}
             </select>
-            <button onClick={() => setFormOpen(false)} className="text-sm text-secondary ml-auto">{t('common.close')}</button>
+            <button onClick={() => setFormOpen(false)} aria-label={t('common.close')} className="text-muted hover:text-primary ml-auto">
+              <X size={16} />
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              data-testid="provider-name" value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder={t('vault.name')}
-              className="rounded-lg border border-divider px-3 py-2 text-sm"
-            />
-            <input
-              data-testid="provider-baseurl" value={form.baseUrl}
-              onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
-              placeholder="Base URL"
-              className="rounded-lg border border-divider px-3 py-2 text-sm"
-            />
-            <input
-              data-testid="provider-model" value={form.model}
-              onChange={(e) => setForm({ ...form, model: e.target.value })}
-              placeholder={t('vault.model')}
-              className="rounded-lg border border-divider px-3 py-2 text-sm"
-            />
-            <input
-              data-testid="provider-apikey" type="password" value={form.apiKey}
-              onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
-              placeholder="API Key"
-              className="rounded-lg border border-divider px-3 py-2 text-sm"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <FieldLabel>{t('vault.name')}</FieldLabel>
+              <Input data-testid="provider-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full" />
+            </div>
+            <div>
+              <FieldLabel>Base URL</FieldLabel>
+              <Input data-testid="provider-baseurl" value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="w-full" />
+            </div>
+            <div>
+              <FieldLabel>{t('vault.model')}</FieldLabel>
+              <Input data-testid="provider-model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className="w-full" />
+            </div>
+            <div>
+              <FieldLabel>API Key</FieldLabel>
+              <Input data-testid="provider-apikey" type="password" value={form.apiKey} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} className="w-full" />
+            </div>
           </div>
-          <button
-            data-testid="provider-save" onClick={save} disabled={busy}
-            className="rounded-lg bg-primary text-white px-4 py-1.5 text-sm font-medium disabled:opacity-40"
-          >
+          <Button data-testid="provider-save" onClick={save} disabled={busy}>
             {t('common.save')}
-          </button>
-        </div>
+          </Button>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {providers.map((p) => (
-          <div key={p.id} data-testid="vault-provider-card" className="rounded-xl border border-divider bg-white/90 p-4 space-y-1">
+          <Card key={p.id} data-testid="vault-provider-card" className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className="font-medium text-primary">{p.name}</span>
-              <span className="text-xs font-mono text-secondary">{p.apiKeyMasked}</span>
+              <span className="font-medium text-heading">{p.name}</span>
+              <span className="text-xs font-mono text-muted">{p.apiKeyMasked}</span>
             </div>
-            <p className="text-xs text-secondary">{p.model}</p>
-            <p className="text-xs text-secondary break-all">{p.baseUrl}</p>
-            <div className="flex gap-2 pt-2">
-              <button onClick={() => openEdit(p)} className="text-xs text-primary">{t('common.edit')}</button>
-              <button onClick={() => remove(p)} disabled={busy} className="text-xs text-red-600 disabled:opacity-40">{t('common.delete')}</button>
+            <p className="text-xs text-muted">{p.model}</p>
+            <p className="text-xs text-muted break-all">{p.baseUrl}</p>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => openEdit(p)} className="text-xs font-medium text-primary hover:underline">{t('common.edit')}</button>
+              <button onClick={() => remove(p)} disabled={busy} className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-40">{t('common.delete')}</button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </section>

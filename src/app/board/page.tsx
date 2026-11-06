@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Plus, RefreshCw } from 'lucide-react';
 import { KanbanBoard } from '@/components/board/KanbanBoard';
 import { CardDetail } from '@/components/board/CardDetail';
@@ -8,9 +9,14 @@ import { useAppStore } from '@/stores/app-store';
 import type { AgentNode } from '@/lib/types';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input, Textarea, FieldLabel } from '@/components/ui/Input';
 
 export default function BoardPage() {
   const { t } = useI18n();
+  const router = useRouter();
   const {
     agents, groups, setAgents, setLayout,
     searchQuery, setSearchQuery, filterType, setFilterType,
@@ -60,60 +66,57 @@ export default function BoardPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <header className="px-6 py-8 text-center">
-        <h1 className="font-heading text-3xl font-bold text-heading">{t('board.page.title')}</h1>
-        <div className="w-16 h-px bg-divider mx-auto mt-3" />
-        <p className="text-sm text-muted mt-2">
-          {t('board.page.summary', { count: agents.length, groups: groups.length })}
-        </p>
+      <PageHeader
+        title={t('board.page.title')}
+        subtitle={t('board.page.summary', { count: agents.length, groups: groups.length })}
+        actions={
+          <>
+            {/* Search */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <Input
+                type="text"
+                placeholder={t('board.search.placeholder')}
+                data-testid="board-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 pl-9"
+              />
+            </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-3 mt-6">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-            <input
-              type="text"
-              placeholder={t('board.search.placeholder')}
-              data-testid="board-search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-card-border rounded-lg w-64 glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
-            />
-          </div>
+            {/* Filter */}
+            <select
+              data-testid="board-filter"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as 'all' | 'agent' | 'skill')}
+              className="rounded-lg border border-card-border glass-input px-3 py-2 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
+            >
+              <option value="all">{t('board.filter.allTypes')}</option>
+              <option value="agent">{t('board.filter.agents')}</option>
+              <option value="skill">{t('board.filter.skills')}</option>
+            </select>
 
-          {/* Filter */}
-          <select
-            data-testid="board-filter"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as 'all' | 'agent' | 'skill')}
-            className="px-3 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body"
-          >
-            <option value="all">{t('board.filter.allTypes')}</option>
-            <option value="agent">{t('board.filter.agents')}</option>
-            <option value="skill">{t('board.filter.skills')}</option>
-          </select>
+            {/* Actions */}
+            <Button
+              onClick={handleRescan}
+              disabled={isScanning}
+              variant="ghost"
+              className="!px-2"
+              title={t('board.page.rescan')}
+            >
+              <RefreshCw className={`h-5 w-5 ${isScanning ? 'animate-spin' : ''}`} />
+            </Button>
 
-          {/* Actions */}
-          <button
-            onClick={handleRescan}
-            disabled={isScanning}
-            className="p-2 hover:bg-primary/10 rounded-lg disabled:opacity-50 text-text-body"
-            title={t('board.page.rescan')}
-          >
-            <RefreshCw className={`w-5 h-5 ${isScanning ? 'animate-spin' : ''}`} />
-          </button>
-
-          <button
-            onClick={() => setShowCreateModal(true)}
-            data-testid="board-new-agent-btn"
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t('board.page.newAgent')}
-          </button>
-        </div>
-      </header>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              data-testid="board-new-agent-btn"
+            >
+              <Plus className="h-4 w-4" />
+              {t('board.page.newAgent')}
+            </Button>
+          </>
+        }
+      />
 
       {/* Board */}
       <div className="flex-1 overflow-auto">
@@ -130,7 +133,7 @@ export default function BoardPage() {
           onClose={() => setSelectedAgent(null)}
           onEdit={(agent) => {
             setSelectedAgent(null);
-            window.location.href = `/agents/${agent.id}`;
+            router.push(`/agents/${agent.id}`);
           }}
           onDelete={async (agent) => {
             if (window.confirm(t('board.card.confirmDelete', { name: agent.name }))) {
@@ -192,80 +195,67 @@ function CreateAgentModal({ onClose, onCreated }: { onClose: () => void; onCreat
     }
   };
 
+  const typeOption = (value: 'agent' | 'skill', label: string, format: string) => (
+    <button
+      type="button"
+      onClick={() => setType(value)}
+      className={`p-4 border-2 rounded-lg text-left transition-colors ${
+        type === value ? 'border-primary bg-primary/10' : 'border-card-border hover:border-secondary'
+      }`}
+    >
+      <div className="font-medium text-heading">{label}</div>
+      <div className="text-sm text-muted">{format}</div>
+    </button>
+  );
+
   return (
-    <div className="fixed inset-0 scrim flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="glass-panel rounded-xl border border-card-border shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
-          <h2 className="font-heading text-xl font-bold text-heading mb-4">{t('board.create.title')}</h2>
-
-          <div className="space-y-4">
-            {/* Type Selection */}
-            <div>
-              <label className="block text-sm font-medium text-text-body mb-2">{t('board.create.type')}</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setType('agent')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                    type === 'agent' ? 'border-primary bg-primary/10' : 'border-card-border hover:border-secondary'
-                  }`}
-                >
-                  <div className="font-medium text-heading">{t('board.create.agent')}</div>
-                  <div className="text-sm text-muted">{t('board.create.formatAgents')}</div>
-                </button>
-                <button
-                  onClick={() => setType('skill')}
-                  className={`p-4 border-2 rounded-lg text-left transition-colors ${
-                    type === 'skill' ? 'border-primary bg-primary/10' : 'border-card-border hover:border-secondary'
-                  }`}
-                >
-                  <div className="font-medium text-heading">{t('board.create.skill')}</div>
-                  <div className="text-sm text-muted">{t('board.create.formatSkill')}</div>
-                </button>
-              </div>
-            </div>
-
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-text-body mb-2">{t('common.name')}</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t('board.create.namePlaceholder')}
-                className="w-full px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-text-body mb-2">{t('common.description')}</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={t('board.create.descPlaceholder')}
-                rows={3}
-                className="w-full px-4 py-2 border border-card-border rounded-lg glass-input focus:outline-none focus:ring-2 focus:ring-accent text-text-body placeholder:text-muted"
-              />
-            </div>
+    <Modal
+      open
+      onClose={onClose}
+      title={t('board.create.title')}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleCreate} disabled={isCreating || !name.trim()}>
+            {isCreating ? t('common.saving') : t('common.create')}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {/* Type Selection */}
+        <div>
+          <FieldLabel>{t('board.create.type')}</FieldLabel>
+          <div className="grid grid-cols-2 gap-3">
+            {typeOption('agent', t('board.create.agent'), t('board.create.formatAgents'))}
+            {typeOption('skill', t('board.create.skill'), t('board.create.formatSkill'))}
           </div>
         </div>
 
-        <div className="p-6 border-t border-divider flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-text-body hover:bg-primary/10 rounded-lg"
-          >
-            {t('common.cancel')}
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={isCreating || !name.trim()}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isCreating ? t('common.saving') : t('common.create')}
-          </button>
+        {/* Name */}
+        <div>
+          <FieldLabel>{t('common.name')}</FieldLabel>
+          <Input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t('board.create.namePlaceholder')}
+            className="w-full"
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <FieldLabel>{t('common.description')}</FieldLabel>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t('board.create.descPlaceholder')}
+            rows={3}
+            className="w-full"
+          />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

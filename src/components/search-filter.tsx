@@ -1,6 +1,8 @@
 'use client';
 
+import { Search } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { Input } from '@/components/ui/Input';
 
 export default function SearchFilter({ search, setSearch, category, setCategory, categories }: {
   search: string;
@@ -24,18 +26,21 @@ export default function SearchFilter({ search, setSearch, category, setCategory,
   };
   return (
     <div className="flex gap-3">
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder={t('workbench.searchPlaceholder')}
-        data-testid="search-input"
-        className="w-full max-w-xs rounded-md border border-card-border px-3 py-1.5 text-sm"
-      />
+      <div className="relative w-full max-w-xs">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('workbench.searchPlaceholder')}
+          data-testid="search-input"
+          className="w-full pl-9"
+        />
+      </div>
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
         data-testid="category-select"
-        className="rounded-md border border-card-border px-2 py-1.5 text-sm"
+        className="rounded-lg border border-card-border glass-input px-2 py-2 text-sm text-text-body focus:outline-none focus:ring-2 focus:ring-accent"
       >
         {categories.map((c) => <option key={c} value={c}>{categoryLabel(c)}</option>)}
       </select>

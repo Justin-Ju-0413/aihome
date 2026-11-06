@@ -214,7 +214,7 @@ export default function SettingsPage() {
                 <span className="flex-1 text-sm font-mono text-text-body">{path}</span>
                 <button
                   onClick={() => handleRemovePath(index)}
-                  className="p-1 hover:bg-red-100 rounded text-red-400 hover:text-red-600"
+                  className="p-1 hover:bg-red-500/10 rounded text-red-400 hover:text-red-600"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -257,7 +257,7 @@ export default function SettingsPage() {
                 {group.id !== 'default' && (
                   <button
                     onClick={() => handleRemoveGroup(group.id)}
-                    className="p-1 hover:bg-red-100 rounded text-red-400 hover:text-red-600"
+                    className="p-1 hover:bg-red-500/10 rounded text-red-400 hover:text-red-600"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

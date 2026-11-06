@@ -130,7 +130,7 @@ export function CardDetail({ agent, onClose, onEdit, onDelete }: CardDetailProps
         <div className="p-6 border-t border-divider flex justify-end gap-3">
           <button
             onClick={() => onDelete(agent)}
-            className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
+            className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             {t('common.delete')}

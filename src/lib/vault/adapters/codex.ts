@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import type { ProviderConfig, VaultData } from '../store';
 import { backupConfig, fingerprintOf, type AdapterState, type ToolAdapter, type WriteResult } from './index';
+import { vaultToolConfigPaths } from '@/lib/tool-config-paths';
 
 export function codexAuthPath(): string {
   return process.env.AIHOME_VAULT_CODEX_AUTH ?? path.join(os.homedir(), '.codex', 'auth.json');
@@ -93,7 +94,7 @@ export const codexAdapter: ToolAdapter = {
   id: 'codex',
   label: 'Codex',
   configPath(): string {
-    return process.env.AIHOME_VAULT_CODEX_CONFIG ?? path.join(os.homedir(), '.codex', 'config.toml');
+    return vaultToolConfigPaths.codex();
   },
 
   detect(data: VaultData): AdapterState {
